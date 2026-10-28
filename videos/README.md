@@ -1,5 +1,9 @@
 # Impro avec un personnage du film — V2 expérimentale
 
+**Nouvel extrait : [lecteur et éditeur OSS](oss/README.md)** — choisir une voix à jouer et conserver les autres voix du film.
+
+Le lecteur ci-dessous concerne Django.
+
 **[Télécharger le lecteur avec choix du personnage (ZIP)](impro-avec-personnage.zip?raw=1)**
 
 1. Extraire le ZIP et ouvrir `impro-avec-personnage.html` dans Chrome, Edge ou Firefox.
