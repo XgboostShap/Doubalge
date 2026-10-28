@@ -1,31 +1,53 @@
-# Contrôle avec son, forme d’onde et curseur
+# Éditeur interactif des paroles
 
-[Télécharger la vidéo avec amplitude audio et curseur de lecture](controle-son-onde-audio.mp4?raw=1)
+**[Télécharger l’éditeur autonome (ZIP, environ 3,7 Mo)](editeur-timeline.zip?raw=1)**
 
-![Aperçu à 8 secondes](apercu-onde-audio-8s.png)
+1. Télécharger et extraire le ZIP.
+2. Ouvrir `editeur-timeline.html` dans Chrome, Firefox ou Edge. L’aperçu de code
+   GitHub ne permet pas d’utiliser l’éditeur.
+3. Modifier la piste **Vos corrections**, puis **Télécharger les corrections**.
+4. Transmettre le fichier JSON dans le chat pour recalculer le rendu.
 
-La bande cyan représente l’amplitude relative de la piste complète (voix,
-musique et bruitages). Le curseur jaune suit la position de lecture, avec des
-repères de temps. La bande est placée au-dessus de la zone des commandes du
-lecteur pour rester visible en pause. Un déplacement dans la vidéo repositionne
-également le curseur, intégré aux images du MP4.
+![Aperçu de l’éditeur](editeur-apercu.png)
 
-Le son original normalisé, les deux portraits et le clignotement sont conservés :
-- 1,5 seconde d’anticipation avec clignotement à 2 Hz ;
-- éclairage constant pendant la parole ;
-- deux locuteurs imposés d’après la confirmation utilisateur ;
-- un petit badge d’incertitude, sans troisième portrait ;
-- cadre orange / Parole ? pour les propositions acoustiques à vérifier.
+La vidéo, le son original normalisé, la forme d’onde et les portraits sont
+intégrés au fichier HTML. L’éditeur fonctionne sans serveur et sans connexion
+après téléchargement.
 
-## Limite de la détection des lèvres
+## Couleurs et édition
 
-Le programme détecte les visages et mesure les variations d’image autour de la
-bouche. Ce n’est pas une reconnaissance fiable de lèvres en train de parler :
-les mouvements de tête et l’éclairage peuvent aussi faire varier ce signal.
-Sur cet extrait, aucune association automatique voix/lèvres n’a rempli les critères.
-Les vignettes restent pilotées par les références acoustiques et les décisions
-utilisateur. La forme d’onde ne prouve pas l’identité de celui qui parle.
+- Orange : visage 0. Violet : visage 12. Gris : inconnu / hors champ.
+- La piste automatique reste intacte ; les corrections sont distinctes.
+- Cliquer positionne la lecture ; double-cliquer écoute le passage.
+- Déplacer un bloc ou ses poignées modifie les intervalles.
+- Les champs Début / Fin permettent une saisie précise en secondes.
+- Choisir un personnage réattribue le bloc sélectionné.
+- Scinder au curseur sépare un bloc ; fusionner réunit deux blocs successifs du même personnage.
+- Maj + glisser sur l’onde crée un intervalle ; Supprimer le retire.
+- Annuler / Rétablir permettent de revenir sur les modifications.
+- Les blocs hachurés restent à vérifier ; une correction de temps ne confirme pas implicitement le personnage.
 
-Vérifications : 24 tests passés ; distinction entre silence et son, positions du
-curseur vérifiées sur la vidéo finale à 8 et 30 secondes, pistes vidéo et audio
-présentes. Le rendu V1 normal reste muet ; ce fichier est un contrôle avec son.
+Le bloc 1,85–5,26 s peut par exemple être scindé vers 3,3 s pour attribuer les
+deux morceaux à des personnages différents. Cet exemple n’est pas appliqué à
+votre place : la page démarre avec les propositions actuelles et les références
+que vous avez déjà données.
+
+## Sauvegarde et rendu
+
+Le brouillon reste dans ce navigateur. Télécharger le JSON avant de changer de
+machine ; ce JSON peut aussi être réimporté dans le même éditeur. Il contient les
+intervalles et personnages, sans la vidéo. Il ne faut pas envoyer seulement une
+capture d’écran pour appliquer des bornes précises.
+
+Le code de rendu importe les corrections temporelles et leur donne priorité,
+sans effacer les événements et scores bruts de diarisation. Un fichier d’une
+autre vidéo/analyse est refusé. Les suppressions, ajouts et chevauchements sont
+pris en charge. La V1 normale reste muette ; le son original sert au contrôle.
+
+Vérifications : 29 tests Python ; gestes réellement testés dans Chromium :
+scission à 3,3 s, couleurs, poignées, déplacement, création, fusion, suppression,
+annulation, export/import, rejet d’une autre source, restauration et zoom.
+Le ZIP a été extrait seul dans un autre dossier : vidéo et son lisibles, sans
+requête réseau.
+
+[Vidéo de contrôle avec son et onde, sans édition](controle-son-onde-audio.mp4?raw=1)
