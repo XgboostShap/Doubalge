@@ -1,24 +1,37 @@
-# Paroles, changements de plan et version pour l’impro
+# Impro avec un personnage du film — V2 expérimentale
 
-**[Télécharger le nouvel éditeur et le lecteur impro (ZIP)](editeur-paroles-plans.zip?raw=1)**
+**[Télécharger le lecteur avec choix du personnage (ZIP)](impro-avec-personnage.zip?raw=1)**
 
-1. Extraire le ZIP et ouvrir `editeur-timeline.html` dans Chrome, Edge ou Firefox.
-2. Corriger les losanges de la ligne **Plans corrigés** : déplacer, ajouter au curseur, supprimer, régler l’instant. Les boutons **Voir juste avant / juste après** aident à placer la coupe.
-3. Cliquer **Télécharger la version impro** puis ouvrir le nouveau `version-impro.html` et utiliser **Plein écran**.
-4. **Télécharger les corrections** sauvegarde ensemble les paroles et les plans. Transmettre le JSON pour régénérer un MP4.
+1. Extraire le ZIP et ouvrir `impro-avec-personnage.html` dans Chrome, Edge ou Firefox.
+2. Choisir **Voix du film conservée**, puis **Lire / Pause** et **Plein écran**.
+3. Le lecteur précise **Le film joue… À vous de jouer…**, et les portraits portent **Film** et **À vous**.
 
-![Aperçu de la timeline avec les plans](editeur-plans-apercu.png)
+- **Visage 12 conservé** : le film joue le personnage à la barbe grise (violet), vous jouez le visage 0 (orange).
+- **Visage 0 conservé** : le film joue le visage 0, vous jouez le visage 12.
+- **Ambiance seule** : toutes les voix sont à improviser, avec le fond séparé.
+- **Aucune — vidéo muette** : silence complet.
 
-Les **27 intervalles de parole du JSON fourni sont intégrés**, sans modification ni approbation supplémentaire. Douze changements de plan automatiques sont proposés. Quinze intervalles de parole et les douze coupes restent à vérifier. La détection d’origine est conservée sur les pistes automatiques. Les coupes sont des instants, indépendants des paroles ; elles peuvent se produire au milieu d’une réplique.
+Le rôle peut changer pendant la lecture. Le son suit la pause, les recherches et la vitesse. Les portraits clignotent 1,5 seconde avant la parole et restent éclairés pendant ; la vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe. Le lecteur fonctionne hors connexion et n’enregistre pas le microphone.
 
-La vidéo de contrôle conserve le son original normalisé pour l’écoute. Le lecteur impro contient une **copie vidéo sans aucune piste audio**, et fonctionne hors connexion. Les portraits orange (visage 0) et violet (visage 12) clignotent 1,5 seconde avant la parole et restent allumés pendant. En bas à gauche, une vignette annonce le prochain plan 0,5 seconde avant la coupe. Les repères provisoires restent signalés. Le lecteur permet de jouer les voix en direct ; il n’enregistre pas le microphone.
+![Aperçu du lecteur duo](impro-duo-apercu.png)
 
-Le ZIP contient aussi une première `version-impro.html` basée sur les corrections reçues et les plans automatiques encore à vérifier. Le bouton de l’éditeur permet d’en produire une nouvelle après chaque correction.
+## MP4 prêts à lire
 
-**[Télécharger le MP4 d’essai pour l’impro](impro-corrigee.mp4?raw=1)** : muet, pleine résolution, portraits et repère blanc de plan intégrés. Le lecteur HTML généré affiche une vignette du prochain plan ; le MP4 emploie le repère blanc du rendu V1. Ces exports restent provisoires pour les passages non validés.
+| Vous jouez | Le film joue | Téléchargement |
+| --- | --- | --- |
+| Visage 0, orange | Visage 12, violet | [MP4 avec voix du visage 12](impro-avec-face-12.mp4?raw=1) |
+| Visage 12, violet | Visage 0, orange | [MP4 avec voix du visage 0](impro-avec-face-0.mp4?raw=1) |
 
-Le JSON comprend un champ facultatif `cuts` (`id`, `time`, `reviewed`). Les anciens JSON de paroles restent compatibles et préservent les plans corrigés. Une liste vide retire tous les repères de plan. Import et export vérifient l’analyse et l’empreinte de la vidéo. Annuler / Rétablir, sauvegarde locale et zoom s’appliquent aux deux types de repères.
+Les MP4 sont en pleine résolution et reprennent les portraits et le repère blanc de plan intégrés au rendu V1. Le lecteur HTML affiche une vignette du prochain plan.
 
-Vérifications : 32 tests Python ; essais réels dans Chromium des gestes d’édition des paroles et des plans, export/import, ancien format, refus des doublons et d’une autre source, restauration locale, génération du lecteur impro et synchronisation des annonces. Les médias exportés pour l’impro ont été contrôlés avec ffprobe : aucune piste audio. Les pages fonctionnent sans requête réseau.
+## Qualité et corrections
 
-[Ancien contrôle avec son et amplitude](controle-son-onde-audio.mp4?raw=1)
+Demucs 4.0.1, modèle officiel `htdemucs`, sépare les voix du mélange. Le fond `source − voix` reste continu ; seules les plages du dialogue choisi sont ouvertes avec des fondus de 10 ms. Les voix inconnues et les portions simultanées de personnages différents sont retirées de cette piste. Aucun découpage ne coupe le mélange original entier.
+
+**La séparation reste expérimentale** : le modèle est entraîné sur la musique ; des restes de voix, une altération du timbre ou des bruitages atténués peuvent subsister. Les 27 intervalles fournis sont conservés, dont 15 restent à vérifier. Les 12 plans automatiques restent aussi à vérifier. Une attribution erronée peut donc conserver une mauvaise voix ; les paroles simultanées ne sont pas séparées entre locuteurs.
+
+**[Télécharger l’éditeur duo (ZIP)](editeur-duo.zip?raw=1)** pour corriger paroles et plans. Le bouton **Télécharger la version impro** exporte les corrections courantes avec le choix du personnage conservé. La séparation audio est réutilisée. Télécharger et transmettre le JSON pour régénérer les MP4.
+
+Vérifications : 38 tests Python ; test réel dans Chromium des deux rôles, du signal sonore, des pauses, du seeking, de la vitesse, des bornes modifiées, des chevauchements, du mode muet et du lecteur sans réseau. Une vérification des deux répliques de référence par transcription les retrouve dans le mix qui conserve leur personnage et ne les retrouve pas dans le mix opposé ; cela ne constitue pas une garantie d’absence de toute fuite vocale.
+
+[Éditeur V1 des paroles et plans](editeur-paroles-plans.zip?raw=1) · [Premier MP4 entièrement muet](impro-corrigee.mp4?raw=1) · [Contrôle avec son original](controle-son-onde-audio.mp4?raw=1)
