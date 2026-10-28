@@ -1,5 +1,19 @@
 # OSS — fichiers HTML sans installation
 
+## MP4 léger pour WhatsApp — voix 1 à improviser
+
+**[Télécharger OSS sans la voix 1 (MP4, 1,8 Mo)](OSS-WhatsApp-sans-voix-1.mp4?raw=1)**
+
+Ce MP4 de deux minutes se lit directement et peut être envoyé comme vidéo sur
+WhatsApp. Les voix 2, 3 et 4 sont conservées avec le fond séparé continu ; les
+plages de la voix 1 sont retirées de la piste séparée de dialogue, selon les
+dernières corrections reçues. Le repère V1 clignote 1,5 seconde avant chaque
+réplique puis reste éclairé pendant ; le repère blanc annonce les 30 changements
+de plan 0,5 seconde avant. La vidéo fait 480 × 360 pixels, en H.264 avec audio AAC.
+La séparation reste expérimentale : de petits restes de voix peuvent subsister.
+
+## Lecteur interactif et éditeur
+
 **[Télécharger le lecteur OSS (ZIP, 3,5 Mo)](OSS-lecteur.zip?raw=1)**
 
 1. Extraire le ZIP et ouvrir **OSS.html** dans Chrome ou Edge.
