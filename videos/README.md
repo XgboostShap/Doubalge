@@ -26,9 +26,11 @@ Les MP4 sont en pleine résolution et reprennent les portraits et le repère bla
 
 ## Qualité et corrections
 
+Le dernier JSON utilisateur corrige le début : visage 0 de **1,85 à 3,43 s**, puis visage 12 de **3,50 à 5,33 s**. Le lecteur, l’éditeur et les deux MP4 reprennent cette correction, y compris les portraits intégrés.
+
 Demucs 4.0.1, modèle officiel `htdemucs`, sépare les voix du mélange. Le fond `source − voix` reste continu ; seules les plages du dialogue choisi sont ouvertes avec des fondus de 10 ms. Les voix inconnues et les portions simultanées de personnages différents sont retirées de cette piste. Aucun découpage ne coupe le mélange original entier.
 
-**La séparation reste expérimentale** : le modèle est entraîné sur la musique ; des restes de voix, une altération du timbre ou des bruitages atténués peuvent subsister. Les 27 intervalles fournis sont conservés, dont 15 restent à vérifier. Les 12 plans automatiques restent aussi à vérifier. Une attribution erronée peut donc conserver une mauvaise voix ; les paroles simultanées ne sont pas séparées entre locuteurs.
+**La séparation reste expérimentale** : le modèle est entraîné sur la musique ; des restes de voix, une altération du timbre ou des bruitages atténués peuvent subsister. Les 28 intervalles fournis sont conservés, dont 15 restent à vérifier. Les 12 plans automatiques restent aussi à vérifier. Une attribution erronée peut donc conserver une mauvaise voix ; les paroles simultanées ne sont pas séparées entre locuteurs.
 
 **[Télécharger l’éditeur duo (ZIP)](editeur-duo.zip?raw=1)** pour corriger paroles et plans. Le bouton **Télécharger la version impro** exporte les corrections courantes avec le choix du personnage conservé. La séparation audio est réutilisée. Télécharger et transmettre le JSON pour régénérer les MP4.
 
