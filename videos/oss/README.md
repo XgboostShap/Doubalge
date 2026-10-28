@@ -24,10 +24,14 @@ puis les ouvrir localement, car l’aperçu GitHub n’exécute pas le lecteur.
 
 ## Repères à vérifier
 
+Les corrections transmises dans le chat sont intégrées : **35 intervalles de
+parole et 30 changements de plan**, dont 7 plans ajoutés. Toutes les répliques
+ont une voix attribuée dans ce fichier. Les états de validation sont préservés :
+9 intervalles et 7 plans sont validés ; 26 intervalles et 23 plans restent
+à vérifier. La diarisation brute et les propositions automatiques restent intactes.
+
 Les quatre repères sont acoustiques et aucune association voix/visage n’est
-confirmée : les cartes affichent donc V1…V4. Sur les 36 intervalles de parole,
-26 ont une attribution proposée et 10 sont inconnus. Les 23 changements de plan
-restent aussi à vérifier. La diarisation brute et les indices sont conservés.
+confirmée : les cartes affichent donc V1…V4.
 
 Le fond séparé reste continu ; les voix inconnues et les chevauchements avec une
 voix remplacée sont retirés de la piste de dialogue. Les chevauchements entre
