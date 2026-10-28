@@ -1,53 +1,24 @@
-# Éditeur interactif des paroles
+# Paroles, changements de plan et version pour l’impro
 
-**[Télécharger l’éditeur autonome (ZIP, environ 3,7 Mo)](editeur-timeline.zip?raw=1)**
+**[Télécharger le nouvel éditeur et le lecteur impro (ZIP)](editeur-paroles-plans.zip?raw=1)**
 
-1. Télécharger et extraire le ZIP.
-2. Ouvrir `editeur-timeline.html` dans Chrome, Firefox ou Edge. L’aperçu de code
-   GitHub ne permet pas d’utiliser l’éditeur.
-3. Modifier la piste **Vos corrections**, puis **Télécharger les corrections**.
-4. Transmettre le fichier JSON dans le chat pour recalculer le rendu.
+1. Extraire le ZIP et ouvrir `editeur-timeline.html` dans Chrome, Edge ou Firefox.
+2. Corriger les losanges de la ligne **Plans corrigés** : déplacer, ajouter au curseur, supprimer, régler l’instant. Les boutons **Voir juste avant / juste après** aident à placer la coupe.
+3. Cliquer **Télécharger la version impro** puis ouvrir le nouveau `version-impro.html` et utiliser **Plein écran**.
+4. **Télécharger les corrections** sauvegarde ensemble les paroles et les plans. Transmettre le JSON pour régénérer un MP4.
 
-![Aperçu de l’éditeur](editeur-apercu.png)
+![Aperçu de la timeline avec les plans](editeur-plans-apercu.png)
 
-La vidéo, le son original normalisé, la forme d’onde et les portraits sont
-intégrés au fichier HTML. L’éditeur fonctionne sans serveur et sans connexion
-après téléchargement.
+Les **27 intervalles de parole du JSON fourni sont intégrés**, sans modification ni approbation supplémentaire. Douze changements de plan automatiques sont proposés. Quinze intervalles de parole et les douze coupes restent à vérifier. La détection d’origine est conservée sur les pistes automatiques. Les coupes sont des instants, indépendants des paroles ; elles peuvent se produire au milieu d’une réplique.
 
-## Couleurs et édition
+La vidéo de contrôle conserve le son original normalisé pour l’écoute. Le lecteur impro contient une **copie vidéo sans aucune piste audio**, et fonctionne hors connexion. Les portraits orange (visage 0) et violet (visage 12) clignotent 1,5 seconde avant la parole et restent allumés pendant. En bas à gauche, une vignette annonce le prochain plan 0,5 seconde avant la coupe. Les repères provisoires restent signalés. Le lecteur permet de jouer les voix en direct ; il n’enregistre pas le microphone.
 
-- Orange : visage 0. Violet : visage 12. Gris : inconnu / hors champ.
-- La piste automatique reste intacte ; les corrections sont distinctes.
-- Cliquer positionne la lecture ; double-cliquer écoute le passage.
-- Déplacer un bloc ou ses poignées modifie les intervalles.
-- Les champs Début / Fin permettent une saisie précise en secondes.
-- Choisir un personnage réattribue le bloc sélectionné.
-- Scinder au curseur sépare un bloc ; fusionner réunit deux blocs successifs du même personnage.
-- Maj + glisser sur l’onde crée un intervalle ; Supprimer le retire.
-- Annuler / Rétablir permettent de revenir sur les modifications.
-- Les blocs hachurés restent à vérifier ; une correction de temps ne confirme pas implicitement le personnage.
+Le ZIP contient aussi une première `version-impro.html` basée sur les corrections reçues et les plans automatiques encore à vérifier. Le bouton de l’éditeur permet d’en produire une nouvelle après chaque correction.
 
-Le bloc 1,85–5,26 s peut par exemple être scindé vers 3,3 s pour attribuer les
-deux morceaux à des personnages différents. Cet exemple n’est pas appliqué à
-votre place : la page démarre avec les propositions actuelles et les références
-que vous avez déjà données.
+**[Télécharger le MP4 d’essai pour l’impro](impro-corrigee.mp4?raw=1)** : muet, pleine résolution, portraits et repère blanc de plan intégrés. Le lecteur HTML généré affiche une vignette du prochain plan ; le MP4 emploie le repère blanc du rendu V1. Ces exports restent provisoires pour les passages non validés.
 
-## Sauvegarde et rendu
+Le JSON comprend un champ facultatif `cuts` (`id`, `time`, `reviewed`). Les anciens JSON de paroles restent compatibles et préservent les plans corrigés. Une liste vide retire tous les repères de plan. Import et export vérifient l’analyse et l’empreinte de la vidéo. Annuler / Rétablir, sauvegarde locale et zoom s’appliquent aux deux types de repères.
 
-Le brouillon reste dans ce navigateur. Télécharger le JSON avant de changer de
-machine ; ce JSON peut aussi être réimporté dans le même éditeur. Il contient les
-intervalles et personnages, sans la vidéo. Il ne faut pas envoyer seulement une
-capture d’écran pour appliquer des bornes précises.
+Vérifications : 32 tests Python ; essais réels dans Chromium des gestes d’édition des paroles et des plans, export/import, ancien format, refus des doublons et d’une autre source, restauration locale, génération du lecteur impro et synchronisation des annonces. Les médias exportés pour l’impro ont été contrôlés avec ffprobe : aucune piste audio. Les pages fonctionnent sans requête réseau.
 
-Le code de rendu importe les corrections temporelles et leur donne priorité,
-sans effacer les événements et scores bruts de diarisation. Un fichier d’une
-autre vidéo/analyse est refusé. Les suppressions, ajouts et chevauchements sont
-pris en charge. La V1 normale reste muette ; le son original sert au contrôle.
-
-Vérifications : 29 tests Python ; gestes réellement testés dans Chromium :
-scission à 3,3 s, couleurs, poignées, déplacement, création, fusion, suppression,
-annulation, export/import, rejet d’une autre source, restauration et zoom.
-Le ZIP a été extrait seul dans un autre dossier : vidéo et son lisibles, sans
-requête réseau.
-
-[Vidéo de contrôle avec son et onde, sans édition](controle-son-onde-audio.mp4?raw=1)
+[Ancien contrôle avec son et amplitude](controle-son-onde-audio.mp4?raw=1)
