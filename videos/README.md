@@ -1,23 +1,32 @@
-# Version corrigée de contrôle — DoublageBasic V1
+# Contrôle avec son — deux personnages
 
-[Télécharger la nouvelle vidéo](doublage-controle-corrige.mp4?raw=1)
+[Télécharger la vidéo de contrôle avec son](controle-son-clignotement.mp4?raw=1)
 
-![Aperçu à 8 secondes](apercu-corrige-8s.png)
+![Aperçu à 8 secondes](controle-son-8s.png)
 
-L'ancienne vidéo `doublage-identifie.mp4` contient des attributions erronées et
-n'est plus la version à contrôler.
+Cette version remplace les précédentes pour le contrôle demandé.
 
-Corrections :
-- deux portraits fixes, sans doublons V0/V1 ; un seul ? temporaire pour les inconnus ;
-- vérification acoustique passage par passage, sans propager une phrase connue à un groupe vocal entier ;
-- « Bientot » distingue l'anticipation de 1,5 seconde de la parole en cours ;
-- « Parole ? » et un cadre orange signalent une proposition à vérifier ;
-- « Parole » correspond aux passages issus des références utilisateur ;
-- aucune piste audio originale dans le rendu.
+- Son original conservé et normalisé pour faciliter l'écoute (AAC 48 kHz).
+- Diarisation relancée avec exactement deux locuteurs, conformément à la confirmation utilisateur.
+- Deux portraits fixes, sans troisième vignette-personne.
+- Portrait atténué au repos.
+- Clignotement à 2 Hz pendant les 1,5 seconde précédant la réplique.
+- Portrait pleinement allumé et constant pendant la parole.
+- Repère de changement de plan anticipé de 0,5 seconde.
+- Petit badge ? pour les passages non attribués : ce n'est pas une troisième personne.
 
-À 8 secondes, le visage 0 est proposé pour la parole en cours et le visage 12
-est annoncé pour la réplique suivante : les deux indicateurs ont des rôles différents.
+« Bientot » distingue l'anticipation de la parole. « Parole ? » / cadre orange
+indiquent une proposition acoustique à vérifier ; « Parole » correspond aux
+répliques de référence données par l'utilisateur. Les voix restent comparées
+passage par passage, sans supposer que le visage visible est celui qui parle.
 
-Cette version n'est pas une validation complète de l'identification des voix.
-Les propositions acoustiques restent indicatives et les cas faibles sont laissés inconnus.
-21 tests passent ; la lecture du rendu et les images de contrôle ont été vérifiées.
+Le nombre de personnes visibles n'est pas une garantie générale du nombre de
+voix : ici la contrainte de deux provient de la confirmation utilisateur.
+
+Cette vidéo AVEC SON est une version de contrôle. Le rendu de doublage V1
+normal reste sans piste audio originale. La sélection d'une voix et la séparation
+des bruitages relèvent toujours de la V2, non développée.
+
+Vérifications : 22 tests passés, piste AAC et signal sonore contrôlés, variations
+de luminosité vérifiées sur la vidéo finale avant et pendant une réplique.
+L'identification acoustique complète reste à valider.
