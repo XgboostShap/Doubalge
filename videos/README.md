@@ -1,19 +1,23 @@
-# Vidéo de contrôle — DoublageBasic V1
+# Version corrigée de contrôle — DoublageBasic V1
 
-[Télécharger la vidéo MP4 (environ 18 Mo)](doublage-identifie.mp4?raw=1)
+[Télécharger la nouvelle vidéo](doublage-controle-corrige.mp4?raw=1)
 
-Rendu de contrôle de la vidéo fournie, sans aucune piste audio originale.
-Les vignettes anticipent les prises de parole de 1,5 seconde ; le repère de
-changement de plan les anticipe de 0,5 seconde.
+![Aperçu à 8 secondes](apercu-corrige-8s.png)
 
-Références données par l’utilisateur :
-- Vers 14 secondes : voix 0 de l’analyse associée au visage 12.
-- Vers 35 secondes : voix 1 associée au visage 0.
+L'ancienne vidéo `doublage-identifie.mp4` contient des attributions erronées et
+n'est plus la version à contrôler.
 
-21 passages utilisent ces associations. Cinq passages restent à vérifier :
-quatre frontières de voix très courtes et le groupe vocal isolé de 33,12 à 34,54 s.
-Les visages ont été regroupés selon les indications de l’utilisateur, sans
-fusion automatique des voix.
+Corrections :
+- deux portraits fixes, sans doublons V0/V1 ; un seul ? temporaire pour les inconnus ;
+- vérification acoustique passage par passage, sans propager une phrase connue à un groupe vocal entier ;
+- « Bientot » distingue l'anticipation de 1,5 seconde de la parole en cours ;
+- « Parole ? » et un cadre orange signalent une proposition à vérifier ;
+- « Parole » correspond aux passages issus des références utilisateur ;
+- aucune piste audio originale dans le rendu.
 
-Cette branche contient la vidéo de contrôle et cette notice. La branche main
-n’est pas modifiée et les changements de code en cours ne sont pas inclus.
+À 8 secondes, le visage 0 est proposé pour la parole en cours et le visage 12
+est annoncé pour la réplique suivante : les deux indicateurs ont des rôles différents.
+
+Cette version n'est pas une validation complète de l'identification des voix.
+Les propositions acoustiques restent indicatives et les cas faibles sont laissés inconnus.
+21 tests passent ; la lecture du rendu et les images de contrôle ont été vérifiées.
