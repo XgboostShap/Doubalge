@@ -12,7 +12,7 @@ import uuid
 import wave
 import webbrowser
 
-from export_html import construire_document, ecrire_json, empreinte, exporter
+from export_html import SCHEMA, construire_document, ecrire_json, empreinte, exporter, valider_corrections
 
 ROOT = Path(__file__).resolve().parent.parent
 PROJECT = ROOT / 'projet' if (ROOT / 'projet' / 'commun.py').exists() else ROOT
@@ -21,7 +21,7 @@ PROJECT = ROOT / 'projet' if (ROOT / 'projet' / 'commun.py').exists() else ROOT
 def initialiser():
     os.environ.pop('HF_HUB_OFFLINE', None)
     for name, folder in {'HF_HOME': 'huggingface', 'PYANNOTE_CACHE': 'pyannote',
-                         'MPLCONFIGDIR': 'matplotlib'}.items():
+                         'MPLCONFIGDIR': 'matplotlib', 'TORCH_HOME': 'torch'}.items():
         path = ROOT / '.cache' / folder
         path.mkdir(parents=True, exist_ok=True)
         os.environ.setdefault(name, str(path))
@@ -97,7 +97,7 @@ def verifier_events(data: dict, duration: float):
 
 
 def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages=0,
-            cpu=False, token=None):
+            cpu=False, token=None, corrections: Path | None = None, separation=True):
     initialiser()
     from commun import duree_et_taille, est_url
     from telecharge import extrait_audio, telecharge
@@ -133,6 +133,19 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
     print(f'[source] {duration:.2f} secondes ; {fps:.2f} images/s.', flush=True)
 
     saved = json.loads(Path(timeline).read_text(encoding='utf-8-sig')) if timeline else None
+    corrected = json.loads(Path(corrections).read_text(encoding='utf-8-sig')) if corrections else None
+    if saved and saved.get('schema') == SCHEMA and 'intervals' in saved:
+        if corrected is not None:
+            raise ValueError('Choisissez la timeline brute dans le premier champ, ou un seul JSON corrigé.')
+        corrected, saved = saved, None
+    if corrected is None and saved:
+        corrected = saved.get('corrections')
+    if corrected is not None:
+        known = {f"voice:{e['speaker']}" for e in saved['events']} if saved else None
+        if saved and (saved.get('corrections') or {}).get('characters'):
+            known.update(p['id'] for p in saved['corrections']['characters'])
+        corrected = valider_corrections(corrected, digest, duration,
+                                       saved.get('analysis_id') if saved else None, known)
     if saved is not None:
         if saved.get('source_sha256'):
             if saved['source_sha256'] != digest:
@@ -144,6 +157,11 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
         events = verifier_events(saved, duration)
         cuts = saved.get('cuts', [])
         print('[analyse] Timeline existante réutilisée.', flush=True)
+    elif corrected is not None:
+        events = [{'start': i['start'], 'end': i['end'], 'speaker': int(i['character'].split(':')[1])}
+                  for i in corrected['intervals'] if i['character'] is not None]
+        cuts = [c['time'] for c in corrected['cuts']]
+        print('[analyse] Corrections manuelles réutilisées ; aucune nouvelle attribution IA.', flush=True)
     else:
         import torch
         from pyannote.audio import Pipeline
@@ -175,14 +193,22 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
         cuts = detecte_plans(str(video))
     if saved and saved.get('plans_a_recalculer'):
         cuts = detecte_plans(str(video))
-    analysis = {'analysis_id': saved.get('analysis_id', uuid.uuid4().hex) if saved else uuid.uuid4().hex,
+    analysis = {'analysis_id': corrected['analysis_id'] if corrected else
+                (saved.get('analysis_id', uuid.uuid4().hex) if saved else uuid.uuid4().hex),
                 'source': source, 'source_sha256': digest,
                 'duration': duration, 'fps': fps, 'events': events, 'cuts': cuts}
+    if corrected is not None:
+        analysis['corrections'] = corrected
+        analysis['corrected_only'] = saved is None or saved.get('corrected_only', False)
     ecrire_json(sortie / 'timeline.json', analysis)
     print(f'[analyse] {len(set(e["speaker"] for e in events))} voix ; {len(events)} passages ; {len(cuts)} plans.', flush=True)
     print('[export] Préparation des vidéos de l’éditeur et du lecteur…', flush=True)
     sound, muted = medias(video, travail)
-    document = construire_document(analysis, forme_onde(wav), sound, muted)
+    pistes = None
+    if separation:
+        from separation_audio import separer
+        pistes = separer(video, travail, duration, digest, ffmpeg, cpu)
+    document = construire_document(analysis, forme_onde(wav), sound, muted, pistes)
     editor, player = exporter(document, sortie)
     print(f'[terminé] Éditeur : {editor}\n[terminé] Lecteur impro : {player}', flush=True)
     return editor, player
@@ -195,7 +221,9 @@ def choisir():
     window.title('Doubalge — préparer une scène')
     window.configure(bg='#11151d')
     window.resizable(False, False)
-    source, timeline = tk.StringVar(), tk.StringVar()
+    source, timeline, corrections = tk.StringVar(), tk.StringVar(), tk.StringVar()
+    separation = tk.BooleanVar(value=True)
+    personnages = tk.IntVar(value=0)
     result = []
 
     def fichier(variable, title, extensions):
@@ -207,7 +235,9 @@ def choisir():
         if not source.get().strip():
             messagebox.showerror('Source manquante', 'Choisissez une vidéo ou collez une URL YouTube.', parent=window)
             return
-        result.append((source.get().strip(), Path(timeline.get()) if timeline.get() else None))
+        result.append((source.get().strip(), Path(timeline.get()) if timeline.get() else None,
+                       Path(corrections.get()) if corrections.get() else None,
+                       separation.get(), personnages.get()))
         window.destroy()
 
     tk.Label(window, text='Préparer une scène', bg='#11151d', fg='white', font=('Segoe UI', 17, 'bold')).grid(row=0, column=0, columnspan=2, sticky='w', padx=20, pady=18)
@@ -217,8 +247,16 @@ def choisir():
     tk.Label(window, text='Timeline déjà calculée (facultatif, pour éviter une nouvelle analyse)', bg='#11151d', fg='#aab8cc').grid(row=3, column=0, columnspan=2, sticky='w', padx=20, pady=(12, 0))
     tk.Entry(window, textvariable=timeline, width=65).grid(row=4, column=0, padx=(20, 8), pady=8)
     tk.Button(window, text='Choisir le JSON', command=lambda: fichier(timeline, 'Timeline du traitement', [('Timeline', '*.json')])).grid(row=4, column=1, padx=(0, 20))
-    tk.Label(window, text='L’éditeur s’ouvrira dans le navigateur après la préparation.', bg='#11151d', fg='#aab8cc').grid(row=5, column=0, columnspan=2, sticky='w', padx=20, pady=8)
-    tk.Button(window, text='Créer l’éditeur', bg='#2967b2', fg='white', command=lancer).grid(row=6, column=0, columnspan=2, sticky='e', padx=20, pady=(8, 20))
+    tk.Label(window, text='Corrections manuelles (prioritaires, sans nouvelle attribution IA)', bg='#11151d', fg='#aab8cc').grid(row=5, column=0, columnspan=2, sticky='w', padx=20, pady=(12, 0))
+    tk.Entry(window, textvariable=corrections, width=65).grid(row=6, column=0, padx=(20, 8), pady=8)
+    tk.Button(window, text='Choisir les corrections', command=lambda: fichier(corrections, 'Corrections de l’éditeur', [('JSON corrigé', '*.json')])).grid(row=6, column=1, padx=(0, 20))
+    tk.Checkbutton(window, text='Préparer le choix des voix et de l’ambiance', variable=separation,
+                   bg='#11151d', fg='white', selectcolor='#252e40', activebackground='#11151d',
+                   activeforeground='white').grid(row=7, column=0, columnspan=2, sticky='w', padx=20, pady=8)
+    tk.Label(window, text='Nombre de voix attendu (0 = automatique, ignoré si JSON fourni)', bg='#11151d', fg='#aab8cc').grid(row=8, column=0, sticky='w', padx=20)
+    tk.Spinbox(window, from_=0, to=20, textvariable=personnages, width=5).grid(row=8, column=1, sticky='w')
+    tk.Label(window, text='L’éditeur s’ouvrira dans le navigateur après la préparation.', bg='#11151d', fg='#aab8cc').grid(row=9, column=0, columnspan=2, sticky='w', padx=20, pady=8)
+    tk.Button(window, text='Créer l’éditeur', bg='#2967b2', fg='white', command=lancer).grid(row=10, column=0, columnspan=2, sticky='e', padx=20, pady=(8, 20))
     window.mainloop()
     return result[0] if result else None
 
@@ -227,6 +265,8 @@ def main():
     parser = argparse.ArgumentParser(description='Créer l’éditeur et le lecteur impro HTML sur votre PC.')
     parser.add_argument('--video')
     parser.add_argument('--timeline', type=Path)
+    parser.add_argument('--corrections', type=Path)
+    parser.add_argument('--sans-audio-separe', action='store_true')
     parser.add_argument('--sortie', type=Path)
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--personnages', type=int, default=0)
@@ -236,9 +276,11 @@ def main():
         selected = choisir()
         if selected is None:
             return
-        args.video, args.timeline = selected
+        args.video, args.timeline, args.corrections, separation, args.personnages = selected
+        args.sans_audio_separe = not separation
     output = args.sortie or ROOT / 'resultats' / ('edition-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
-    editor, _ = traiter(args.video, output, args.timeline, args.personnages, args.cpu)
+    editor, _ = traiter(args.video, output, args.timeline, args.personnages, args.cpu,
+                        corrections=args.corrections, separation=not args.sans_audio_separe)
     if not args.sans_ouvrir:
         webbrowser.open(editor.as_uri())
 

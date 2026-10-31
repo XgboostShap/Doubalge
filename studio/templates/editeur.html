@@ -2,7 +2,7 @@
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Doubalge — Éditeur de la scène</title>
 <style>
-:root{color-scheme:dark;--bg:#11151d;--panel:#1b2230;--line:#354054;--text:#f1f5fc;--muted:#aab8cc;--yellow:#ffe044}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background:var(--bg);color:var(--text);font:14px system-ui,sans-serif}main{height:100dvh;max-width:1800px;margin:auto;padding:10px 14px;display:grid;grid-template-rows:auto minmax(130px,.85fr) auto minmax(174px,1fr) auto auto;gap:8px;min-width:0}h1{font-size:20px;margin:0}h2{font-size:13px;margin:0 0 7px}p{margin:0}button,input,select{font:inherit;border:1px solid var(--line);border-radius:6px;background:#252e40;color:var(--text);padding:6px 9px;min-width:0}button{cursor:pointer;white-space:nowrap}button:hover{background:#34435e}button:disabled{opacity:.38;cursor:default}button.primary{background:#2967b2;border-color:#4e92ed}button.danger{color:#ffb2ab}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}.topbar,.toolbar,.actions,.fields{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.topbar{justify-content:space-between;gap:8px}.heading{display:flex;align-items:baseline;gap:12px}.subtitle,.hint,small{color:var(--muted);font-size:12px}.topbar button{font-size:12px}.player{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;min-height:0;background:var(--panel);border:1px solid #283344;border-radius:9px;padding:8px}.video-box{min-height:0;position:relative;background:#000;border-radius:5px;overflow:hidden}.video-box video{display:block;width:100%;height:100%;object-fit:contain;background:#000}.sidebar{min-height:0;display:flex;flex-direction:column;gap:7px}.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;min-height:0;flex:1}.person{display:flex;gap:7px;text-align:left;border-left:5px solid var(--person);align-items:center;min-height:30px;padding:5px 7px;overflow:hidden}.person img{width:30px;height:30px;object-fit:cover;border-radius:3px}.person .name{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.person small{display:block;font-size:10px;white-space:nowrap}.person.chosen{outline:2px solid var(--person);outline-offset:-2px}.person.speaking{box-shadow:inset 0 0 0 2px var(--person);background:#39445a}.person.upcoming{animation:flash .5s steps(1) infinite}@keyframes flash{50%{opacity:.4}}#voice-references{display:flex;gap:4px;flex-wrap:wrap}#voice-references[hidden]{display:none}#voice-references button{font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;padding:3px 5px}.transport{justify-content:space-between;gap:8px}.transport .toolbar{flex-wrap:nowrap}.transport label{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}#clock{font:600 15px ui-monospace,monospace;white-space:nowrap;min-width:190px}#seek{width:75px}#zoom{width:110px}.timeline-panel{min-height:0;overflow:hidden;background:var(--panel);border:1px solid #283344;border-radius:9px;padding:5px 7px}.scroll{height:100%;min-height:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}svg{display:block;touch-action:none;user-select:none}svg text{font-family:system-ui,sans-serif;pointer-events:none}.segment{cursor:grab}.segment.auto{pointer-events:none}.handle{cursor:ew-resize}.cursor{pointer-events:none}.editors{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:8px}.form{background:var(--panel);border:1px solid #283344;padding:9px 10px;border-radius:9px;min-width:0}.form h2{min-height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fields{margin-bottom:7px;gap:8px}.fields label{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.form input[type=number]{width:76px;padding:4px 6px}.form select{max-width:150px;padding:4px 6px}.form .actions{gap:5px}.form .actions button{font-size:12px;padding:5px 7px}.form input[type=checkbox]{margin:0}#cut-select{max-width:160px}#cut-count{font-size:11px;font-weight:400;color:var(--muted);margin-left:6px}.status-row{display:flex;align-items:center;gap:12px;min-width:0}#status{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#b8cbe4;border-left:3px solid #5a8ed6;padding-left:8px;min-height:17px}#status.error{border-color:#ff776c;color:#ffb8af}.status-row .hint{white-space:nowrap;font-size:11px}.file{display:none}dialog{background:var(--panel);color:var(--text);border:1px solid #526783;border-radius:10px;padding:20px;max-width:min(900px,94vw);max-height:85vh}dialog::backdrop{background:#0009}dialog p{line-height:1.6;margin:10px 0}dialog h2{font-size:18px}dialog .close{float:right}dialog .table-wrap{overflow:auto;max-height:60vh}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#222c3e}tr.selected{background:#344765}kbd{font:12px monospace;background:#344054;padding:2px 4px}#duo-options .toolbar{margin:10px 0}#duo-options label{display:flex;gap:8px;align-items:center}#duo-options[hidden]{display:none}
+:root{color-scheme:dark;--bg:#11151d;--panel:#1b2230;--line:#354054;--text:#f1f5fc;--muted:#aab8cc;--yellow:#ffe044}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background:var(--bg);color:var(--text);font:14px system-ui,sans-serif}main{height:100dvh;max-width:1800px;margin:auto;padding:10px 14px;display:grid;grid-template-rows:auto minmax(130px,.85fr) auto minmax(174px,1fr) auto auto;gap:8px;min-width:0}h1{font-size:20px;margin:0}h2{font-size:13px;margin:0 0 7px}p{margin:0}button,input,select{font:inherit;border:1px solid var(--line);border-radius:6px;background:#252e40;color:var(--text);padding:6px 9px;min-width:0}button{cursor:pointer;white-space:nowrap}button:hover{background:#34435e}button:disabled{opacity:.38;cursor:default}button.primary{background:#2967b2;border-color:#4e92ed}button.danger{color:#ffb2ab}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}.topbar,.toolbar,.actions,.fields{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.topbar{justify-content:space-between;gap:8px}.heading{display:flex;align-items:baseline;gap:12px}.subtitle,.hint,small{color:var(--muted);font-size:12px}.topbar button{font-size:12px}.player{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;min-height:0;background:var(--panel);border:1px solid #283344;border-radius:9px;padding:8px}.video-box{min-height:0;position:relative;background:#000;border-radius:5px;overflow:hidden}.video-box video{display:block;width:100%;height:100%;object-fit:contain;background:#000}.sidebar{min-height:0;display:flex;flex-direction:column;gap:7px}.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;min-height:0;flex:1}.person{display:flex;gap:7px;text-align:left;border-left:5px solid var(--person);align-items:center;min-height:30px;padding:5px 7px;overflow:hidden}.person img{width:30px;height:30px;object-fit:cover;border-radius:3px}.person .name{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.person small{display:block;font-size:10px;white-space:nowrap}.person.chosen{outline:2px solid var(--person);outline-offset:-2px}.person.speaking{box-shadow:inset 0 0 0 2px var(--person);background:#39445a}.person.upcoming{animation:flash .5s steps(1) infinite}@keyframes flash{50%{opacity:.4}}#voice-references{display:flex;gap:4px;flex-wrap:wrap}#voice-references[hidden]{display:none}#voice-references button{font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;padding:3px 5px}.transport{justify-content:space-between;gap:8px}.transport .toolbar{flex-wrap:nowrap}.transport label{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px}#clock{font:600 15px ui-monospace,monospace;white-space:nowrap;min-width:190px}#seek{width:75px}#zoom{width:110px}.timeline-panel{min-height:0;overflow:hidden;background:var(--panel);border:1px solid #283344;border-radius:9px;padding:5px 7px}.scroll{height:100%;min-height:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}svg{display:block;touch-action:none;user-select:none}svg text{font-family:system-ui,sans-serif;pointer-events:none}.segment{cursor:grab}.segment.auto{pointer-events:none}.handle{cursor:ew-resize}.cursor{pointer-events:none}.editors{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:8px}.form{background:var(--panel);border:1px solid #283344;padding:9px 10px;border-radius:9px;min-width:0}.form h2{min-height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fields{margin-bottom:7px;gap:8px}.fields label{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.form input[type=number]{width:76px;padding:4px 6px}.form select{max-width:150px;padding:4px 6px}.form .actions{gap:5px}.form .actions button{font-size:12px;padding:5px 7px}.form input[type=checkbox]{margin:0}#cut-select{max-width:160px}#cut-count{font-size:11px;font-weight:400;color:var(--muted);margin-left:6px}.status-row{display:flex;align-items:center;gap:12px;min-width:0}#status{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#b8cbe4;border-left:3px solid #5a8ed6;padding-left:8px;min-height:17px}#status.error{border-color:#ff776c;color:#ffb8af}.status-row .hint{white-space:nowrap;font-size:11px}.file{display:none}dialog{background:var(--panel);color:var(--text);border:1px solid #526783;border-radius:10px;padding:20px;max-width:min(900px,94vw);max-height:85vh}dialog::backdrop{background:#0009}dialog p{line-height:1.6;margin:10px 0}dialog h2{font-size:18px}dialog .close{float:right}dialog .table-wrap{overflow:auto;max-height:60vh}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#222c3e}tr.selected{background:#344765}kbd{font:12px monospace;background:#344054;padding:2px 4px}#duo-options .toolbar{margin:10px 0}#duo-options label{display:flex;gap:8px;align-items:center}#duo-options[hidden]{display:none}#remove-voices label{display:flex;gap:8px;align-items:center;border-left:4px solid var(--voice);padding:8px;background:#252e40;border-radius:5px}
 @media(max-height:760px){main{padding:7px 10px;gap:6px;grid-template-rows:auto minmax(118px,.8fr) auto minmax(166px,1fr) auto auto}.subtitle{display:none}h1{font-size:18px}.form{padding:7px 8px}.form h2{margin-bottom:5px}.form .actions button{font-size:11px;padding:4px 6px}.fields{margin-bottom:6px}.transport button,.transport select{padding:5px 7px}.status-row .hint{font-size:10px}.player{padding:6px}}
 @media(max-width:1150px){.subtitle{display:none}.player{grid-template-columns:minmax(0,1fr) 250px}.status-row .hint{display:none}.form .fields{gap:5px}.form select{max-width:115px}.form input[type=number]{width:66px}.form .actions button{font-size:11px;padding:4px 5px}.topbar button{font-size:11px;padding:5px 7px}.transport{gap:4px}#clock{font-size:13px;min-width:165px}.transport .toolbar{gap:4px}#zoom{width:95px}}
 </style></head><body><main>
@@ -18,8 +18,96 @@
 </main>
 <dialog id="help-dialog"><button class="close" data-close>Fermer</button><h2>Corriger la scène</h2><p>Sur la timeline, clique un bloc de parole pour le sélectionner. Glisse son centre pour le déplacer, ses bords pour ajuster le début ou la fin, ou déplace-le vers la ligne d’une autre voix. Les champs sous la timeline permettent une saisie précise.</p><p>Pour un changement de plan, clique le losange blanc puis glisse-le, saisis son instant, utilise les boutons −1 / +1 image ou place-le au curseur. La vidéo reste visible pendant toutes ces actions.</p><p><kbd>Espace</kbd> lecture/pause · <kbd>←</kbd> / <kbd>→</kbd> avancer d’une image · <kbd>S</kbd> scinder un bloc · <kbd>P</kbd> ajouter un plan · <kbd>Suppr</kbd> supprimer la sélection · <kbd>Ctrl+Z</kbd> annuler.</p><p>« Voir l’analyse initiale » affiche les propositions d’origine en transparence. Elles sont conservées ; tes corrections sont prioritaires. Les hachures signalent les passages non validés. La sauvegarde du navigateur est un brouillon : utilise « Enregistrer les corrections » pour conserver le JSON.</p><button id="reset">Revenir au point de départ</button></dialog>
 <dialog id="list-dialog"><button class="close" data-close>Fermer</button><h2 id="count"></h2><div class="table-wrap"><table><thead><tr><th>Bloc</th><th>Voix</th><th>Début</th><th>Fin</th><th>État</th></tr></thead><tbody id="rows"></tbody></table></div></dialog>
-<dialog id="options-dialog"><button class="close" data-close>Fermer</button><h2>Lecteur d’impro</h2><p>Le lecteur exporté reprend tes corrections. Les repères clignotent 1,5 seconde avant la parole et la vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe.</p><div id="duo-options" hidden><div class="toolbar"><label>Mode <select id="duo-mode"><option value="play_one">Je joue une voix, le film joue les autres</option><option value="keep_one">Le film joue une voix, je joue les autres</option></select></label><label><span id="duo-choice-label">Voix que je joue</span> <select id="duo-character"></select></label></div><p>Le fond séparé reste continu. La séparation est expérimentale : des restes de voix peuvent subsister. Les chevauchements avec une voix remplacée sont retirés de la piste de dialogue.</p></div><p id="no-duo-note">Sans pistes audio séparées, la version impro est muette. Le son original reste disponible dans l’éditeur.</p></dialog>
+<dialog id="options-dialog"><button class="close" data-close>Fermer</button><h2>Lecteur d’impro</h2><p>Le lecteur exporté reprend tes corrections et les choix audio ci-dessous. Les repères clignotent 1,5 seconde avant la parole et la vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe.</p><div id="duo-options" hidden><p>Coche les voix à retirer. Les choix se cumulent et sont repris dans le lecteur exporté.</p><div id="remove-voices" class="toolbar"></div><p><label><input id="keep-ambience" type="checkbox" checked> Conserver l’ambiance et la musique</label></p><p><label><input id="keep-unknown" type="checkbox" checked> Conserver les paroles non attribuées</label></p><div class="toolbar"><button id="mix-keep-all">Tout conserver</button><button id="mix-remove-all">Retirer toutes les voix</button></div><p>La séparation peut laisser des restes de voix. Un chevauchement avec une voix retirée est coupé dans le dialogue ; le fond reste indépendant.</p></div><p id="no-duo-note">Ce projet n’a pas de pistes séparées : le lecteur conserve le son original. Recrée-le avec la préparation audio pour choisir les voix et l’ambiance.</p></dialog>
 <script id="editor-data" type="application/json">__EDITOR_DATA__</script><script>
+/* Moteur partagé : choix cumulables et mixage indépendant du fond sonore. */
+(() => {
+  'use strict';
+  function normaliseMix(data, characters) {
+    const known = new Set(characters.map(p => p.id));
+    if (data.audioMix) return {
+      removedCharacters: [...new Set(data.audioMix.removedCharacters || [])].filter(id => known.has(id)),
+      keepAmbience: data.audioMix.keepAmbience !== false,
+      keepUnknown: data.audioMix.keepUnknown !== false,
+    };
+    // Lecture des anciens lecteurs à choix d'un seul rôle.
+    const chosen = data.keepCharacter || data.defaultCharacter;
+    if (data.duoAudio && chosen) {
+      const mode = data.duoMode || data.duoDefaultMode;
+      return {
+        removedCharacters: characters.filter(p => chosen === 'none' || chosen === 'background'
+          || (mode === 'play_one' ? p.id === chosen : p.id !== chosen)).map(p => p.id),
+        keepAmbience: chosen !== 'none', keepUnknown: false,
+      };
+    }
+    return { removedCharacters: [], keepAmbience: true, keepUnknown: true };
+  }
+  function union(ranges) {
+    const result = [];
+    for (const [a, b] of ranges.sort((x, y) => x[0] - y[0] || x[1] - y[1])) {
+      if (b <= a) continue;
+      if (result.length && a <= result.at(-1)[1]) result.at(-1)[1] = Math.max(result.at(-1)[1], b);
+      else result.push([a, b]);
+    }
+    return result;
+  }
+  function windows(intervals, mix, duration) {
+    const removed = new Set(mix.removedCharacters);
+    const wanted = mix.keepUnknown ? [[0, duration]] : union(intervals.filter(
+      i => i.character !== null && !removed.has(i.character)).map(i => [i.start, i.end]));
+    const blocked = union(intervals.filter(i => i.character === null ? !mix.keepUnknown
+      : removed.has(i.character)).map(i => [i.start, i.end]));
+    const result = [];
+    let first = 0;
+    for (const [a, b] of wanted) {
+      let cursor = a;
+      while (first < blocked.length && blocked[first][1] <= cursor) first++;
+      for (let index = first; index < blocked.length; index++) {
+        const [left, right] = blocked[index];
+        if (left >= b) break;
+        if (left > cursor) result.push([cursor, Math.min(left, b)]);
+        cursor = Math.max(cursor, right);
+        if (cursor >= b) break;
+      }
+      if (cursor < b) result.push([cursor, b]);
+    }
+    return result;
+  }
+  function schedule(gain, ranges, offset, now, rate, fade = .01) {
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(0, now);
+    for (const [start, end] of ranges) {
+      if (end <= offset) continue;
+      const f = Math.max(.00001, Math.min(fade, (end - start) / 2));
+      const left = Math.max(start, offset), at = t => now + (t - offset) / rate;
+      const level = Math.max(0, Math.min(1, (left - start) / f, (end - left) / f));
+      gain.setValueAtTime(level, at(left));
+      if (start + f > left) gain.linearRampToValueAtTime(1, at(start + f));
+      if (end - f > left) gain.setValueAtTime(1, at(end - f));
+      gain.linearRampToValueAtTime(0, at(end));
+    }
+  }
+  function createGraph(context, buffers, intervals, mix, duration, options = {}) {
+    const now = context.currentTime, offset = options.offset || 0, rate = options.rate || 1;
+    const master = context.createGain(), voice = context.createGain(), background = context.createGain();
+    master.gain.value = options.volume ?? 1;
+    background.gain.value = mix.keepAmbience ? 1 : 0;
+    voice.connect(master); background.connect(master); master.connect(context.destination);
+    schedule(voice.gain, options.ranges || windows(intervals, mix, duration), offset, now, rate, options.fade);
+    const sources = [];
+    for (const [index, buffer] of buffers.entries()) {
+      if (offset >= buffer.duration) continue;
+      const source = context.createBufferSource(); source.buffer = buffer;
+      source.playbackRate.value = rate; source.connect(index === 0 ? background : voice);
+      source.start(now, offset); sources.push(source);
+    }
+    return { master, voice, background, sources, origin: { media: offset, context: now, rate },
+      stop() { for (const source of sources) { try { source.stop(); } catch {} source.disconnect(); }
+        voice.disconnect(); background.disconnect(); master.disconnect(); } };
+  }
+  globalThis.DoubalgeAudio = { normaliseMix, union, windows, createGraph };
+})();
+
 
 'use strict';
 const DATA=JSON.parse(document.getElementById('editor-data').textContent);
@@ -27,6 +115,7 @@ const $=id=>document.getElementById(id), video=$('video'), svg=$('timeline');
 const clone=x=>JSON.parse(JSON.stringify(x)), round=x=>Math.round(x*100)/100;
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const duration=DATA.duration, people=DATA.characters, known=new Set(people.map(p=>p.id));
+let audioMix=DoubalgeAudio.normaliseMix(DATA,people);
 const person=id=>people.find(p=>p.id===id), label=id=>person(id)?.label||'Inconnu / hors champ';
 const color=id=>person(id)?.color||'#758398';
 const fmt=t=>{const n=Math.round(Math.max(0,t)*100);return String(Math.floor(n/6000)).padStart(2,'0')+':'+String(Math.floor(n/100)%60).padStart(2,'0')+'.'+String(n%100).padStart(2,'0');};
@@ -35,16 +124,16 @@ const lanes=[...people.map(p=>p.id),null], LEFT=92;
 let RH=26, editTop=20, cutTop=0, waveTop=0, waveH=38, H=0;
 const storageKey='doublage-editeur-plans-'+DATA.analysis_id, base=JSON.stringify({intervals:DATA.initial,cuts:DATA.initialCuts||[]});
 function message(text,error=false){$('status').textContent=text;$('status').title=text;$('status').classList.toggle('error',error);}
-function snapshot(){return {intervals:clone(intervals),cuts:clone(cuts)};}
-function restore(state){intervals=clone(state.intervals);cuts=clone(state.cuts);}
-function documentData(){return {schema:DATA.schema,analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,...snapshot()};}
+function snapshot(){return {intervals:clone(intervals),cuts:clone(cuts),audioMix:clone(audioMix)};}
+function restore(state){intervals=clone(state.intervals);cuts=clone(state.cuts);if(state.audioMix)audioMix=clone(state.audioMix);}
+function documentData(){return {schema:DATA.schema,analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,characters:people.map(p=>({id:p.id,label:p.label,color:p.color})),...snapshot()};}
 function validateCuts(list){if(!Array.isArray(list)||list.length>10000)throw Error('Liste de plans invalide.');const ids=new Set();const result=list.map(c=>{if(!c||typeof c.id!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(c.id)||ids.has(c.id))throw Error('Identifiant de plan invalide ou répété.');ids.add(c.id);if(typeof c.time!=='number'||!Number.isFinite(c.time)||c.time<=0||c.time>=duration||typeof c.reviewed!=='boolean')throw Error('Chaque plan doit être à l’intérieur de la vidéo et avoir un état de validation.');return {id:c.id,time:c.time,reviewed:c.reviewed};}).sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id));if(result.some((c,n)=>n&&Math.abs(c.time-result[n-1].time)<.005))throw Error('Deux changements de plan ne peuvent pas occuper le même instant.');return result;}
 function validate(d){
  if(!d||d.schema!==DATA.schema||d.analysis_id!==DATA.analysis_id||d.source_sha256!==DATA.source_sha256)throw Error('Ce fichier concerne une autre vidéo ou une autre analyse.');
  if(typeof d.duration!=='number'||!Number.isFinite(d.duration)||Math.abs(d.duration-duration)>.01||!Array.isArray(d.intervals)||d.intervals.length>10000)throw Error('Durée ou liste d’intervalles invalide.');
  const ids=new Set();const clean=d.intervals.map(i=>{if(!i||typeof i.id!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(i.id)||ids.has(i.id))throw Error('Identifiant invalide ou répété.');ids.add(i.id);
  if(typeof i.start!=='number'||typeof i.end!=='number'||!Number.isFinite(i.start)||!Number.isFinite(i.end)||i.start<0||i.end>duration||i.end<=i.start)throw Error('Chaque intervalle doit avoir 0 ≤ début < fin ≤ durée.');
- if(i.character!==null&&!known.has(i.character))throw Error('Personnage inconnu.');if(typeof i.reviewed!=='boolean')throw Error('État de validation invalide.');return {id:i.id,start:i.start,end:i.end,character:i.character,reviewed:i.reviewed};});return {intervals:clean,cuts:validateCuts(Object.hasOwn(d,'cuts')?d.cuts:cuts)};}
+ if(i.character!==null&&!known.has(i.character))throw Error('Personnage inconnu.');if(typeof i.reviewed!=='boolean')throw Error('État de validation invalide.');return {id:i.id,start:i.start,end:i.end,character:i.character,reviewed:i.reviewed};});return {intervals:clean,cuts:validateCuts(Object.hasOwn(d,'cuts')?d.cuts:cuts),audioMix:validateMix(d.audioMix??audioMix)};}
 function persist(){try{localStorage.setItem(storageKey,JSON.stringify({base,document:documentData()}));message('Brouillon enregistré dans ce navigateur. Enregistrez les corrections pour les conserver.');}catch(e){message('Sauvegarde locale indisponible : téléchargez les corrections avant de fermer cette page.',true);}}
 try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&saved.base===base){restore(validate(saved.document));message('Votre brouillon local a été restauré.');}}catch(e){}
 function sort(){intervals.sort((a,b)=>a.start-b.start||a.end-b.end||a.id.localeCompare(b.id));cuts.sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id));}
@@ -106,7 +195,7 @@ function renderRows(){const rows=$('rows');rows.replaceChildren();for(const [n,i
  for(const text of [label(i.character),fmt(i.start),fmt(i.end),i.reviewed?'Validé':'À vérifier']){const cell=document.createElement('td');cell.textContent=text;tr.append(cell);}rows.append(tr);}
  $('count').textContent=intervals.length+' intervalles · '+intervals.filter(i=>!i.reviewed).length+' à vérifier';}
 function renderCuts(){const select=$('cut-select');select.replaceChildren(new Option('Sélectionner un plan',''));for(const [n,c] of cuts.entries())select.add(new Option(`Plan ${n+1} · ${fmt(c.time)}${c.reviewed?' ✓':' ?'}`,c.id));if(!currentCut())selectedCut=null;select.value=selectedCut||'';const c=currentCut();for(const name of ['cut-time','cut-reviewed','cut-before','cut-after','cut-delete','cut-cursor','cut-nudge-back','cut-nudge-next'])$(name).disabled=!c;$('cut-time').value=c?c.time:'';$('cut-reviewed').checked=!!c?.reviewed;$('cut-count').textContent=cuts.length+' changement(s) de plan · '+cuts.filter(c=>!c.reviewed).length+' à vérifier';}
-function render(){sort();renderForm();renderCuts();renderTimeline();renderRows();}
+function render(){sort();renderForm();renderCuts();renderTimeline();renderRows();renderMix();}
 function updateCursor(){const t=video.currentTime||0,x=xAt(t),cursor=$('playhead');if(cursor){cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);}$('clock').textContent=fmt(t)+' / '+fmt(duration);
  if(document.activeElement!==$('seek'))$('seek').value=round(t);
  for(const button of $('people').querySelectorAll('button')){const character=button.dataset.character||null,active=intervals.some(i=>i.character===character&&i.start<=t&&t<i.end),soon=!active&&intervals.some(i=>i.character===character&&i.start-1.5<=t&&t<i.start);button.classList.toggle('speaking',active);button.classList.toggle('upcoming',soon);const status=button.querySelector('small');status.textContent=active?'Parole en cours':soon?'Bientôt':'Cliquer pour affecter';}
@@ -142,9 +231,15 @@ $('redo').onclick=()=>{if(!redo.length)return;undo.push(snapshot());restore(redo
 $('reset').onclick=()=>change(()=>{intervals=clone(DATA.initial);cuts=clone(DATA.initialCuts||[]);selected=null;selectedCut=null;});
 $('export').onclick=()=>{try{validate(documentData());const blob=new Blob([JSON.stringify(documentData(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='timeline-corrigee-'+DATA.analysis_id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Corrections enregistrées. Le lecteur impro exporté reprend vos modifications.');}catch(e){message(e.message,true);}};
 $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async event=>{const file=event.target.files[0];if(!file)return;try{const loaded=validate(JSON.parse(await file.text()));change(()=>{restore(loaded);selected=null;selectedCut=null;});message('Corrections importées. Les pistes automatiques sont inchangées.');}catch(e){message(e.message,true);}event.target.value='';};
-for(const p of people){if(!p.reference)continue;$('voice-references').hidden=false;const b=document.createElement('button');b.textContent='▶ '+p.label;b.title=p.reference.text||'';b.onclick=()=>{seek(p.reference.start);stopAt=p.reference.end;video.play().catch(e=>message(e.message,true));message(p.label+' · '+(p.reference.text||'Référence audio')+' · '+fmt(p.reference.start));};$('voice-references').append(b);}
-if(DATA.duoAudio){$('duo-options').hidden=false;for(const p of people)$('duo-character').add(new Option(p.label,p.id));$('duo-character').add(new Option('Ambiance seule','background'));$('duo-character').add(new Option('Aucune — vidéo muette','none'));$('duo-character').value=DATA.defaultCharacter||people.at(-1)?.id||'none';$('duo-mode').value=DATA.duoDefaultMode||'keep_one';const choiceLabel=()=>$('duo-choice-label').textContent=$('duo-mode').value==='play_one'?'Voix que je joue':'Voix du film conservée';$('duo-mode').onchange=choiceLabel;choiceLabel();}
-$('impro').onclick=()=>{try{const edits=validate(documentData()),data={duration,characters:people,intervals:edits.intervals,cuts:edits.cuts,media:DATA.improMedia};if(DATA.duoAudio){data.duoAudio=DATA.duoAudio;data.keepCharacter=$('duo-character').value;data.duoMode=$('duo-mode').value;}const serialized=JSON.stringify(data).replace(/</g,'\\u003c'),html=DATA.improTemplate.replace('__IMPRO_DATA__',()=>serialized),url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='version-impro.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Lecteur impro exporté. Ouvrez version-impro.html dans votre navigateur.');}catch(e){message(e.message,true);}};
+for(const p of people){if(!p.reference)continue;$('voice-references').hidden=false;const b=document.createElement('button');b.textContent='▶ '+p.label;b.title=p.reference.text||'';b.onclick=()=>{const ref=referenceFor(p,intervals);if(!ref){message('Aucun passage attribué à '+p.label,true);return;}seek(ref.start);stopAt=ref.end;video.play().catch(e=>message(e.message,true));message(p.label+' · Extrait repère · '+fmt(ref.start));};$('voice-references').append(b);}
+function validateMix(value){if(!value||!Array.isArray(value.removedCharacters)||value.removedCharacters.some(id=>!known.has(id))||typeof value.keepAmbience!=='boolean'||typeof value.keepUnknown!=='boolean')throw Error('Choix des voix ou de l’ambiance invalide.');return {removedCharacters:[...new Set(value.removedCharacters)],keepAmbience:value.keepAmbience,keepUnknown:value.keepUnknown};}
+function renderMix(){for(const input of $('remove-voices').querySelectorAll('input'))input.checked=audioMix.removedCharacters.includes(input.dataset.character);$('keep-ambience').checked=audioMix.keepAmbience;$('keep-unknown').checked=audioMix.keepUnknown;}
+if(DATA.duoAudio){$('duo-options').hidden=false;for(const p of people){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.dataset.character=p.id;label.style.setProperty('--voice',p.color);label.append(input,document.createTextNode('Retirer '+p.label));$('remove-voices').append(label);input.onchange=()=>change(()=>{audioMix.removedCharacters=[...$('remove-voices').querySelectorAll('input:checked')].map(i=>i.dataset.character);});}}
+$('keep-ambience').onchange=()=>change(()=>{audioMix.keepAmbience=$('keep-ambience').checked;});
+$('keep-unknown').onchange=()=>change(()=>{audioMix.keepUnknown=$('keep-unknown').checked;});
+$('mix-keep-all').onclick=()=>change(()=>{audioMix={removedCharacters:[],keepAmbience:true,keepUnknown:true};});
+$('mix-remove-all').onclick=()=>change(()=>{audioMix.removedCharacters=people.map(p=>p.id);audioMix.keepUnknown=false;});
+$('impro').onclick=()=>{try{const edits=validate(documentData()),data={duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix)};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;const serialized=JSON.stringify(data).replace(/</g,'\\u003c'),html=DATA.improTemplate.replace('__IMPRO_DATA__',()=>serialized),url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='version-impro.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Lecteur impro exporté avec vos corrections et vos choix audio.');}catch(e){message(e.message,true);}};
 document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea'))return;if(e.code==='Space'){e.preventDefault();play();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();$(e.shiftKey?'redo':'undo').click();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();$('redo').click();}else if(e.key==='Delete'){if(currentCut())removeCut();else remove();}else if(e.key.toLowerCase()==='s')split();});
 video.src=DATA.media;video.addEventListener('error',()=>message('Lecture impossible dans cet aperçu. Téléchargez le HTML complet puis ouvrez-le dans Chrome, Firefox ou Edge.',true));
 video.addEventListener('timeupdate',updateCursor);video.addEventListener('seeked',updateCursor);video.addEventListener('ended',()=>{stopAt=null;updateCursor();});
@@ -163,5 +258,8 @@ for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest
 $('no-duo-note').hidden=!!DATA.duoAudio;
 video.addEventListener('play',()=>{$('play').textContent='Pause';});video.addEventListener('pause',()=>{$('play').textContent='Lire / Pause';});
 document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||document.querySelector('dialog[open]'))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();if(e.altKey&&currentCut())nudgeCut(e.key==='ArrowLeft'?-1:1);else nextFrame(e.key==='ArrowLeft'?-1:1);}else if(e.key.toLowerCase()==='p'){e.preventDefault();addCut();}});
+
+function referenceFor(person,list){const candidates=list.filter(i=>i.character===person.id).slice().sort((a,b)=>Number(b.reviewed)-Number(a.reviewed)||(b.end-b.start)-(a.end-a.start));const i=candidates[0];return i?{character:person.id,start:i.start,end:Math.min(i.end,i.start+5),text:'Extrait repère'}:null;}
+function exportPeople(list){return people.map(p=>({...p,reference:referenceFor(p,list)}));}
 
 </script></body></html>

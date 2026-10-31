@@ -80,7 +80,13 @@ async function downloadText(download) {
     assert.equal(await page.evaluate(() => JSON.stringify([DATA.automatic, DATA.automaticCuts])), automatic);
     console.log('Plans : déplacement, saisie, pas image et conservation de l’analyse initiale vérifiés.');
 
+    await page.locator('#options-open').click();
+    await page.locator('#remove-voices input[data-character="voice:0"]').check();
+    await page.locator('#remove-voices input[data-character="voice:1"]').check();
+    await page.locator('#keep-ambience').uncheck();
+    await page.locator('#options-dialog [data-close]').click();
     // Les données de correction et le lecteur exporté doivent contenir les modifications courantes.
+    await page.evaluate(() => { people[0].label = '</script><script>globalThis.__bad=true</script>'; });
     let pending = page.waitForEvent('download');
     await page.locator('#export').click();
     const corrections = JSON.parse(await downloadText(await pending));
@@ -90,12 +96,17 @@ async function downloadText(download) {
     const playerData = JSON.parse(html.match(/<script id="impro-data" type="application\/json">(.*?)<\/script>/s)[1]);
     assert.deepEqual(playerData.intervals, corrections.intervals);
     assert.deepEqual(playerData.cuts, corrections.cuts);
-    console.log('Exports : JSON et lecteur impro conservent les corrections.');
+    assert.deepEqual(playerData.audioMix, corrections.audioMix);
+    assert.deepEqual(playerData.audioMix.removedCharacters, ['voice:0', 'voice:1']);
+    assert.equal(playerData.audioMix.keepAmbience, false);
+    assert.equal(playerData.characters[0].label, '</script><script>globalThis.__bad=true</script>');
+    console.log('Exports : JSON et lecteur impro conservent les corrections et les choix audio cumulés.');
 
     const player = await browser.newPage();
     player.on('pageerror', error => failures.push(error.message));
     await player.setContent(html);
     await player.waitForFunction(() => document.getElementById('video').readyState >= 2);
+    assert.equal(await player.evaluate(() => globalThis.__bad), undefined);
     await player.locator('#play').click();
     await player.waitForFunction(() => document.getElementById('video').currentTime > .1);
     await player.locator('#play').click();

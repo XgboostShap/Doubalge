@@ -3,46 +3,263 @@
 <style>
 :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#10141b;color:#eef2f9;font:16px system-ui,sans-serif}main{max-width:1400px;margin:auto;padding:16px}h1{font-size:23px;margin:0 0 10px}p{line-height:1.5}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}button{font:inherit;background:#26364e;color:white;border:1px solid #5c7599;border-radius:6px;padding:9px 14px;cursor:pointer}button:focus-visible{outline:2px solid #ffe044}#stage{position:relative;background:#000;isolation:isolate;aspect-ratio:16/9;max-height:85vh;margin:auto}#video{width:100%;height:100%;object-fit:contain}#video::-webkit-media-controls-fullscreen-button{display:none}#stage:fullscreen{width:100vw;height:100vh;max-height:none;aspect-ratio:auto}#portraits{position:absolute;right:1.5%;bottom:70px;display:flex;flex-direction:column-reverse;gap:7px;pointer-events:none}.portrait{position:relative;width:clamp(58px,8vw,115px);aspect-ratio:1;border:3px solid var(--color);background:#252c36;opacity:.35}.portrait img{width:100%;height:100%;object-fit:cover}.caption{position:absolute;bottom:0;left:0;right:0;background:#10141be8;text-align:center;font-size:clamp(10px,1vw,14px);padding:3px}#plan{position:absolute;left:1.5%;bottom:70px;width:clamp(90px,12vw,175px);aspect-ratio:16/9;border:3px solid white;background:#18202c;pointer-events:none;opacity:.35}#preview{width:100%;height:100%;object-fit:cover}#unknown{position:absolute;right:13%;bottom:80px;color:#ffe044;background:#1e2635;padding:5px 9px;border-radius:5px;pointer-events:none}#clock{font:16px ui-monospace,monospace}#note{color:#c7d3e6;font-size:14px}@media(max-width:650px){main{padding:7px}#portraits,#plan{bottom:48px}#unknown{right:23%;bottom:52px}.portrait{width:50px}#plan{width:85px}}
 </style></head><body><main>
-<style>.voice-symbol{display:grid;place-items:center;height:100%;font-size:30px;font-weight:800;background:var(--color)}#portraits.audio-only{flex-direction:row;gap:5px}#portraits.audio-only .portrait{width:clamp(48px,6vw,85px)}select{font:inherit;padding:8px;background:#26364e;color:white;border:1px solid #5c7599;border-radius:6px}</style>
+<style>input[type=checkbox]{accent-color:#5e9ee8}#remove-voices label{display:flex;gap:7px;align-items:center;background:#1d293c;border-left:4px solid var(--voice);padding:8px 12px;border-radius:5px}.voice-symbol{display:grid;place-items:center;height:100%;font-size:30px;font-weight:800;background:var(--color)}#portraits.audio-only{flex-direction:row;gap:5px}#portraits.audio-only .portrait{width:clamp(48px,6vw,85px)}select{font:inherit;padding:8px;background:#26364e;color:white;border:1px solid #5c7599;border-radius:6px}</style>
 <h1>Version pour l’impro</h1><p>Les repères clignotent 1,5 seconde avant une réplique, puis restent allumés pendant la parole. La vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe.</p>
 <div id="stage"><video id="video" controls playsinline preload="metadata" controlslist="nofullscreen" disablepictureinpicture></video><div id="portraits"></div><div id="plan" hidden><video id="preview" muted playsinline preload="metadata" aria-hidden="true"></video><span class="caption" id="plan-label">Prochain plan</span></div><span id="unknown" hidden>Voix non attribuée ?</span></div>
-<div id="duo-controls" hidden><div class="toolbar"><label>Mode <select id="duo-mode"><option value="play_one">Je joue une voix, le film joue les autres</option><option value="keep_one">Le film joue une voix, je joue les autres</option></select></label><label><span id="role-choice-label">Voix du film conservée</span> <select id="keep-character"></select></label><label>Volume du film <input id="duo-volume" type="range" min="0" max="100" value="100"></label></div><p id="role-explanation"></p><p id="audio-status" role="status"></p><p style="color:#dfc68b;font-size:14px">Version expérimentale : des restes de voix ou des bruitages atténués peuvent subsister. Les chevauchements avec une voix remplacée et les voix non attribuées sont retirés de la piste de dialogue ; le fond séparé reste continu.</p><div id="voice-references" class="toolbar" hidden></div></div>
+<div id="duo-controls" hidden><h2 style="font-size:17px">Voix à retirer</h2><p>Cochez une ou plusieurs voix à jouer vous-même. Les autres restent audibles.</p><div id="remove-voices" class="toolbar"></div><div class="toolbar"><label><input id="keep-ambience" type="checkbox" checked> Conserver l’ambiance et la musique</label><label><input id="keep-unknown" type="checkbox" checked> Conserver les paroles non attribuées</label><label>Volume <input id="duo-volume" type="range" min="0" max="100" value="100"></label></div><div class="toolbar"><button id="keep-all">Tout conserver</button><button id="remove-all">Retirer toutes les voix</button></div><p id="role-explanation"></p><p id="audio-status" role="status"></p><p style="color:#dfc68b;font-size:14px">Séparation expérimentale : des restes de voix peuvent subsister dans le fond. Si une voix retirée parle en même temps qu’une autre, le passage commun est coupé dans le dialogue ; l’ambiance reste indépendante.</p><div id="voice-references" class="toolbar" hidden></div></div><p id="original-audio-note" hidden>Son original : les pistes séparées ne sont pas présentes. Recréez ce projet avec la préparation audio pour choisir les voix et l’ambiance.</p>
 <div class="toolbar"><button id="play">Lire / Pause</button><button id="restart">Recommencer</button><button id="fullscreen">Plein écran</button><span id="clock"></span></div><p id="note"></p>
 </main><script id="impro-data" type="application/json">__IMPRO_DATA__</script><script>
+/* Moteur partagé : choix cumulables et mixage indépendant du fond sonore. */
+(() => {
+  'use strict';
+  function normaliseMix(data, characters) {
+    const known = new Set(characters.map(p => p.id));
+    if (data.audioMix) return {
+      removedCharacters: [...new Set(data.audioMix.removedCharacters || [])].filter(id => known.has(id)),
+      keepAmbience: data.audioMix.keepAmbience !== false,
+      keepUnknown: data.audioMix.keepUnknown !== false,
+    };
+    // Lecture des anciens lecteurs à choix d'un seul rôle.
+    const chosen = data.keepCharacter || data.defaultCharacter;
+    if (data.duoAudio && chosen) {
+      const mode = data.duoMode || data.duoDefaultMode;
+      return {
+        removedCharacters: characters.filter(p => chosen === 'none' || chosen === 'background'
+          || (mode === 'play_one' ? p.id === chosen : p.id !== chosen)).map(p => p.id),
+        keepAmbience: chosen !== 'none', keepUnknown: false,
+      };
+    }
+    return { removedCharacters: [], keepAmbience: true, keepUnknown: true };
+  }
+  function union(ranges) {
+    const result = [];
+    for (const [a, b] of ranges.sort((x, y) => x[0] - y[0] || x[1] - y[1])) {
+      if (b <= a) continue;
+      if (result.length && a <= result.at(-1)[1]) result.at(-1)[1] = Math.max(result.at(-1)[1], b);
+      else result.push([a, b]);
+    }
+    return result;
+  }
+  function windows(intervals, mix, duration) {
+    const removed = new Set(mix.removedCharacters);
+    const wanted = mix.keepUnknown ? [[0, duration]] : union(intervals.filter(
+      i => i.character !== null && !removed.has(i.character)).map(i => [i.start, i.end]));
+    const blocked = union(intervals.filter(i => i.character === null ? !mix.keepUnknown
+      : removed.has(i.character)).map(i => [i.start, i.end]));
+    const result = [];
+    let first = 0;
+    for (const [a, b] of wanted) {
+      let cursor = a;
+      while (first < blocked.length && blocked[first][1] <= cursor) first++;
+      for (let index = first; index < blocked.length; index++) {
+        const [left, right] = blocked[index];
+        if (left >= b) break;
+        if (left > cursor) result.push([cursor, Math.min(left, b)]);
+        cursor = Math.max(cursor, right);
+        if (cursor >= b) break;
+      }
+      if (cursor < b) result.push([cursor, b]);
+    }
+    return result;
+  }
+  function schedule(gain, ranges, offset, now, rate, fade = .01) {
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(0, now);
+    for (const [start, end] of ranges) {
+      if (end <= offset) continue;
+      const f = Math.max(.00001, Math.min(fade, (end - start) / 2));
+      const left = Math.max(start, offset), at = t => now + (t - offset) / rate;
+      const level = Math.max(0, Math.min(1, (left - start) / f, (end - left) / f));
+      gain.setValueAtTime(level, at(left));
+      if (start + f > left) gain.linearRampToValueAtTime(1, at(start + f));
+      if (end - f > left) gain.setValueAtTime(1, at(end - f));
+      gain.linearRampToValueAtTime(0, at(end));
+    }
+  }
+  function createGraph(context, buffers, intervals, mix, duration, options = {}) {
+    const now = context.currentTime, offset = options.offset || 0, rate = options.rate || 1;
+    const master = context.createGain(), voice = context.createGain(), background = context.createGain();
+    master.gain.value = options.volume ?? 1;
+    background.gain.value = mix.keepAmbience ? 1 : 0;
+    voice.connect(master); background.connect(master); master.connect(context.destination);
+    schedule(voice.gain, options.ranges || windows(intervals, mix, duration), offset, now, rate, options.fade);
+    const sources = [];
+    for (const [index, buffer] of buffers.entries()) {
+      if (offset >= buffer.duration) continue;
+      const source = context.createBufferSource(); source.buffer = buffer;
+      source.playbackRate.value = rate; source.connect(index === 0 ? background : voice);
+      source.start(now, offset); sources.push(source);
+    }
+    return { master, voice, background, sources, origin: { media: offset, context: now, rate },
+      stop() { for (const source of sources) { try { source.stop(); } catch {} source.disconnect(); }
+        voice.disconnect(); background.disconnect(); master.disconnect(); } };
+  }
+  globalThis.DoubalgeAudio = { normaliseMix, union, windows, createGraph };
+})();
+
 'use strict';
-const DATA=JSON.parse(document.getElementById('impro-data').textContent), $=id=>document.getElementById(id),video=$('video'),preview=$('preview');
-const cuts=DATA.cuts.slice().sort((a,b)=>a.time-b.time), intervals=DATA.intervals, cards=[];
-video.src=DATA.media;preview.src=DATA.media;
-for(const [n,p] of DATA.characters.entries()){const card=document.createElement('div');card.className='portrait';card.style.setProperty('--color',p.color);card.dataset.character=p.id;if(p.photo){const img=document.createElement('img');img.src='data:image/jpeg;base64,'+p.photo;img.alt=p.label;card.append(img);}else{const symbol=document.createElement('span');symbol.className='voice-symbol';symbol.textContent='V'+(n+1);card.append(symbol);}const caption=document.createElement('span');caption.className='caption';caption.textContent=p.label;card.append(caption);$('portraits').append(card);cards.push({p,card,caption});}
-$('portraits').classList.toggle('audio-only',DATA.characters.every(p=>!p.photo));
-const pending=intervals.filter(i=>!i.reviewed).length,pendingCuts=cuts.filter(c=>!c.reviewed).length;
-$('note').textContent=(pending||pendingCuts)?`Repères provisoires : ${pending} intervalle(s) de parole et ${pendingCuts} changement(s) de plan restent à vérifier.`:DATA.duoAudio?'Repères validés.':'Repères validés. La vidéo ne contient aucune piste audio originale.';
-const fmt=t=>String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0');
-let keepCharacter=DATA.keepCharacter||'none',roleMode=DATA.duoMode==='play_one'?'play_one':'keep_one',audition=null;
-function union(ranges){const result=[];for(const [a,b] of ranges.sort((x,y)=>x[0]-y[0]||x[1]-y[1])){if(result.length&&a<=result.at(-1)[1])result.at(-1)[1]=Math.max(result.at(-1)[1],b);else result.push([a,b]);}return result;}
-function keptIds(){if(audition)return new Set([audition.character]);if(!DATA.characters.some(p=>p.id===keepCharacter))return new Set();return new Set(DATA.characters.filter(p=>roleMode==='play_one'?p.id!==keepCharacter:p.id===keepCharacter).map(p=>p.id));}
-function voiceWindows(character){return windowsForCharacters(new Set([character]));}
-function windowsForCharacters(ids){const wanted=union(intervals.filter(i=>ids.has(i.character)).map(i=>[i.start,i.end])),blocked=union(intervals.filter(i=>!ids.has(i.character)).map(i=>[i.start,i.end])),result=[];for(const [a,b] of wanted){let cursor=a;for(const [left,right] of blocked){if(right<=cursor)continue;if(left>=b)break;if(left>cursor)result.push([cursor,Math.min(left,b)]);cursor=Math.max(cursor,right);if(cursor>=b)break;}if(cursor<b)result.push([cursor,b]);}return result;}
-let audioContext=null, audioReady=null, audioBuffers=null, master=null, sources=[], voiceGain=null, audioOrigin=null, startingAudio=false;
-function stopAudio(){for(const source of sources){try{source.stop();source.disconnect();}catch(e){}}sources=[];if(voiceGain){voiceGain.disconnect();voiceGain=null;}audioOrigin=null;}
-async function prepareAudio(){if(!DATA.duoAudio)return;if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();master=audioContext.createGain();master.connect(audioContext.destination);master.gain.value=Number($('duo-volume').value)/100;}if(!audioReady){$('audio-status').textContent='Préparation du son…';audioReady=Promise.all(['background','dialogue'].map(async key=>{const bytes=await(await fetch(DATA.duoAudio[key])).arrayBuffer();return audioContext.decodeAudioData(bytes);})).then(buffers=>{audioBuffers=buffers;$('audio-status').textContent='Son prêt.';}).catch(e=>{audioReady=null;$('audio-status').textContent='Son indisponible : '+e.message;throw e;});}await audioReady;}
-function scheduleVoice(offset,now,rate){const gain=voiceGain.gain,fade=DATA.duoAudio.fade||.01,ranges=audition?[[audition.start,audition.end]]:windowsForCharacters(keptIds());gain.cancelScheduledValues(now);gain.setValueAtTime(0,now);for(const [start,end] of ranges){if(end<=offset)continue;const f=Math.min(fade,(end-start)/2),left=Math.max(start,offset),level=Math.max(0,Math.min(1,(left-start)/f,(end-left)/f)),at=t=>now+(t-offset)/rate;gain.setValueAtTime(level,at(left));if(start+f>left)gain.linearRampToValueAtTime(1,at(start+f));if(end-f>left)gain.setValueAtTime(1,at(end-f));gain.linearRampToValueAtTime(0,at(end));}}
-async function startAudio(){if(!DATA.duoAudio||startingAudio)return;startingAudio=true;try{await prepareAudio();await audioContext.resume();stopAudio();if(video.paused||video.ended||video.seeking||(keepCharacter==='none'&&!audition))return;const offset=video.currentTime,now=audioContext.currentTime,rate=video.playbackRate;audioOrigin={media:offset,context:now,rate};master.gain.value=Number($('duo-volume').value)/100;voiceGain=audioContext.createGain();voiceGain.connect(master);scheduleVoice(offset,now,rate);for(const [n,buffer] of audioBuffers.entries()){if(offset>=buffer.duration)continue;const source=audioContext.createBufferSource();source.buffer=buffer;source.playbackRate.value=rate;source.connect(n===0?master:voiceGain);source.start(now,offset);sources.push(source);} $('audio-status').textContent='Son synchronisé.';}catch(e){stopAudio();$('audio-status').textContent='Son indisponible : '+e.message;}finally{startingAudio=false;}}
-function roleExplanation(){if(!DATA.duoAudio)return;const ids=keptIds(),chosen=DATA.characters.find(p=>p.id===keepCharacter),kept=DATA.characters.filter(p=>ids.has(p.id)).map(p=>p.label).join(', '),played=DATA.characters.filter(p=>!ids.has(p.id)).map(p=>p.label).join(', ');$('role-choice-label').textContent=roleMode==='play_one'?'Voix que je joue':'Voix du film conservée';$('role-explanation').textContent=chosen?`Le film joue ${kept}. À vous de jouer : ${played}.`:keepCharacter==='background'?'Toutes les voix sont à improviser, avec le fond sonore séparé.':'Toutes les voix sont à improviser, sans son.';}
-if(DATA.duoAudio){$('duo-controls').hidden=false;for(const p of DATA.characters)$('keep-character').add(new Option(p.label,p.id));$('keep-character').add(new Option('Ambiance seule','background'));$('keep-character').add(new Option('Aucune — vidéo muette','none'));if(![...$('keep-character').options].some(o=>o.value===keepCharacter))keepCharacter='none';$('keep-character').value=keepCharacter;$('duo-mode').value=roleMode;function changeRole(){audition=null;keepCharacter=$('keep-character').value;roleMode=$('duo-mode').value;roleExplanation();if(!video.paused)startAudio();else stopAudio();update();}$('keep-character').onchange=changeRole;$('duo-mode').onchange=changeRole;$('duo-volume').oninput=()=>{if(master)master.gain.value=Number($('duo-volume').value)/100;};video.addEventListener('play',startAudio);video.addEventListener('pause',stopAudio);video.addEventListener('ended',()=>{stopAudio();audition=null;});video.addEventListener('seeking',stopAudio);video.addEventListener('waiting',stopAudio);video.addEventListener('playing',startAudio);video.addEventListener('seeked',()=>{if(!video.paused)startAudio();});video.addEventListener('ratechange',()=>{if(!video.paused)startAudio();});roleExplanation();
- for(const p of DATA.characters){if(!p.reference)continue;$('voice-references').hidden=false;const b=document.createElement('button');b.textContent='Écouter '+p.label+' · '+(p.reference.text||'repère');b.onclick=async()=>{try{video.pause();stopAudio();audition={character:p.id,start:p.reference.start,end:p.reference.end};video.currentTime=audition.start;await prepareAudio();await audioContext.resume();await video.play();$('audio-status').textContent='Écoute du repère '+p.label;}catch(e){audition=null;$('audio-status').textContent=e.message;}};$('voice-references').append(b);}
+const DATA = JSON.parse(document.getElementById('impro-data').textContent);
+const $ = id => document.getElementById(id), video = $('video'), preview = $('preview');
+const cuts = DATA.cuts.slice().sort((a, b) => a.time - b.time), intervals = DATA.intervals, cards = [];
+const AUDIO = DoubalgeAudio;
+let audioMix = AUDIO.normaliseMix(DATA, DATA.characters), audition = null;
+video.src = DATA.media; preview.src = DATA.media;
+video.muted = !!DATA.duoAudio;
+for (const [n, person] of DATA.characters.entries()) {
+  const card = document.createElement('div'); card.className = 'portrait';
+  card.style.setProperty('--color', person.color); card.dataset.character = person.id;
+  if (person.photo) { const image = document.createElement('img'); image.src = 'data:image/jpeg;base64,' + person.photo;
+    image.alt = person.label; card.append(image); }
+  else { const symbol = document.createElement('span'); symbol.className = 'voice-symbol'; symbol.textContent = 'V' + (n + 1); card.append(symbol); }
+  const caption = document.createElement('span'); caption.className = 'caption'; caption.textContent = person.label;
+  card.append(caption); $('portraits').append(card); cards.push({ p: person, card, caption });
 }
-let previewCut=null;
-function update(){const t=video.currentTime||0, flash=t%.5<.25;
- if(audition&&t>=audition.end){video.pause();stopAudio();audition=null;roleExplanation();}
- const ids=keptIds();for(const {p,card,caption} of cards){const active=intervals.filter(i=>i.character===p.id&&i.start<=t&&t<i.end),soon=!active.length&&intervals.some(i=>i.character===p.id&&i.start-1.5<=t&&t<i.start),role=DATA.duoAudio?(ids.has(p.id)?'Film':'À vous'):'';card.style.opacity=active.length||(soon&&flash)?'1':'.35';caption.textContent=active.length?`${role||'Parole'}${active.some(i=>!i.reviewed)?' ?':''}`:soon?`${role?role+' · ':''}Bientôt`:(role?role+' · ':'')+p.label;card.dataset.state=active.length?'speaking':soon?'upcoming':'idle';}
- $('unknown').hidden=!intervals.some(i=>i.character===null&&i.start<=t&&t<i.end);
- const next=cuts.find(c=>t<c.time+.25);$('plan').hidden=!next;
- if(next){if(previewCut!==next.time&&preview.readyState>=1){preview.currentTime=Math.min(DATA.duration-.02,next.time+.08);previewCut=next.time;}const active=t>=next.time&&t<next.time+.25,soon=t>=next.time-.5&&t<next.time;$('plan').style.opacity=active||(soon&&flash)?'1':'.35';$('plan-label').textContent=active?'Changement de plan':soon?'Plan imminent':'Prochain plan';$('plan').dataset.state=active?'cut':soon?'upcoming':'idle';}
- $('clock').textContent=fmt(t)+' / '+fmt(DATA.duration);
+$('portraits').classList.toggle('audio-only', DATA.characters.every(p => !p.photo));
+const pending = intervals.filter(i => !i.reviewed).length, pendingCuts = cuts.filter(c => !c.reviewed).length;
+$('note').textContent = pending || pendingCuts ? `Repères provisoires : ${pending} passage(s) et ${pendingCuts} plan(s) restent à vérifier.` : 'Repères validés.';
+const fmt = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+let audioContext = null, audioReady = null, buffers = null, graph = null, generation = 0;
+
+function keptIds() {
+  return new Set(DATA.characters.filter(p => audition ? p.id === audition.character
+    : !audioMix.removedCharacters.includes(p.id)).map(p => p.id));
 }
-async function play(){if(video.paused){try{if(DATA.duoAudio){await prepareAudio();await audioContext.resume();}await video.play();}catch(e){$('audio-status').textContent=e.message;}}else{video.pause();stopAudio();}}
-$('play').onclick=play;$('restart').onclick=()=>{stopAudio();audition=null;video.currentTime=0;roleExplanation();update();};$('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('stage').requestFullscreen();}catch(e){$('note').textContent='Le plein écran est indisponible dans ce navigateur.';}};
-video.addEventListener('timeupdate',update);video.addEventListener('seeked',update);video.addEventListener('error',()=>$('note').textContent='Ouvrez ce fichier dans Chrome, Edge ou Firefox.');document.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.target.matches('button,input,select,textarea')){e.preventDefault();play();}});
-let lastSync=0;function animate(){update();if(audioOrigin&&!video.paused&&audioContext.currentTime-lastSync>.25){lastSync=audioContext.currentTime;const expected=audioOrigin.media+(audioContext.currentTime-audioOrigin.context)*audioOrigin.rate;if(Math.abs(expected-video.currentTime)>.08)startAudio();}requestAnimationFrame(animate);}update();requestAnimationFrame(animate);
+function stopAudio() { generation++; if (graph) graph.stop(); graph = null; }
+function ensureContext() {
+  if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+async function prepareAudio() {
+  if (!DATA.duoAudio) return;
+  ensureContext();
+  if (!audioReady) {
+    $('audio-status').textContent = 'Préparation du son…';
+    audioReady = Promise.all(['background', 'dialogue'].map(async key => {
+      const response = await fetch(DATA.duoAudio[key]);
+      return audioContext.decodeAudioData(await response.arrayBuffer());
+    })).then(value => { buffers = value; $('audio-status').textContent = 'Son prêt.'; })
+      .catch(error => { audioReady = null; $('audio-status').textContent = 'Son indisponible : ' + error.message; throw error; });
+  }
+  await audioReady;
+}
+async function startAudio() {
+  if (!DATA.duoAudio) return;
+  const request = ++generation;
+  try {
+    ensureContext();
+    await Promise.all([prepareAudio(), audioContext.resume()]);
+    if (request !== generation) return;
+    if (graph) graph.stop(); graph = null;
+    if (video.paused || video.ended || video.seeking) return;
+    const mix = audition ? { removedCharacters: [], keepAmbience: false, keepUnknown: false } : audioMix;
+    graph = AUDIO.createGraph(audioContext, buffers, intervals, mix, DATA.duration, {
+      offset: video.currentTime, rate: video.playbackRate, volume: Number($('duo-volume').value) / 100,
+      fade: DATA.duoAudio.fade || .01, ranges: audition ? [[audition.start, audition.end]] : null,
+    });
+    $('audio-status').textContent = 'Son synchronisé.';
+  } catch (error) {
+    stopAudio(); $('audio-status').textContent = 'Son indisponible : ' + error.message;
+  }
+}
+function roleExplanation() {
+  if (!DATA.duoAudio) return;
+  const kept = DATA.characters.filter(p => !audioMix.removedCharacters.includes(p.id)).map(p => p.label);
+  const removed = DATA.characters.filter(p => audioMix.removedCharacters.includes(p.id)).map(p => p.label);
+  $('role-explanation').textContent = `Voix conservées : ${kept.join(', ') || 'aucune'}. Voix retirées : ${removed.join(', ') || 'aucune'}. Ambiance : ${audioMix.keepAmbience ? 'conservée' : 'retirée'}.`;
+}
+function renderMix() {
+  for (const checkbox of $('remove-voices').querySelectorAll('input')) checkbox.checked = audioMix.removedCharacters.includes(checkbox.dataset.character);
+  $('keep-ambience').checked = audioMix.keepAmbience; $('keep-unknown').checked = audioMix.keepUnknown;
+  roleExplanation();
+}
+function changeMix() {
+  audition = null; stopAudio(); renderMix(); if (!video.paused) startAudio(); update();
+}
+if (DATA.duoAudio) {
+  $('duo-controls').hidden = false;
+  for (const person of DATA.characters) {
+    const label = document.createElement('label'), checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.dataset.character = person.id;
+    label.style.setProperty('--voice', person.color); label.append(checkbox, document.createTextNode('Retirer ' + person.label));
+    checkbox.onchange = () => {
+      audioMix.removedCharacters = [...$('remove-voices').querySelectorAll('input:checked')].map(c => c.dataset.character);
+      changeMix();
+    };
+    $('remove-voices').append(label);
+  }
+  $('keep-ambience').onchange = () => { audioMix.keepAmbience = $('keep-ambience').checked; changeMix(); };
+  $('keep-unknown').onchange = () => { audioMix.keepUnknown = $('keep-unknown').checked; changeMix(); };
+  $('keep-all').onclick = () => { audioMix = { removedCharacters: [], keepAmbience: true, keepUnknown: true }; changeMix(); };
+  $('remove-all').onclick = () => { audioMix.removedCharacters = DATA.characters.map(p => p.id); audioMix.keepUnknown = false; changeMix(); };
+  $('duo-volume').oninput = () => { if (graph) graph.master.gain.value = Number($('duo-volume').value) / 100; };
+  for (const name of ['play', 'playing']) video.addEventListener(name, startAudio);
+  for (const name of ['pause', 'seeking', 'waiting']) video.addEventListener(name, stopAudio);
+  video.addEventListener('ended', () => { stopAudio(); audition = null; });
+  for (const name of ['seeked', 'ratechange']) video.addEventListener(name, () => { if (!video.paused) startAudio(); });
+  for (const person of DATA.characters) {
+    if (!person.reference) continue;
+    $('voice-references').hidden = false;
+    const button = document.createElement('button'); button.textContent = 'Écouter ' + person.label;
+    button.onclick = async () => {
+      try {
+        video.pause(); stopAudio(); audition = { character: person.id, start: person.reference.start, end: person.reference.end };
+        video.currentTime = audition.start; ensureContext();
+        await Promise.all([prepareAudio(), audioContext.resume()]); await video.play();
+      } catch (error) { audition = null; $('audio-status').textContent = error.message; }
+    };
+    $('voice-references').append(button);
+  }
+  renderMix();
+} else $('original-audio-note').hidden = false;
+
+let previewCut = null;
+function update() {
+  const t = video.currentTime || 0, flash = t % .5 < .25;
+  if (audition && t >= audition.end) { video.pause(); stopAudio(); audition = null; roleExplanation(); }
+  const kept = keptIds();
+  for (const { p, card, caption } of cards) {
+    const active = intervals.filter(i => i.character === p.id && i.start <= t && t < i.end);
+    const soon = !active.length && intervals.some(i => i.character === p.id && i.start - 1.5 <= t && t < i.start);
+    const role = DATA.duoAudio ? kept.has(p.id) ? 'Film' : 'À vous' : '';
+    card.style.opacity = active.length || soon && flash ? '1' : '.35';
+    caption.textContent = active.length ? `${role || 'Parole'}${active.some(i => !i.reviewed) ? ' ?' : ''}`
+      : soon ? `${role ? role + ' · ' : ''}Bientôt` : (role ? role + ' · ' : '') + p.label;
+    card.dataset.state = active.length ? 'speaking' : soon ? 'upcoming' : 'idle';
+  }
+  $('unknown').hidden = !intervals.some(i => i.character === null && i.start <= t && t < i.end);
+  const next = cuts.find(c => t < c.time + .25); $('plan').hidden = !next;
+  if (next) {
+    if (previewCut !== next.time && preview.readyState >= 1) { preview.currentTime = Math.min(DATA.duration - .02, next.time + .08); previewCut = next.time; }
+    const active = t >= next.time && t < next.time + .25, soon = t >= next.time - .5 && t < next.time;
+    $('plan').style.opacity = active || soon && flash ? '1' : '.35';
+    $('plan-label').textContent = active ? 'Changement de plan' : soon ? 'Plan imminent' : 'Prochain plan';
+  }
+  $('clock').textContent = fmt(t) + ' / ' + fmt(DATA.duration);
+}
+async function play() {
+  if (video.paused) {
+    try { if (DATA.duoAudio) { ensureContext(); await Promise.all([prepareAudio(), audioContext.resume()]); } await video.play(); }
+    catch (error) { $('note').textContent = error.message; }
+  } else { video.pause(); stopAudio(); }
+}
+$('play').onclick = play;
+$('restart').onclick = () => { stopAudio(); audition = null; video.currentTime = 0; roleExplanation(); update(); };
+$('fullscreen').onclick = async () => {
+  try { if (document.fullscreenElement) await document.exitFullscreen(); else await $('stage').requestFullscreen(); }
+  catch { $('note').textContent = 'Le plein écran est indisponible dans ce navigateur.'; }
+};
+for (const name of ['timeupdate', 'seeked']) video.addEventListener(name, update);
+video.addEventListener('error', () => { $('note').textContent = 'Ouvrez ce fichier dans Chrome, Edge ou Firefox.'; });
+document.addEventListener('keydown', e => { if (e.code === 'Space' && !e.target.matches('button,input,select,textarea')) { e.preventDefault(); play(); } });
+let lastSync = 0;
+function animate() {
+  update();
+  if (graph && !video.paused && audioContext.currentTime - lastSync > .25) {
+    lastSync = audioContext.currentTime;
+    const expected = graph.origin.media + (audioContext.currentTime - graph.origin.context) * graph.origin.rate;
+    if (Math.abs(expected - video.currentTime) > .08) startAudio();
+  }
+  requestAnimationFrame(animate);
+}
+update(); requestAnimationFrame(animate);
+
 </script></body></html>

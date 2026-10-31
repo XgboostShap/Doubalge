@@ -14,7 +14,7 @@ def create(directory):
     directory.mkdir(parents=True, exist_ok=True)
     source = directory / 'source.mp4'
     ffmpeg(['-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=25',
-            '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=16000',
+            '-f', 'lavfi', '-i', 'aevalsrc=0.2*sin(2*PI*110*t)+0.2*sin(2*PI*440*t):s=24000:d=3',
             '-t', '3', '-c:v', 'libx264', '-threads', '2', '-c:a', 'aac', str(source)])
     wav = directory / 'audio.wav'
     ffmpeg(['-i', str(source), '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', str(wav)])
@@ -27,7 +27,11 @@ def create(directory):
                 {'start': 1.35, 'end': 2.1, 'speaker': 1},
                 {'start': 2.25, 'end': 2.8, 'speaker': 2},
             ]}
-    document = construire_document(data, forme_onde(wav), editor, muted)
+    for name, frequency in [('dialogue', 440), ('ambiance', 110)]:
+        ffmpeg(['-f', 'lavfi', '-i', f'aevalsrc=0.2*sin(2*PI*{frequency}*t):s=24000:d=3',
+                '-c:a', 'aac', '-b:a', '96k', str(directory / (name + '.m4a'))])
+    document = construire_document(data, forme_onde(wav), editor, muted,
+                                    (directory / 'dialogue.m4a', directory / 'ambiance.m4a'))
     return exporter(document, directory)
 
 

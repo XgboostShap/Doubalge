@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from export_html import construire_document, exporter, serialiser_html
+from export_html import construire_document, exporter, serialiser_html, valider_corrections
 from lancer_studio import verifier_events
 
 
@@ -60,6 +60,33 @@ class ExportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verifier_events({'intervals': []}, 3)
         self.assertEqual(verifier_events({'events': [{'start': 0, 'end': 3.04, 'speaker': 0}]}, 3)[0]['end'], 3)
+
+    def test_manual_corrections_preserve_ids_voices_and_reviewed_flags(self):
+        correction = {'schema': 'doublagebasic.timeline-edit.v1', 'source_sha256': 'a' * 64,
+                      'analysis_id': 'projet-A', 'duration': 3,
+                      'intervals': [{'id': 'corrige', 'start': .3, 'end': 1.1, 'character': 'voice:0', 'reviewed': True}],
+                      'cuts': [{'id': 'plan-corrige', 'time': 1.6, 'reviewed': True}],
+                      'audioMix': {'removedCharacters': ['voice:0'], 'keepAmbience': True, 'keepUnknown': False}}
+        self.analysis['corrections'] = correction
+        self.analysis['corrected_only'] = True
+        document = self.document()
+        self.assertEqual(document['initial'], correction['intervals'])
+        self.assertEqual(document['initialCuts'], correction['cuts'])
+        self.assertEqual(document['audioMix'], correction['audioMix'])
+        self.assertEqual(document['automatic'], [])
+        with self.assertRaises(ValueError):
+            valider_corrections(correction, 'b' * 64, 3)
+        with self.assertRaises(ValueError):
+            valider_corrections(correction, 'a' * 64, 3, 'autre-analyse')
+
+    def test_unseparated_player_keeps_original_audio(self):
+        document = self.document()
+        document['improMedia'] = 'data:video/mp4;base64,bXVldA=='
+        _, player = exporter(document, self.root)
+        data = json.loads(re.search(r'<script id="impro-data" type="application/json">(.*?)</script>',
+                                    player.read_text(encoding='utf-8'), re.S).group(1))
+        self.assertEqual(data['media'], document['media'])
+        self.assertNotEqual(data['media'], document['improMedia'])
 
 
 if __name__ == '__main__':
