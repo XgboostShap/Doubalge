@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from export_html import construire_document, exporter, serialiser_html, valider_corrections
 from lancer_studio import verifier_events
+from actualiser_editeur import actualiser
 
 
 class ExportTests(unittest.TestCase):
@@ -92,6 +93,31 @@ class ExportTests(unittest.TestCase):
                                     player.read_text(encoding='utf-8'), re.S).group(1))
         self.assertEqual(data['media'], document['media'])
         self.assertNotEqual(data['media'], document['improMedia'])
+
+    def test_editor_upgrade_keeps_media_and_applies_saved_corrections(self):
+        document = self.document()
+        editor, _ = exporter(document, self.root)
+        original = editor.read_bytes()
+        corrections = {k: document[k] for k in ('schema', 'analysis_id', 'source_sha256', 'duration')}
+        corrections.update(intervals=[{'id': 'manuel', 'start': .5, 'end': 1.6, 'character': 'voice:0', 'reviewed': True}],
+                           cuts=[{'id': 'coupe', 'time': 1.8, 'reviewed': True}],
+                           audioMix={'removedCharacters': ['voice:0'], 'keepAmbience': False, 'keepUnknown': True})
+        path = self.root / 'corrections.json'
+        path.write_text(json.dumps(corrections), encoding='utf-8')
+        updated = actualiser(editor, path)
+        data = json.loads(re.search(r'<script id="editor-data" type="application/json">(.*?)</script>',
+                                    updated.read_text(encoding='utf-8'), re.S).group(1))
+        self.assertEqual(data['media'], document['media'])
+        self.assertEqual(data['initial'], corrections['intervals'])
+        self.assertEqual(data['initialCuts'], corrections['cuts'])
+        self.assertEqual(data['audioMix'], corrections['audioMix'])
+        self.assertEqual(data['automatic'], document['automatic'])
+        self.assertEqual(editor.read_bytes(), original)
+        self.assertNotEqual(actualiser(editor), updated)
+        corrections['source_sha256'] = 'b' * 64
+        path.write_text(json.dumps(corrections), encoding='utf-8')
+        with self.assertRaises(ValueError):
+            actualiser(editor, path)
 
 
 if __name__ == '__main__':

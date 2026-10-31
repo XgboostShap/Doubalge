@@ -1,5 +1,6 @@
 """Vidéo synthétique et timeline connue pour tester l'édition sans modèle réseau."""
 from pathlib import Path
+import math
 import sys
 
 STUDIO = Path(__file__).resolve().parents[1]
@@ -8,11 +9,19 @@ from lancer_studio import initialiser, ffmpeg, forme_onde, medias
 from export_html import construire_document, empreinte, exporter
 
 
-def create(directory):
+def create(directory, longue=False):
     initialiser()
     directory = Path(directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     source = directory / 'source.mp4'
+    if longue:
+        ffmpeg(['-f', 'lavfi', '-i', 'color=c=0x264663:size=320x180:rate=1',
+                '-t', '504.69', '-c:v', 'libx264', '-threads', '2', str(source)])
+        events = [{'start': t + .1, 'end': t + 2.1, 'speaker': n % 4} for n, t in enumerate(range(0, 500, 4))]
+        data = {'analysis_id': 'test-editeur-long', 'source_sha256': empreinte(source),
+                'duration': 504.69, 'fps': 25, 'cuts': [40, 100, 200, 300, 400, 480], 'events': events}
+        document = construire_document(data, [abs(math.sin(n * .1)) * .7 for n in range(2000)], source, source)
+        return exporter(document, directory)
     ffmpeg(['-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=25',
             '-f', 'lavfi', '-i', 'aevalsrc=0.2*sin(2*PI*110*t)+0.2*sin(2*PI*440*t):s=24000:d=3',
             '-t', '3', '-c:v', 'libx264', '-threads', '2', '-c:a', 'aac', str(source)])
@@ -36,4 +45,4 @@ def create(directory):
 
 
 if __name__ == '__main__':
-    print(create(sys.argv[1])[0])
+    print(create(sys.argv[1], longue='--longue' in sys.argv)[0])

@@ -39,7 +39,16 @@ Le lancement utilise UTF-8 pour éviter les erreurs d’écriture de rapport Win
 
 L’éditeur `OSS-editeur.html` s’ouvre après préparation. Il conserve ensemble la
 vidéo, la timeline, le panneau de parole et le panneau des changements de plan.
-La liste complète et l’aide sont dans des fenêtres séparées.
+La vidéo se trouve à gauche, avec les voix et les deux panneaux de correction
+à sa droite. La liste complète et l’aide sont dans des fenêtres séparées.
+
+Pour une vidéo longue, la timeline affiche **trois minutes à la fois** par défaut.
+La barre **Défiler** sous les pistes, ses flèches et la barre horizontale permettent
+de parcourir le reste ; les noms des voix restent visibles à gauche. Le réglage
+**Vue** propose aussi 1 minute, 30 secondes et la vue entière. Le défilement manuel
+ne change ni l’image courante ni les corrections et désactive **Suivre la lecture**.
+**Au curseur** retrouve la position de lecture ; recocher **Suivre la lecture**
+permet à la timeline d’accompagner la vidéo.
 
 - Cliquer un bloc de parole, puis glisser son centre pour le déplacer ou ses
   poignées pour ajuster ses bornes. Déplacer un bloc sur une autre ligne change sa voix.
@@ -68,6 +77,28 @@ Les HTML intègrent leurs médias et se partagent seuls. Leur taille dépend de 
 Une erreur d’export conserve la timeline déjà calculée : elle peut être réutilisée.
 Le fond « hors champ / inconnu » n’est pas un personnage supplémentaire.
 Les identités acoustiques restent des propositions à vérifier.
+
+### Mettre à jour un éditeur déjà créé
+
+Inutile de refaire l’analyse d’une vidéo de huit minutes pour changer l’interface :
+
+1. Dans l’ancien éditeur, **Enregistrer les corrections** pour télécharger le JSON
+   contenant le dernier brouillon.
+2. Copier le dossier `studio` mis à jour et **Actualiser-editeur.cmd** dans le
+   dossier principal du projet, à côté de la `.venv` existante.
+3. Lancer **Actualiser-editeur.cmd**, choisir l’ancien `OSS-editeur.html`, puis le
+   JSON de corrections enregistré. Le JSON est facultatif si les repères intégrés
+   au HTML suffisent.
+4. Cliquer **Créer le nouvel éditeur**. Un HTML `…-actualise.html` est créé à côté
+   de l’original et s’ouvre dans le navigateur. Les médias, les propositions initiales,
+   les corrections importées et leurs validations sont conservés. L’original reste
+   intact ; aucun modèle, téléchargement ou nouveau traitement audio n’est nécessaire.
+
+En ligne de commande :
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 studio\actualiser_editeur.py "D:\Resultats\OSS-editeur.html" --corrections "D:\Resultats\timeline-corrigee.json"
+```
 
 ## Spectacle : improvisateurs, public et plusieurs scènes
 
@@ -184,6 +215,9 @@ Le test local génère une vidéo synthétique, effectue de vrais glissements et
 exports dans Chromium, puis lit le lecteur exporté. Les écrans 1280×720,
 1366×768 et 1920×1080 sont couverts avec quatre voix et une piste inconnue.
 Un très grand nombre de voix peut nécessiter une fenêtre plus grande.
+Une vidéo synthétique de 8 min 24 vérifie la vue de trois minutes, le défilement,
+les noms de voix fixes, les déplacements et poignées après défilement, la fin de
+vidéo, les différentes échelles et le maintien de la position au redimensionnement.
 Les fichiers CMD et CUDA restent à exécuter sur le PC Windows ; le moteur et
 les interfaces sont vérifiés dans l’environnement Linux de développement.
 
