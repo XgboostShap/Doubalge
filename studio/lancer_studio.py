@@ -210,7 +210,7 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
         pistes = separer(video, travail, duration, digest, ffmpeg, cpu)
     document = construire_document(analysis, forme_onde(wav), sound, muted, pistes)
     editor, player = exporter(document, sortie)
-    print(f'[terminé] Éditeur : {editor}\n[terminé] Lecteur impro : {player}', flush=True)
+    print(f'[terminé] Éditeur : {editor}\n[terminé] Lecteur impro : {player}\n[terminé] Spectacle : {sortie / "Spectacle.html"}', flush=True)
     return editor, player
 
 

@@ -142,7 +142,8 @@ def construire_document(analysis: dict, peaks: list[float], editor_video: Path,
     document = {
         'schema': SCHEMA, 'analysis_id': analysis['analysis_id'],
         'source_sha256': analysis['source_sha256'], 'duration': duration, 'fps': analysis.get('fps', 25),
-        'characters': characters, 'audioMix': valider_mix(None, set()), 'duoDefaultMode': 'play_one',
+        'characters': characters, 'title': Path(analysis.get('source', 'Scène')).stem,
+        'audioMix': valider_mix(None, set()), 'duoDefaultMode': 'play_one',
         'defaultCharacter': characters[0]['id'] if characters else 'background',
         'automatic': [{**i, 'confidence': 'proposition audio'} for i in intervals],
         'initial': copy.deepcopy(intervals), 'automaticCuts': copy.deepcopy(cuts),
@@ -150,6 +151,7 @@ def construire_document(analysis: dict, peaks: list[float], editor_video: Path,
         'media': donnees_media(editor_video, 'video/mp4'),
         'improMedia': donnees_media(muted_video, 'video/mp4'),
         'improTemplate': (TEMPLATES / 'impro.html').read_text(encoding='utf-8'),
+        'showTemplate': (TEMPLATES / 'spectacle.html').read_text(encoding='utf-8'),
     }
     if analysis.get('corrections'):
         corrections = valider_corrections(analysis['corrections'], analysis['source_sha256'], duration,
@@ -196,6 +198,7 @@ def exporter(document: dict, sortie: Path) -> tuple[Path, Path]:
     sortie.mkdir(parents=True, exist_ok=True)
     document = copy.deepcopy(document)
     document['improTemplate'] = (TEMPLATES / 'impro.html').read_text(encoding='utf-8')
+    document['showTemplate'] = (TEMPLATES / 'spectacle.html').read_text(encoding='utf-8')
     editor = (TEMPLATES / 'editeur.html').read_text(encoding='utf-8')
     if editor.count('__EDITOR_DATA__') != 1:
         raise ValueError('Gabarit éditeur incomplet.')
@@ -204,16 +207,22 @@ def exporter(document: dict, sortie: Path) -> tuple[Path, Path]:
         raise ValueError('Gabarit impro incomplet.')
     player = {'duration': document['duration'], 'characters': document['characters'],
               'intervals': document['initial'], 'cuts': document['initialCuts'],
-              'media': document['improMedia'] if 'duoAudio' in document else document['media']}
+              'media': document['improMedia'] if 'duoAudio' in document else document['media'],
+              'title': document.get('title', 'Scène'), 'analysis_id': document['analysis_id'],
+              'source_sha256': document['source_sha256'], 'showTemplate': document['showTemplate']}
     if 'audioMix' in document:
         player['audioMix'] = document['audioMix']
     if 'duoAudio' in document:
         player.update(duoAudio=document['duoAudio'], keepCharacter=document['defaultCharacter'],
                       duoMode=document['duoDefaultMode'])
     editor_file, player_file = sortie / 'OSS-editeur.html', sortie / 'OSS.html'
+    show_data = {'schema': 'doublagebasic.show.v1', 'autoAdvance': False,
+                 'scenes': [{'title': player['title'], 'data': {k: v for k, v in player.items() if k != 'showTemplate'},
+                             'performers': {}}]}
     for path, text in [
         (editor_file, editor.replace('__EDITOR_DATA__', serialiser_html(document))),
         (player_file, impro_template.replace('__IMPRO_DATA__', serialiser_html(player))),
+        (sortie / 'Spectacle.html', document['showTemplate'].replace('__SHOW_DATA__', serialiser_html(show_data))),
     ]:
         temporary = path.with_suffix('.html.tmp')
         temporary.write_text(text, encoding='utf-8')

@@ -1,0 +1,40 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Doubalge — Public</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}video{width:100vw;height:100vh;object-fit:contain;visibility:hidden}button{position:fixed;inset:auto 20px 20px auto;padding:14px;background:#26364e;color:#fff;border:1px solid #7892b6;border-radius:7px;cursor:pointer;font:16px system-ui}body[data-started] button,:fullscreen button{display:none}body[data-started]{cursor:none}</style></head><body><video id="film" muted playsinline preload="auto" disablepictureinpicture></video><button id="fullscreen">Plein écran public</button>
+<script>
+(() => {
+  const film = document.getElementById('film');
+  let key = null, latest = null;
+  const api = {
+    ready: false, error: '',
+    load(source, sceneKey) {
+      film.pause(); film.style.visibility = 'hidden'; key = sceneKey; api.ready = false; api.error = '';
+      if (source) film.src = source; else film.removeAttribute('src');
+      film.load();
+    },
+    sync(state) {
+      latest = state;
+      if (state.key !== key || !api.ready) return;
+      film.muted = true;
+      if (state.black) { film.pause(); film.style.visibility = 'hidden'; return; }
+      film.style.visibility = 'visible';
+      const target = Math.max(0, Math.min(film.duration || state.time, state.time));
+      const difference = target - film.currentTime;
+      if (Math.abs(difference) > (state.playing ? .16 : .015)) film.currentTime = target;
+      film.playbackRate = state.playing ? Math.max(.25, Math.min(4, state.rate + Math.max(-.04, Math.min(.04, difference * .25)))) : state.rate;
+      if (state.playing) {
+        document.body.dataset.started = 'true';
+        if (film.paused) film.play().catch(error => { api.error = error.message; });
+      } else film.pause();
+    },
+  };
+  film.addEventListener('loadedmetadata', () => { api.ready = true; if (latest) api.sync(latest); });
+  film.addEventListener('error', () => { api.error = 'La vidéo de l’écran public ne peut pas être lue.'; });
+  async function fullscreen() {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
+    catch (error) { api.fullscreenError = 'Plein écran : ' + error.message; }
+  }
+  document.getElementById('fullscreen').onclick = fullscreen;
+  document.addEventListener('dblclick', fullscreen);
+  window.DoubalgePublic = api;
+})();
+</script></body></html>

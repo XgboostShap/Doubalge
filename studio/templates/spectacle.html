@@ -1,0 +1,494 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Doubalge — Spectacle</title>
+<style>
+:root{color-scheme:dark;--bg:#11151d;--panel:#1b2230;--line:#354054;--text:#f1f5fc;--muted:#aab8cc}*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:14px system-ui,sans-serif}main{height:100dvh;max-width:1900px;margin:auto;padding:12px;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px}h1{font-size:21px;margin:0}h2{font-size:15px;margin:0 0 8px}p{margin:7px 0;line-height:1.45}button,input{font:inherit;background:#263249;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}button{cursor:pointer;white-space:nowrap}button:hover{background:#354866}button:disabled{opacity:.4;cursor:default}button.primary{background:#2967b2}button:focus-visible,input:focus-visible{outline:2px solid #ffe044}input[type=checkbox]{accent-color:#579de4}header,.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}header{justify-content:space-between}.toolbar{margin:6px 0}.work{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px}.monitor{display:grid;grid-template-rows:auto minmax(140px,1fr) auto auto;gap:7px;min-height:0}#scene-title{font-size:17px}#stage{min-height:0;position:relative;background:#000;border-radius:8px;overflow:hidden}#master{width:100%;height:100%;object-fit:contain;background:#000}#stage:fullscreen{width:100vw;height:100vh;border-radius:0}#cards{position:absolute;right:12px;bottom:32px;display:flex;gap:7px;align-items:flex-end;pointer-events:none}.card{position:relative;width:85px;min-height:80px;border:3px solid var(--voice);background:#172333;opacity:.35;text-align:center}.card img{width:100%;height:72px;object-fit:cover}.card .symbol{display:block;font-size:24px;padding:10px;font-weight:800;background:var(--voice)}.card .name{display:block;font-size:12px;background:#111c2be8;padding:3px}.card .state{font-size:11px;color:#d3dfef;padding:3px}#next-plan{position:absolute;left:12px;bottom:32px;width:150px;aspect-ratio:16/9;border:3px solid white;opacity:.35;pointer-events:none}#preview{width:100%;height:100%;object-fit:cover}#next-plan span{position:absolute;bottom:0;left:0;right:0;background:#111b;text-align:center;font-size:12px}#next-voices{position:absolute;top:10px;left:10px;max-width:80%;padding:6px 9px;border-radius:5px;background:#111b;font-size:13px}#next-voices:empty{display:none}#standby{position:absolute;inset:0;display:grid;place-items:center;background:#05090dc9;color:#c9d8ec;text-align:center;pointer-events:none}#standby[hidden]{display:none}#clock{font:15px ui-monospace,monospace}#seek{flex:1;min-width:100px}#roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px}.role{background:var(--panel);border-left:4px solid var(--voice);padding:7px;border-radius:5px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.role label{font-size:12px;white-space:nowrap}.role input[type=text]{grid-column:1/-1;padding:5px;font-size:12px;width:100%}.audio-settings{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px}.audio-settings label{display:flex;gap:5px;align-items:center}aside{min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}#queue{list-style:none;margin:0;padding:0;overflow:auto;flex:1;min-height:0}.scene{border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:7px;background:#151e2c}.scene.active{border-color:#68a9ff;background:#20344f}.scene input{width:100%;padding:5px;font-size:13px}.scene .toolbar{gap:5px;margin-bottom:0}.scene button{font-size:11px;padding:4px 7px}.scene small{color:var(--muted);font-size:11px}#status{color:#b9cce5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid #609de9;padding-left:9px;font-size:12px}#status.error{color:#ffb3ab;border-color:#ff8477}.muted{color:var(--muted);font-size:12px}.file{display:none}#public-state{font-size:12px;color:#b9cce5}dialog{background:var(--panel);color:var(--text);max-width:700px;border:1px solid #657fa1;border-radius:9px;padding:20px}dialog::backdrop{background:#0009}dialog p{line-height:1.6}#volume{width:90px}@media(max-width:1100px){.work{grid-template-columns:minmax(0,1fr) 270px}.card{width:65px}.card .symbol{padding:5px;font-size:20px}#next-plan{width:110px}#roles{grid-template-columns:repeat(2,minmax(0,1fr))}button{padding:6px 8px}}@media(max-height:760px){main{padding:8px;gap:7px}.monitor{gap:5px}.role{padding:5px}.role input[type=text]{padding:3px}h1{font-size:18px}header button{font-size:12px}.card{min-height:60px}.card .symbol{padding:4px}.card .state{padding:2px;font-size:10px}}
+</style></head><body><main>
+<header><div><h1>Mode spectacle</h1><span class="muted">Improvisateurs ici · vidéo seule sur l’écran public</span></div><div class="toolbar"><button id="open-public" class="primary">Ouvrir l’écran public</button><button id="save-program">Enregistrer le spectacle</button><button id="load-program">Charger un spectacle</button><button id="help">Installation des écrans</button></div></header>
+<div class="work"><section class="monitor"><div><h2 id="scene-title">Ajoute les scènes préparées dans l’éditeur</h2><span id="public-state">Écran public fermé — répétition locale possible</span></div>
+<div id="stage"><video id="master" playsinline preload="auto"></video><div id="next-voices"></div><div id="cards"></div><div id="next-plan" hidden><video id="preview" muted playsinline preload="metadata"></video><span id="plan-label">Prochain plan</span></div><div id="standby">En attente d’une scène</div></div>
+<div><div class="toolbar"><button id="previous">Précédente</button><button id="play" class="primary">Lire</button><button id="stop">Noir / arrêt</button><button id="next">Suivante</button><button id="impro-fullscreen">Plein écran impro</button><span id="clock">00:00 / 00:00</span></div><div class="toolbar"><input id="seek" type="range" min="0" max="1" value="0" step="0.01" aria-label="Position dans la scène"><label>Volume <input id="volume" type="range" min="0" max="100" value="100"></label></div></div>
+<section><h2>Voix jouées par les improvisateurs</h2><div id="roles"></div><div class="audio-settings"><label><input id="ambience" type="checkbox" checked> Conserver l’ambiance</label><label><input id="unknown" type="checkbox" checked> Garder les paroles non attribuées</label></div><p id="audio-note" class="muted">Les choix de voix et les noms sont propres à chaque scène.</p></section></section>
+<aside><h2>Programme du spectacle</h2><button id="add-scenes" class="primary">Ajouter des scènes</button><input id="scene-files" class="file" type="file" accept=".html,.json" multiple><input id="program-file" class="file" type="file" accept=".html,.json"><p class="muted">Choisis les lecteurs impro exportés après correction. Plusieurs fichiers peuvent être ajoutés ensemble.</p><ol id="queue"></ol><div><label><input id="auto-next" type="checkbox"> Enchaînement automatique</label><p id="queue-summary" class="muted">Aucune scène</p><p class="muted">Sans enchaînement automatique, la suivante se prépare sur écran public noir et démarre avec Lire.</p></div></aside></div>
+<footer id="status" role="status">Prêt. Ajoute tes scènes ou charge un spectacle enregistré.</footer>
+</main><dialog id="help-dialog"><h2>Deux écrans pour le spectacle</h2><p>Sur Windows, utilise <b>Win + P → Étendre</b>. Clique sur <b>Ouvrir l’écran public</b>, déplace cette nouvelle fenêtre sur le deuxième écran, puis clique sur son bouton Plein écran. Un double-clic dans cette fenêtre permet aussi de changer le plein écran.</p><p>L’écran public reçoit uniquement la vidéo, sans noms, repères ni réglages. Le son est produit une seule fois par cette fenêtre de commande sur la sortie audio par défaut du PC. La vidéo de l’écran public reste muette pour éviter un écho. Choisis la sortie de la sono dans les réglages audio Windows.</p><p>Prépare chaque scène dans l’éditeur, puis exporte son lecteur impro. Ajoute ces fichiers dans l’ordre du spectacle. Tu peux changer l’ordre, les noms des scènes, les voix retirées et les noms des improvisateurs. Enregistre le spectacle pour conserver l’ensemble et le rouvrir hors connexion.</p><p><b>Espace</b> : lire/pause · <b>N</b> : scène suivante · <b>P</b> : précédente · <b>B</b> : noir et arrêt. Les vignettes anticipent les paroles de 1,5 seconde et les plans de 0,5 seconde. Fais une répétition sur les deux écrans avant le spectacle.</p><button id="close-help">Fermer</button></dialog>
+<script id="show-data" type="application/json">__SHOW_DATA__</script><script>
+/* Moteur partagé : choix cumulables et mixage indépendant du fond sonore. */
+(() => {
+  'use strict';
+  function normaliseMix(data, characters) {
+    const known = new Set(characters.map(p => p.id));
+    if (data.audioMix) return {
+      removedCharacters: [...new Set(data.audioMix.removedCharacters || [])].filter(id => known.has(id)),
+      keepAmbience: data.audioMix.keepAmbience !== false,
+      keepUnknown: data.audioMix.keepUnknown !== false,
+    };
+    // Lecture des anciens lecteurs à choix d'un seul rôle.
+    const chosen = data.keepCharacter || data.defaultCharacter;
+    if (data.duoAudio && chosen) {
+      const mode = data.duoMode || data.duoDefaultMode;
+      return {
+        removedCharacters: characters.filter(p => chosen === 'none' || chosen === 'background'
+          || (mode === 'play_one' ? p.id === chosen : p.id !== chosen)).map(p => p.id),
+        keepAmbience: chosen !== 'none', keepUnknown: false,
+      };
+    }
+    return { removedCharacters: [], keepAmbience: true, keepUnknown: true };
+  }
+  function union(ranges) {
+    const result = [];
+    for (const [a, b] of ranges.sort((x, y) => x[0] - y[0] || x[1] - y[1])) {
+      if (b <= a) continue;
+      if (result.length && a <= result.at(-1)[1]) result.at(-1)[1] = Math.max(result.at(-1)[1], b);
+      else result.push([a, b]);
+    }
+    return result;
+  }
+  function windows(intervals, mix, duration) {
+    const removed = new Set(mix.removedCharacters);
+    const wanted = mix.keepUnknown ? [[0, duration]] : union(intervals.filter(
+      i => i.character !== null && !removed.has(i.character)).map(i => [i.start, i.end]));
+    const blocked = union(intervals.filter(i => i.character === null ? !mix.keepUnknown
+      : removed.has(i.character)).map(i => [i.start, i.end]));
+    const result = [];
+    let first = 0;
+    for (const [a, b] of wanted) {
+      let cursor = a;
+      while (first < blocked.length && blocked[first][1] <= cursor) first++;
+      for (let index = first; index < blocked.length; index++) {
+        const [left, right] = blocked[index];
+        if (left >= b) break;
+        if (left > cursor) result.push([cursor, Math.min(left, b)]);
+        cursor = Math.max(cursor, right);
+        if (cursor >= b) break;
+      }
+      if (cursor < b) result.push([cursor, b]);
+    }
+    return result;
+  }
+  function schedule(gain, ranges, offset, now, rate, fade = .01) {
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(0, now);
+    for (const [start, end] of ranges) {
+      if (end <= offset) continue;
+      const f = Math.max(.00001, Math.min(fade, (end - start) / 2));
+      const left = Math.max(start, offset), at = t => now + (t - offset) / rate;
+      const level = Math.max(0, Math.min(1, (left - start) / f, (end - left) / f));
+      gain.setValueAtTime(level, at(left));
+      if (start + f > left) gain.linearRampToValueAtTime(1, at(start + f));
+      if (end - f > left) gain.setValueAtTime(1, at(end - f));
+      gain.linearRampToValueAtTime(0, at(end));
+    }
+  }
+  function createGraph(context, buffers, intervals, mix, duration, options = {}) {
+    const now = context.currentTime, offset = options.offset || 0, rate = options.rate || 1;
+    const master = context.createGain(), voice = context.createGain(), background = context.createGain();
+    master.gain.value = options.volume ?? 1;
+    background.gain.value = mix.keepAmbience ? 1 : 0;
+    voice.connect(master); background.connect(master); master.connect(context.destination);
+    schedule(voice.gain, options.ranges || windows(intervals, mix, duration), offset, now, rate, options.fade);
+    const sources = [];
+    for (const [index, buffer] of buffers.entries()) {
+      if (offset >= buffer.duration) continue;
+      const source = context.createBufferSource(); source.buffer = buffer;
+      source.playbackRate.value = rate; source.connect(index === 0 ? background : voice);
+      source.start(now, offset); sources.push(source);
+    }
+    return { master, voice, background, sources, origin: { media: offset, context: now, rate },
+      stop() { for (const source of sources) { try { source.stop(); } catch {} source.disconnect(); }
+        voice.disconnect(); background.disconnect(); master.disconnect(); } };
+  }
+  globalThis.DoubalgeAudio = { normaliseMix, union, windows, createGraph };
+})();
+
+/* Lecture des exports : on extrait le JSON, sans jamais exécuter le HTML importé. */
+(() => {
+  'use strict';
+  const SCHEMA = 'doublagebasic.show.v1';
+  const finite = x => typeof x === 'number' && Number.isFinite(x);
+  const identifier = x => typeof x === 'string' && /^[A-Za-z][A-Za-z0-9_-]*:[0-9]{1,4}$/.test(x);
+  function media(value, kind) {
+    const pattern = kind === 'video' ? /^data:video\/(?:mp4|webm);base64,[A-Za-z0-9+/=\r\n]+$/
+      : /^data:audio\/(?:mp4|m4a|wav|x-wav|mpeg|ogg);base64,[A-Za-z0-9+/=\r\n]+$/;
+    if (typeof value !== 'string' || !pattern.test(value)) throw Error('Le fichier doit intégrer ses médias, sans adresse réseau.');
+    return value;
+  }
+  function scene(value, name = 'Scène') {
+    if (!value || !finite(value.duration) || value.duration <= 0 || value.duration > 86400) throw Error('Durée de scène invalide.');
+    if (!Array.isArray(value.characters) || value.characters.length > 100) throw Error('Voix de la scène invalides.');
+    const ids = new Set();
+    const characters = value.characters.map((p, n) => {
+      if (!p || !identifier(p.id) || ids.has(p.id)) throw Error('Identifiant de voix invalide ou répété.');
+      ids.add(p.id);
+      let photo = null;
+      if (p.photo) {
+        if (typeof p.photo !== 'string' || !/^(?:data:image\/(?:jpeg|png);base64,)?[A-Za-z0-9+/=\r\n]+$/.test(p.photo)) throw Error('Portrait intégré invalide.');
+        photo = p.photo;
+      }
+      return { id: p.id, label: String(p.label || `Voix ${n + 1}`).slice(0, 120),
+        color: typeof p.color === 'string' && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#6f9fcd', photo };
+    });
+    const list = value.initial || value.intervals, cutList = value.initialCuts || value.cuts;
+    if (!Array.isArray(list) || list.length > 10000 || !Array.isArray(cutList) || cutList.length > 10000) throw Error('Repères de scène invalides.');
+    const intervals = list.map((i, n) => {
+      if (!i || !finite(i.start) || !finite(i.end) || i.start < 0 || i.end > value.duration || i.end <= i.start
+          || i.character !== null && !ids.has(i.character)) throw Error('Passage de parole invalide.');
+      return { id: String(i.id || 'e' + n).slice(0, 100), start: i.start, end: i.end,
+        character: i.character, reviewed: i.reviewed === true };
+    });
+    const cuts = cutList.map((c, n) => {
+      if (!c || !finite(c.time) || c.time <= 0 || c.time >= value.duration) throw Error('Changement de plan invalide.');
+      return { id: String(c.id || 'cut' + n).slice(0, 100), time: c.time, reviewed: c.reviewed === true };
+    }).sort((a, b) => a.time - b.time);
+    const result = { title: String(value.title || name).slice(0, 160), duration: value.duration,
+      analysis_id: String(value.analysis_id || ''), source_sha256: String(value.source_sha256 || ''),
+      characters, intervals, cuts,
+      media: media(value.initial && value.duoAudio ? value.improMedia : value.media, 'video'),
+      audioMix: DoubalgeAudio.normaliseMix(value, characters) };
+    if (value.duoAudio) result.duoAudio = {
+      dialogue: media(value.duoAudio.dialogue, 'audio'), background: media(value.duoAudio.background, 'audio'),
+      fade: finite(value.duoAudio.fade) && value.duoAudio.fade > 0 && value.duoAudio.fade <= .1 ? value.duoAudio.fade : .01,
+    };
+    return result;
+  }
+  function entry(raw, fallback) {
+    const data = scene(raw.data || raw, raw.title || fallback);
+    const performers = Object.fromEntries(data.characters.map(p => [p.id, String(raw.performers?.[p.id] || '').slice(0, 100)]));
+    return { id: globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + '-' + Math.random().toString(36).slice(2),
+      title: String(raw.title || data.title).slice(0, 160), data, performers };
+  }
+  function programme(raw) {
+    if (!raw || raw.schema !== SCHEMA || !Array.isArray(raw.scenes) || raw.scenes.length > 100) throw Error('Programme de spectacle invalide.');
+    return { schema: SCHEMA, autoAdvance: raw.autoAdvance === true,
+      volume: finite(raw.volume) && raw.volume >= 0 && raw.volume <= 1 ? raw.volume : 1,
+      scenes: raw.scenes.map((item, n) => entry(item, `Scène ${n + 1}`)) };
+  }
+  function parse(text, filename = 'Scène') {
+    const name = filename.replace(/\.[^.]+$/, '');
+    let raw;
+    if (text.trimStart().startsWith('{')) raw = JSON.parse(text);
+    else {
+      const found = text.match(/<script\b[^>]*\bid\s*=\s*["'](show-data|impro-data|editor-data)["'][^>]*>([\s\S]*?)<\/script\s*>/i);
+      if (!found) throw Error('Choisissez un lecteur impro, un éditeur ou un programme exporté par Doubalge.');
+      raw = JSON.parse(found[2]);
+    }
+    if (raw.schema === 'doublagebasic.timeline-edit.v1' && !raw.media) throw Error('Ce JSON contient des corrections, pas la vidéo. Importe-le dans l’éditeur puis exporte son lecteur impro.');
+    const result = raw.schema === SCHEMA ? programme(raw) : { schema: SCHEMA, autoAdvance: false, scenes: [entry(raw, name)] };
+    if (raw.initial) result.warning = 'Éditeur importé : seules les corrections intégrées au fichier sont disponibles. Pour inclure un brouillon récent, exporte son lecteur impro dans l’éditeur.';
+    return result;
+  }
+  function serialize(entries, autoAdvance, volume = 1) {
+    return { schema: SCHEMA, autoAdvance: !!autoAdvance, volume,
+      scenes: entries.map(e => ({ title: e.title, data: e.data, performers: e.performers })) };
+  }
+  globalThis.DoubalgeShow = { SCHEMA, scene, programme, parse, serialize };
+})();
+
+'use strict';
+const $ = id => document.getElementById(id), master = $('master'), preview = $('preview');
+const MODEL = DoubalgeShow, AUDIO = DoubalgeAudio, PUBLIC_PAGE = "\u003c!doctype html>\u003chtml lang=\"fr\">\u003chead>\u003cmeta charset=\"utf-8\">\u003ctitle>Doubalge — Public\u003c/title>\n\u003cstyle>html,body{margin:0;height:100%;overflow:hidden;background:#000}video{width:100vw;height:100vh;object-fit:contain;visibility:hidden}button{position:fixed;inset:auto 20px 20px auto;padding:14px;background:#26364e;color:#fff;border:1px solid #7892b6;border-radius:7px;cursor:pointer;font:16px system-ui}body[data-started] button,:fullscreen button{display:none}body[data-started]{cursor:none}\u003c/style>\u003c/head>\u003cbody>\u003cvideo id=\"film\" muted playsinline preload=\"auto\" disablepictureinpicture>\u003c/video>\u003cbutton id=\"fullscreen\">Plein écran public\u003c/button>\n\u003cscript>\n(() => {\n  const film = document.getElementById('film');\n  let key = null, latest = null;\n  const api = {\n    ready: false, error: '',\n    load(source, sceneKey) {\n      film.pause(); film.style.visibility = 'hidden'; key = sceneKey; api.ready = false; api.error = '';\n      if (source) film.src = source; else film.removeAttribute('src');\n      film.load();\n    },\n    sync(state) {\n      latest = state;\n      if (state.key !== key || !api.ready) return;\n      film.muted = true;\n      if (state.black) { film.pause(); film.style.visibility = 'hidden'; return; }\n      film.style.visibility = 'visible';\n      const target = Math.max(0, Math.min(film.duration || state.time, state.time));\n      const difference = target - film.currentTime;\n      if (Math.abs(difference) > (state.playing ? .16 : .015)) film.currentTime = target;\n      film.playbackRate = state.playing ? Math.max(.25, Math.min(4, state.rate + Math.max(-.04, Math.min(.04, difference * .25)))) : state.rate;\n      if (state.playing) {\n        document.body.dataset.started = 'true';\n        if (film.paused) film.play().catch(error => { api.error = error.message; });\n      } else film.pause();\n    },\n  };\n  film.addEventListener('loadedmetadata', () => { api.ready = true; if (latest) api.sync(latest); });\n  film.addEventListener('error', () => { api.error = 'La vidéo de l’écran public ne peut pas être lue.'; });\n  async function fullscreen() {\n    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }\n    catch (error) { api.fullscreenError = 'Plein écran : ' + error.message; }\n  }\n  document.getElementById('fullscreen').onclick = fullscreen;\n  document.addEventListener('dblclick', fullscreen);\n  window.DoubalgePublic = api;\n})();\n\u003c/script>\u003c/body>\u003c/html>\n";
+const PUBLIC_NAME = 'DoubalgePublic-' + (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+let queue = [], activeId = null, loading = false, loadVersion = 0, publicWindow = null, publicWasOpen = false;
+let black = true, playIntent = false, audioContext = null, audioState = null, graph = null, audioGeneration = 0, cards = [];
+let previewCut = null, dirty = false;
+const current = () => queue.find(e => e.id === activeId) || null;
+const index = () => queue.findIndex(e => e.id === activeId);
+const fmt = t => String(Math.floor(Math.max(0, t) / 60)).padStart(2, '0') + ':' + String(Math.floor(Math.max(0, t) % 60)).padStart(2, '0');
+function message(text, error = false) { $('status').textContent = text; $('status').title = text; $('status').classList.toggle('error', error); }
+function changed() { dirty = true; message('Programme modifié. Enregistre le spectacle pour conserver les scènes, les noms et les réglages.'); }
+function stopAudio() { audioGeneration++; if (graph) graph.stop(); graph = null; }
+function pause(makeBlack = false) { playIntent = false; stopAudio(); master.pause(); if (makeBlack) black = true; syncPublic(); buttons(); }
+function fail(error) { pause(true); message(error.message || String(error), true); }
+const action = fn => (...args) => { try { return Promise.resolve(fn(...args)).catch(fail); } catch (error) { fail(error); } };
+
+function publicAPI() {
+  if (!publicWindow) return null;
+  try {
+    if (publicWindow.closed) {
+      publicWindow = null;
+      if (publicWasOpen) { publicWasOpen = false; pause(true); message('L’écran public a été fermé. Lecture arrêtée ; rouvre-le avant de reprendre.', true); }
+      return null;
+    }
+    return publicWindow.DoubalgePublic || null;
+  } catch { publicWindow = null; pause(true); message('L’écran public a changé de page. Rouvre la sortie public.', true); return null; }
+}
+function sceneKey() { return activeId ? activeId + '-' + loadVersion : null; }
+function syncPublic() {
+  const api = publicAPI();
+  $('public-state').textContent = api ? api.ready ? black ? 'Écran public connecté — noir d’attente' : 'Écran public connecté — vidéo seule, son unique sur le PC' : 'Préparation de l’écran public…'
+    : 'Écran public fermé — répétition locale possible';
+  if (api) {
+    api.sync({ key: sceneKey(), time: master.currentTime || 0, rate: master.playbackRate,
+      playing: !master.paused && !master.ended && !loading, black: black || loading || !current() });
+    if (api.error) { if (!black) pause(true); message(api.error, true); }
+    else if (api.fullscreenError) message(api.fullscreenError, true);
+  }
+}
+async function openPublic() {
+  if (publicWindow && !publicWindow.closed) { publicWindow.focus(); return; }
+  const win = window.open('', PUBLIC_NAME, 'popup,width=1000,height=650');
+  if (!win) throw Error('Le navigateur a bloqué la fenêtre. Autorise les fenêtres pour cette page puis réessaie.');
+  publicWindow = win; publicWasOpen = true;
+  win.document.open(); win.document.write(PUBLIC_PAGE); win.document.close();
+  for (let n = 0; n < 40 && !publicAPI(); n++) await new Promise(resolve => setTimeout(resolve, 50));
+  const api = publicAPI();
+  if (!api) throw Error('Impossible de préparer la fenêtre public.');
+  api.load(current()?.data.media || null, sceneKey()); syncPublic();
+  message('Déplace la fenêtre Public sur le second écran et active son plein écran. Le son reste unique sur ce PC.');
+}
+async function waitPublic(version) {
+  for (let n = 0; n < 120; n++) {
+    if (version !== loadVersion || !playIntent) return false;
+    const api = publicAPI();
+    if (api?.error) throw Error(api.error);
+    if (!api || api.ready) return true;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  throw Error('L’écran public n’est pas prêt. Vérifie cette fenêtre avant de relancer.');
+}
+function metadata(video) {
+  if (video.readyState >= 1) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => finish(Error('Chargement vidéo trop long.')), 15000);
+    const done = () => finish(), error = () => finish(Error('Cette scène ne peut pas être lue dans ce navigateur.'));
+    function finish(problem) { clearTimeout(timer); video.removeEventListener('loadedmetadata', done); video.removeEventListener('error', error); problem ? reject(problem) : resolve(); }
+    video.addEventListener('loadedmetadata', done); video.addEventListener('error', error);
+  });
+}
+async function selectScene(id, autoplay = false) {
+  const entry = queue.find(e => e.id === id); if (!entry) return;
+  pause(true); const version = ++loadVersion; loading = true; activeId = id; previewCut = null;
+  audioState = { data: entry.data, version, buffers: null, promise: null };
+  master.muted = !!entry.data.duoAudio; master.volume = Number($('volume').value) / 100; master.playbackRate = 1;
+  master.src = entry.data.media; master.load(); preview.src = entry.data.media; preview.load();
+  const api = publicAPI(); if (api) api.load(entry.data.media, sceneKey());
+  renderQueue(); renderRoles(); buttons();
+  message('Préparation de ' + entry.title + '…');
+  try {
+    await metadata(master);
+    if (version !== loadVersion) return;
+    loading = false; master.currentTime = 0; $('seek').max = entry.data.duration;
+    buttons(); update(); syncPublic();
+    message(entry.title + ' prête. L’écran public reste noir jusqu’à Lire.');
+    if (autoplay) await play();
+  } catch (error) { if (version === loadVersion) { loading = false; fail(error); } }
+}
+function ensureContext() { if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
+async function prepareAudio(state = audioState) {
+  if (!state?.data.duoAudio) return;
+  ensureContext();
+  if (!state.promise) state.promise = Promise.all(['background', 'dialogue'].map(async key => {
+    const response = await fetch(state.data.duoAudio[key]);
+    return audioContext.decodeAudioData(await response.arrayBuffer());
+  })).then(buffers => { state.buffers = buffers; }).catch(error => { state.promise = null; throw error; });
+  await state.promise;
+}
+async function startAudio() {
+  if (!current()?.data.duoAudio) return;
+  const state = audioState, request = ++audioGeneration;
+  try {
+    ensureContext(); await Promise.all([prepareAudio(state), audioContext.resume()]);
+    if (request !== audioGeneration || state !== audioState || master.paused || master.ended || master.seeking) return;
+    if (graph) graph.stop();
+    graph = AUDIO.createGraph(audioContext, state.buffers, state.data.intervals, state.data.audioMix, state.data.duration,
+      { offset: master.currentTime, rate: master.playbackRate, volume: Number($('volume').value) / 100,
+        fade: state.data.duoAudio.fade || .01 });
+  } catch (error) { if (state === audioState) fail(error); }
+}
+async function play() {
+  if (!current() || loading) return;
+  if (playIntent || !master.paused) { pause(); return; }
+  const version = loadVersion; playIntent = true; buttons();
+  try {
+    if (current().data.duoAudio) { ensureContext(); await Promise.all([prepareAudio(), audioContext.resume()]); }
+    if (!await waitPublic(version) || version !== loadVersion || !playIntent) return;
+    black = false; await master.play(); syncPublic();
+  } catch (error) { if (version === loadVersion) fail(error); }
+}
+async function advance(delta) {
+  if (loading) return;
+  const next = queue[index() + delta];
+  if (next) await selectScene(next.id, false);
+}
+function move(id, delta) {
+  const from = queue.findIndex(e => e.id === id), to = from + delta;
+  if (to < 0 || to >= queue.length) return;
+  [queue[from], queue[to]] = [queue[to], queue[from]]; renderQueue(); buttons(); changed();
+}
+async function remove(id) {
+  const old = queue.findIndex(e => e.id === id), wasActive = activeId === id;
+  if (wasActive) pause(true);
+  queue = queue.filter(e => e.id !== id); changed();
+  if (wasActive && queue.length) await selectScene(queue[Math.min(old, queue.length - 1)].id);
+  else if (wasActive) {
+    activeId = null; loadVersion++; audioState = null; master.removeAttribute('src'); master.load();
+    preview.removeAttribute('src'); preview.load(); publicAPI()?.load(null, null); renderRoles();
+  }
+  renderQueue(); buttons(); update();
+}
+function renderQueue() {
+  $('queue').replaceChildren();
+  for (const [position, entry] of queue.entries()) {
+    const li = document.createElement('li'); li.className = 'scene'; li.classList.toggle('active', entry.id === activeId); li.dataset.id = entry.id;
+    const name = document.createElement('input'); name.value = entry.title; name.setAttribute('aria-label', 'Titre de la scène ' + (position + 1));
+    name.oninput = () => { entry.title = name.value.slice(0, 160); changed(); buttons(); };
+    const description = document.createElement('small'); description.textContent = `${position + 1} · ${fmt(entry.data.duration)} · ${entry.data.characters.length} voix`;
+    const actions = document.createElement('div'); actions.className = 'toolbar';
+    for (const [text, key, handler, disabled] of [
+      ['Préparer', 'prepare', () => selectScene(entry.id), loading],
+      ['↑', 'up', () => move(entry.id, -1), position === 0],
+      ['↓', 'down', () => move(entry.id, 1), position === queue.length - 1],
+      ['Retirer', 'remove', () => remove(entry.id), false],
+    ]) { const b = document.createElement('button'); b.textContent = text; b.dataset.action = key; b.disabled = disabled; b.onclick = action(handler); actions.append(b); }
+    li.append(name, description, actions); $('queue').append(li);
+  }
+  $('queue-summary').textContent = queue.length ? `${queue.length} scène(s) · ${fmt(queue.reduce((sum, e) => sum + e.data.duration, 0))} au total` : 'Aucune scène';
+}
+function mixChanged() {
+  changed(); stopAudio(); if (!master.paused) startAudio(); update();
+}
+function renderRoles() {
+  $('roles').replaceChildren(); $('cards').replaceChildren(); cards = [];
+  const entry = current(); $('ambience').disabled = $('unknown').disabled = !entry?.data.duoAudio; if (!entry) return;
+  for (const [number, p] of entry.data.characters.entries()) {
+    const role = document.createElement('div'); role.className = 'role'; role.style.setProperty('--voice', p.color);
+    const label = document.createElement('label'), checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.dataset.character = p.id; checkbox.checked = !!entry.data.duoAudio && entry.data.audioMix.removedCharacters.includes(p.id);
+    checkbox.disabled = !entry.data.duoAudio; label.append(checkbox, document.createTextNode(' Je joue ' + p.label));
+    checkbox.onchange = () => { entry.data.audioMix.removedCharacters = [...$('roles').querySelectorAll('input[type=checkbox]:checked')].map(c => c.dataset.character); mixChanged(); };
+    const tag = document.createElement('span'); tag.className = 'muted'; tag.textContent = 'voix du film retirée';
+    const performer = document.createElement('input'); performer.type = 'text'; performer.maxLength = 100;
+    performer.placeholder = 'Nom de l’improvisateur (facultatif)'; performer.value = entry.performers[p.id] || '';
+    performer.setAttribute('aria-label', 'Improvisateur pour ' + p.label); performer.dataset.performer = p.id;
+    performer.oninput = () => { entry.performers[p.id] = performer.value; changed(); };
+    role.append(label, tag, performer); $('roles').append(role);
+    const card = document.createElement('div'); card.className = 'card'; card.dataset.character = p.id; card.style.setProperty('--voice', p.color);
+    if (p.photo) { const image = document.createElement('img'); image.src = p.photo.startsWith('data:') ? p.photo : 'data:image/jpeg;base64,' + p.photo; image.alt = p.label; card.append(image); }
+    else { const symbol = document.createElement('span'); symbol.className = 'symbol'; symbol.textContent = 'V' + (number + 1); card.append(symbol); }
+    const name = document.createElement('span'), state = document.createElement('div'); name.className = 'name'; state.className = 'state'; card.append(name, state); $('cards').append(card); cards.push({ p, card, name, state });
+  }
+  $('ambience').checked = entry.data.audioMix.keepAmbience; $('unknown').checked = entry.data.audioMix.keepUnknown;
+  $('ambience').disabled = $('unknown').disabled = !entry.data.duoAudio;
+  $('audio-note').textContent = entry.data.duoAudio ? 'Cases cochées : voix retirées du film. Les chevauchements et les résidus de séparation restent à vérifier.' : 'Sans pistes séparées : son intégré au fichier, réglages des voix indisponibles. Recrée cette scène avec la préparation audio si nécessaire.';
+}
+function buttons() {
+  const entry = current(), at = index();
+  for (const button of $('queue').querySelectorAll('[data-action=prepare]')) button.disabled = loading;
+  $('play').disabled = $('stop').disabled = !entry || loading;
+  $('previous').disabled = !entry || at <= 0 || loading; $('next').disabled = !entry || at >= queue.length - 1 || loading;
+  $('play').textContent = playIntent && master.paused ? 'Annuler préparation' : master.paused ? 'Lire' : 'Pause';
+  $('scene-title').textContent = entry ? `${at + 1} / ${queue.length} — ${entry.title}` : 'Ajoute les scènes préparées dans l’éditeur';
+  $('seek').disabled = !entry || loading;
+}
+function update() {
+  const entry = current(), t = master.currentTime || 0;
+  $('clock').textContent = fmt(t) + ' / ' + fmt(entry?.data.duration || 0);
+  if (document.activeElement !== $('seek')) $('seek').value = t;
+  $('standby').hidden = !!entry && !loading;
+  $('standby').textContent = !entry ? 'En attente d’une scène' : loading ? 'Préparation…' : 'Scène prête — Lire pour démarrer';
+  if (!entry) { $('next-plan').hidden = true; $('next-voices').textContent = ''; return; }
+  const soonNames = [];
+  for (const { p, card, name, state } of cards) {
+    const active = entry.data.intervals.some(i => i.character === p.id && i.start <= t && t < i.end);
+    const soon = !active && entry.data.intervals.some(i => i.character === p.id && i.start - 1.5 <= t && t < i.start);
+    const performer = entry.performers[p.id] || p.label, separated = !!entry.data.duoAudio,
+      impro = separated && entry.data.audioMix.removedCharacters.includes(p.id);
+    name.textContent = impro || !separated ? performer : p.label; name.title = p.label + (impro ? ' — ' + performer : '');
+    state.textContent = active ? (!separated ? 'Parole' : impro ? 'À vous !' : 'Film')
+      : soon ? (!separated ? 'Bientôt' : impro ? 'À vous bientôt' : 'Film bientôt') : p.label;
+    card.style.opacity = active || soon && t % .5 < .25 ? '1' : '.35';
+    card.dataset.state = active ? 'speaking' : soon ? 'upcoming' : 'idle';
+    if (soon) soonNames.push(impro || !separated ? performer : p.label + ' (film)');
+  }
+  $('next-voices').textContent = soonNames.length ? 'Bientôt : ' + soonNames.join(' · ') : '';
+  const next = entry.data.cuts.find(c => t < c.time + .25); $('next-plan').hidden = !next;
+  if (next) {
+    if (previewCut !== next.time && preview.readyState >= 1) { preview.currentTime = Math.min(entry.data.duration - .02, next.time + .08); previewCut = next.time; }
+    const soon = t >= next.time - .5 && t < next.time, active = t >= next.time && t < next.time + .25;
+    $('next-plan').style.opacity = active || soon && t % .5 < .25 ? '1' : '.35';
+    $('plan-label').textContent = active ? 'Changement de plan' : soon ? 'Plan imminent' : 'Prochain plan';
+  }
+}
+async function importFiles(files, replace = false) {
+  const added = [], failures = [], warnings = []; let autoAdvance = false, volume = 1;
+  for (const file of files) {
+    try {
+      if (!/\.(?:html|json)$/i.test(file.name)) throw Error('Choisis le lecteur HTML exporté, pas le fichier vidéo brut.');
+      const parsed = MODEL.parse(await file.text(), file.name); added.push(...parsed.scenes); autoAdvance = parsed.autoAdvance;
+      volume = parsed.volume ?? 1;
+      if (parsed.warning) warnings.push(parsed.warning);
+    }
+    catch (error) { failures.push(file.name + ' : ' + error.message); }
+  }
+  if (!added.length) { message(failures.join(' · ') || 'Ce fichier ne contient aucune scène.', true); return; }
+  if (queue.length + added.length > 100 && !replace || added.length > 100) throw Error('Le programme accepte au maximum 100 scènes.');
+  if (replace) { pause(true); queue = []; activeId = null; $('auto-next').checked = autoAdvance; $('volume').value = volume * 100; }
+  queue.push(...added); renderQueue(); changed();
+  if (!current()) await selectScene(queue[0].id);
+  if (failures.length) message(failures.join(' · '), true);
+  else if (warnings.length) message(warnings.join(' · '));
+}
+function saveProgramme() {
+  if (!queue.length) { message('Ajoute au moins une scène avant d’enregistrer.', true); return; }
+  const documentCopy = document.documentElement.cloneNode(true);
+  documentCopy.querySelector('#show-data').textContent = JSON.stringify(MODEL.serialize(queue, $('auto-next').checked, Number($('volume').value) / 100)).split('<').join(String.fromCharCode(92) + 'u003c');
+  for (const id of ['master', 'preview']) documentCopy.querySelector('#' + id).removeAttribute('src');
+  for (const id of ['queue', 'roles', 'cards']) documentCopy.querySelector('#' + id).replaceChildren();
+  const url = URL.createObjectURL(new Blob(['<!doctype html>', documentCopy.outerHTML], { type: 'text/html;charset=utf-8' }));
+  const link = document.createElement('a'); link.href = url; link.download = 'spectacle.html'; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000); dirty = false; message('Spectacle enregistré avec toutes ses scènes et leurs réglages. Ouvre ce HTML pour le retrouver hors connexion.');
+}
+$('add-scenes').onclick = () => $('scene-files').click();
+$('scene-files').onchange = action(async event => { await importFiles([...event.target.files]); event.target.value = ''; });
+$('load-program').onclick = () => $('program-file').click();
+$('program-file').onchange = action(async event => { await importFiles([...event.target.files], true); event.target.value = ''; });
+$('save-program').onclick = action(saveProgramme); $('open-public').onclick = action(openPublic);
+$('play').onclick = action(play); $('stop').onclick = () => { pause(true); master.currentTime = 0; syncPublic(); update(); };
+$('previous').onclick = action(() => advance(-1)); $('next').onclick = action(() => advance(1));
+$('ambience').onchange = () => { if (current()) { current().data.audioMix.keepAmbience = $('ambience').checked; mixChanged(); } };
+$('unknown').onchange = () => { if (current()) { current().data.audioMix.keepUnknown = $('unknown').checked; mixChanged(); } };
+$('volume').oninput = () => { master.volume = Number($('volume').value) / 100; if (graph) graph.master.gain.value = Number($('volume').value) / 100; changed(); };
+$('auto-next').onchange = changed;
+$('seek').oninput = () => { if (current()) { master.currentTime = Number($('seek').value); syncPublic(); } };
+$('help').onclick = () => $('help-dialog').showModal(); $('close-help').onclick = () => $('help-dialog').close();
+$('impro-fullscreen').onclick = action(async () => { if (document.fullscreenElement) await document.exitFullscreen(); else await $('stage').requestFullscreen(); });
+master.addEventListener('play', () => { playIntent = true; black = false; startAudio(); buttons(); syncPublic(); });
+master.addEventListener('playing', startAudio);
+master.addEventListener('pause', () => { playIntent = false; stopAudio(); buttons(); syncPublic(); });
+for (const event of ['seeking', 'waiting']) master.addEventListener(event, stopAudio);
+for (const event of ['seeked', 'ratechange']) master.addEventListener(event, () => { if (!master.paused) startAudio(); syncPublic(); });
+master.addEventListener('ended', action(async () => {
+  if (!master.ended || loading) return;
+  pause(true); const next = queue[index() + 1];
+  if (next && $('auto-next').checked) await selectScene(next.id, true);
+  else message(next ? 'Scène terminée. Prépare la suivante avec Suivante.' : 'Spectacle terminé.');
+}));
+document.addEventListener('keydown', action(event => {
+  if (event.target.matches('input,button,select,textarea') || $('help-dialog').open) return;
+  if (event.code === 'Space') { event.preventDefault(); return play(); }
+  if (event.key.toLowerCase() === 'n') return advance(1);
+  if (event.key.toLowerCase() === 'p') return advance(-1);
+  if (event.key.toLowerCase() === 'b') pause(true);
+}));
+let lastSync = 0;
+function animate() {
+  update();
+  if (graph && !master.paused && audioContext.currentTime - lastSync > .25) {
+    lastSync = audioContext.currentTime;
+    const expected = graph.origin.media + (audioContext.currentTime - graph.origin.context) * graph.origin.rate;
+    if (Math.abs(expected - master.currentTime) > .08) startAudio();
+  }
+  requestAnimationFrame(animate);
+}
+setInterval(syncPublic, 100); requestAnimationFrame(animate);
+function closeController() {
+  stopAudio();
+  try { if (publicWindow && !publicWindow.closed) publicWindow.DoubalgePublic?.load(null, null); } catch {}
+}
+window.addEventListener('pagehide', closeController);
+window.addEventListener('beforeunload', closeController);
+(async () => {
+  const raw = JSON.parse($('show-data').textContent), program = MODEL.programme(raw);
+  queue = program.scenes; $('auto-next').checked = program.autoAdvance; $('volume').value = program.volume * 100;
+  renderQueue(); buttons(); if (queue.length) await selectScene(queue[0].id);
+})().catch(fail);
+
+</script></body></html>

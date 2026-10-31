@@ -100,6 +100,17 @@ async function downloadText(download) {
     assert.deepEqual(playerData.audioMix.removedCharacters, ['voice:0', 'voice:1']);
     assert.equal(playerData.audioMix.keepAmbience, false);
     assert.equal(playerData.characters[0].label, '</script><script>globalThis.__bad=true</script>');
+    pending = page.waitForEvent('download');
+    await page.locator('#spectacle').click();
+    const showHtml = await downloadText(await pending);
+    const showData = JSON.parse(showHtml.match(/<script id="show-data" type="application\/json">(.*?)<\/script>/s)[1]);
+    assert.deepEqual(showData.scenes[0].data.intervals, corrections.intervals);
+    assert.deepEqual(showData.scenes[0].data.audioMix, corrections.audioMix);
+    const show = await browser.newPage();
+    show.on('pageerror', error => failures.push(error.message));
+    await show.setContent(showHtml);
+    await show.waitForFunction(() => queue.length === 1 && !loading);
+    assert.equal(await show.evaluate(() => globalThis.__bad), undefined);
     console.log('Exports : JSON et lecteur impro conservent les corrections et les choix audio cumulés.');
 
     const player = await browser.newPage();

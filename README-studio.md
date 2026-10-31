@@ -69,6 +69,64 @@ Une erreur d’export conserve la timeline déjà calculée : elle peut être r�
 Le fond « hors champ / inconnu » n’est pas un personnage supplémentaire.
 Les identités acoustiques restent des propositions à vérifier.
 
+## Spectacle : improvisateurs, public et plusieurs scènes
+
+Le fichier **Spectacle.html** à la racine est une application autonome : l’ouvrir
+dans Chrome ou Edge sur le PC du spectacle. Aucune installation ni connexion
+Internet n’est nécessaire pour jouer les scènes déjà préparées.
+
+1. Dans chaque éditeur, terminer les corrections, puis **Exporter le lecteur impro**.
+   Le bouton **Mode spectacle** exporte aussi un spectacle contenant directement
+   cette scène avec les corrections courantes. Les nouveaux dossiers de résultat
+   contiennent un fichier Spectacle.html préchargé avec leur scène initiale.
+2. Dans le mode spectacle, cliquer **Ajouter des scènes** et sélectionner plusieurs
+   lecteurs HTML exportés. Les anciennes versions des lecteurs sont compatibles.
+   Un MP4 brut ou un JSON de corrections ne contient pas tous les repères/pistes :
+   il faut préparer ce fichier dans l’éditeur puis exporter son lecteur.
+3. Ordonner les scènes avec les flèches ↑ / ↓, changer leurs titres si nécessaire,
+   puis **Préparer** la scène choisie. Les voix retirées, l’ambiance et les noms
+   des improvisateurs sont mémorisés séparément pour chaque scène.
+4. **Enregistrer le spectacle** télécharge un HTML contenant l’ensemble du programme,
+   ses vidéos, ses pistes audio et ses réglages. Ce fichier peut être rouvert seul,
+   hors connexion, ou chargé avec **Charger un spectacle**. Le programme contient
+   les médias : sa taille augmente avec le nombre et la durée des vidéos.
+
+### Installer les deux écrans
+
+Sur Windows : **Win + P → Étendre**. Dans le mode spectacle, cliquer **Ouvrir
+l’écran public**, déplacer la nouvelle fenêtre sur le deuxième écran puis cliquer
+sur **Plein écran public**. Un double-clic dans cette fenêtre permet aussi de
+changer le plein écran. Autoriser les fenêtres du navigateur si celui-ci bloque
+l’ouverture demandée par le bouton.
+
+L’écran improvisateurs conserve la vidéo, les vignettes de voix avec le nom de
+l’improvisateur, les annonces de parole et l’aperçu du prochain plan. Cocher
+« Je joue Voix N » retire cette voix du film ; les choix se cumulent. Les voix
+conservées sont marquées « Film » pour éviter de les confondre avec les rôles joués.
+Le plein écran impro affiche seulement cette vue de scène ; les raccourcis restent actifs.
+
+L’écran public affiche **la vidéo seule**, sans noms ni repères. Sa vidéo est
+toujours muette : le son est produit **une seule fois par la fenêtre de commande**,
+avec le mixage choisi. Sélectionner la sortie de la sono dans les réglages audio
+Windows ; le programme ne change pas automatiquement les périphériques audio.
+Le microphone des improvisateurs reste géré par la sono, hors de cette application.
+
+Les deux lectures suivent la même position et les mêmes pauses. Entre deux scènes,
+la sortie public reste noire pendant la préparation. Par défaut, le passage se
+fait avec **Suivante**, puis **Lire**. Cocher **Enchaînement automatique** pour
+lancer la suivante après la fin. Le bouton **Noir / arrêt** coupe la lecture et
+remet au début. La fermeture de la fenêtre public arrête la lecture ; la fermeture
+de la commande remet la sortie public au noir.
+
+Raccourcis de spectacle : **Espace** lire/pause, **N** suivante, **P** précédente,
+**B** noir et arrêt. Ils sont désactivés pendant la saisie d’un nom.
+Vérifier l’ensemble sur les deux écrans réels avant le spectacle : la sortie vidéo,
+le plein écran et la latence dépendent aussi du PC, des écrans et du navigateur.
+
+Importer directement un fichier éditeur réutilise les corrections intégrées à ce
+fichier, pas les brouillons de son ancien navigateur. Pour garder les dernières
+modifications, exporter le lecteur ou le spectacle depuis l’éditeur ouvert.
+
 ## Sélection des voix et ambiance
 
 L’éditeur conserve le son original pour vérifier les attributions. Le traitement
@@ -136,6 +194,12 @@ la vitesse et le cumul de cases sont aussi exercés dans Chromium. Une séparati
 réelle HDemucs et une génération complète depuis un JSON corrigé ont été vérifiées
 sur un court extrait, sur CPU. Cela ne garantit pas l’absence de résidus vocaux
 sur toutes les vidéos.
+
+Les essais du mode spectacle ouvrent deux fenêtres Chromium, vérifient les pauses,
+recherches et transitions, la sortie public sans repères et muette, les réglages
+par scène, la sauvegarde autonome et la lecture hors connexion. La synchronisation
+est contrôlée sur les horloges vidéo du navigateur ; l’installation physique
+Windows sur deux moniteurs reste à vérifier sur le PC du spectacle.
 
 Les gabarits proviennent des HTML fournis par l’utilisateur et de la branche
 `video-controle-20261028-6c04ef`, notamment pour retrouver les corrections OSS.

@@ -35,6 +35,11 @@ class ExportTests(unittest.TestCase):
         self.assertNotIn('duoAudio', data)
         self.assertIn('base64,', data['media'])
         self.assertIn('impro-data', player.read_text(encoding='utf-8'))
+        show = json.loads(re.search(r'<script id="show-data" type="application/json">(.*?)</script>',
+                                    (self.root / 'Spectacle.html').read_text(encoding='utf-8'), re.S).group(1))
+        self.assertEqual(len(show['scenes']), 1)
+        self.assertEqual(show['scenes'][0]['data']['intervals'], document['initial'])
+        self.assertNotIn('showTemplate', show['scenes'][0]['data'])
         self.assertEqual(document['automatic'][0]['reviewed'], False)
         document['initial'][0]['start'] = .5
         self.assertEqual(document['automatic'][0]['start'], .25)

@@ -162,3 +162,18 @@ function animate() {
   requestAnimationFrame(animate);
 }
 update(); requestAnimationFrame(animate);
+if (DATA.showTemplate) {
+  $('spectacle').hidden = false;
+  $('spectacle').onclick = () => {
+    const data = { ...DATA, audioMix: { ...audioMix, removedCharacters: [...audioMix.removedCharacters] } };
+    delete data.showTemplate;
+    const program = { schema: 'doublagebasic.show.v1', autoAdvance: false,
+      scenes: [{ title: data.title || 'Scène', data, performers: {} }] };
+    const serialized = JSON.stringify(program).split('<').join(String.fromCharCode(92) + 'u003c');
+    const html = DATA.showTemplate.replace('__SHOW_DATA__', () => serialized);
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'spectacle.html'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $('note').textContent = 'Spectacle exporté. Ouvre-le pour ajouter les autres scènes et préparer l’écran public.';
+  };
+}
