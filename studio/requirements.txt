@@ -1,0 +1,9 @@
+-c contraintes.txt
+torch==2.8.0
+torchaudio==2.8.0
+pyannote.audio==3.3.2
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+imageio-ffmpeg==0.7.0
+yt-dlp[default,deno]==2026.10.26
+deno==2.9.8

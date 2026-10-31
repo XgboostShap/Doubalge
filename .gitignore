@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.cache/
+resultats/
+token_hf.txt
+*.bak-*
