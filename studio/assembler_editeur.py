@@ -6,7 +6,7 @@ import json
 def assembler():
     root = Path(__file__).resolve().parent
     layout = (root / 'editor-layout.html').read_text(encoding='utf-8')
-    script = (root / 'editor.js').read_text(encoding='utf-8')
+    script = (root / 'editor.js').read_text(encoding='utf-8') + '\n' + (root / 'mp4.js').read_text(encoding='utf-8')
     audio = (root / 'audio.js').read_text(encoding='utf-8')
     downloads = (root / 'downloads.js').read_text(encoding='utf-8')
     text = (layout + '<script id="editor-data" type="application/json">__EDITOR_DATA__</script>'

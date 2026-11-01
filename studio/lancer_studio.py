@@ -260,6 +260,7 @@ def choisir():
 def main():
     parser = argparse.ArgumentParser(description='Créer l’éditeur et le lecteur impro HTML sur votre PC.')
     parser.add_argument('--video')
+    parser.add_argument('--editeur', type=Path, help='Rouvrir un éditeur existant sans analyse IA.')
     parser.add_argument('--timeline', type=Path)
     parser.add_argument('--corrections', type=Path)
     parser.add_argument('--sans-audio-separe', action='store_true')
@@ -269,7 +270,28 @@ def main():
     parser.add_argument('--sans-ouvrir', action='store_true')
     parser.add_argument('--detection', choices=['auto', 'community-1', 'classique'], default='auto')
     args = parser.parse_args()
+    if args.editeur:
+        from serveur_editeur import ouvrir
+        ouvrir(args.editeur)
+        return
     if not args.video:
+        import tkinter as tk
+        from tkinter import messagebox, filedialog
+        window = tk.Tk()
+        window.withdraw()
+        existing = messagebox.askyesnocancel('Doubalge',
+            'Ouvrir une scène déjà préparée ?\n\nOui : choisir son éditeur HTML, sans analyse IA.\nEnregistrez d’abord le JSON de vos corrections dans l’ancien onglet, puis importez-le dans l’éditeur ouvert.\n\nNon : préparer une nouvelle vidéo.', parent=window)
+        if existing is None:
+            window.destroy()
+            return
+        if existing:
+            path = filedialog.askopenfilename(parent=window, title='Ouvrir une scène — éditeur HTML', filetypes=[('Éditeur HTML', '*.html')])
+            window.destroy()
+            if path:
+                from serveur_editeur import ouvrir
+                ouvrir(Path(path))
+            return
+        window.destroy()
         selected = choisir()
         if selected is None:
             return
@@ -279,7 +301,8 @@ def main():
     editor, _ = traiter(args.video, output, args.timeline, args.personnages, args.cpu,
                         corrections=args.corrections, separation=not args.sans_audio_separe, detection=args.detection)
     if not args.sans_ouvrir:
-        webbrowser.open(editor.as_uri())
+        from serveur_editeur import ouvrir
+        ouvrir(editor)
 
 
 if __name__ == '__main__':

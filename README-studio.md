@@ -3,7 +3,8 @@
 Cette version reprend les interfaces des fichiers OSS fournis, avec l’édition
 des paroles et des plans sur un seul écran. Les huit modules Python historiques
 restent inchangés. Le lecteur HTML et son éditeur sont autonomes : la vidéo est
-intégrée aux fichiers, sans serveur ni téléchargement au moment de leur lecture.
+intégrée aux fichiers, sans téléchargement au moment de leur lecture. L’export MP4
+utilise un service local ouvert par le lanceur ; les lecteurs HTML restent autonomes.
 
 ## Installation sur le PC Windows
 
@@ -18,7 +19,9 @@ Le dépôt GitHub fonctionne aussi directement avec ses huit modules à la racin
 3. Créer `token_hf.txt` à côté de `Lancer-studio.cmd`, contenant uniquement
    la clé Hugging Face complète sur une ligne, sans guillemets, en UTF-8.
    Ce fichier privé est ignoré par Git. Ne pas l’inclure dans une archive partagée.
-4. Ouvrir `Lancer-studio.cmd`, choisir une vidéo ou coller son URL YouTube.
+4. Ouvrir `Lancer-studio.cmd`, répondre **Non** pour préparer une nouvelle scène,
+   puis choisir une vidéo ou coller son URL YouTube. **Oui** rouvre un éditeur existant
+   sans réanalyse, avec l’interface actuelle et l’export MP4.
    Une timeline.json déjà calculée peut être choisie pour réutiliser l’analyse.
    Dans « Corrections manuelles », choisir le JSON corrigé de l’éditeur : ses voix,
    ses bornes, ses plans et ses validations sont prioritaires, sans nouvelle attribution IA.
@@ -157,6 +160,76 @@ En ligne de commande :
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 studio\actualiser_editeur.py "D:\Resultats\OSS-editeur.html" --corrections "D:\Resultats\timeline-corrigee.json"
 ```
+
+## Envoyer une vidéo d’entraînement MP4
+
+### Mettre à jour le projet existant
+
+Enregistrer d’abord les corrections JSON depuis l’ancien onglet. Extraire le ZIP
+GitHub de cette version, puis copier **tout le dossier `studio`** et les lanceurs
+à côté de l’installation existante (ou de `projet`). Conserver `.venv`,
+`.venv-detection`, `.cache`, `token_hf.txt` et `resultats` ; ne pas déplacer ni
+supprimer les anciens résultats. Cette fonction utilise les dépendances déjà
+prévues, dont `imageio-ffmpeg==0.7.0` et NumPy ; aucune réinstallation de modèle
+n’est nécessaire si le studio fonctionne déjà.
+
+1. Ouvrir **Lancer-studio.cmd**, répondre **Oui**, puis choisir le fichier
+   **OSS-editeur.html** de la scène. L’interface actuelle s’ouvre sans analyse IA,
+   même pour un ancien HTML. `Actualiser-editeur.cmd` reste un outil exceptionnel.
+2. **Importer le dernier JSON corrigé**, notamment si les corrections étaient
+   seulement dans l’ancien onglet. Le navigateur distingue l’ancien fichier local
+   et l’éditeur ouvert par le lanceur : leurs brouillons ne sont pas transférés
+   automatiquement. Le fichier `corrections-initiales.json` reste l’état initial.
+3. Dans **Exporter un MP4 → Choisir les voix et l’ambiance**, cocher une ou deux
+   voix à retirer et régler l’ambiance et les paroles non attribuées.
+4. Revenir à **Exporter un MP4**, choisir **Compact** ou **Standard**, puis
+   **Créer le MP4**. Les plages, attributions, noms et plans sont figés à ce clic.
+   Garder la fenêtre du lanceur ouverte. La progression et **Annuler l’export**
+   restent disponibles ; annuler ne modifie pas les corrections.
+5. Cliquer **Télécharger le MP4**, puis vérifier la vidéo et le son. Joindre ce
+   fichier au mail ou l’envoyer soi-même dans WhatsApp. Aucun message n’est envoyé
+   par Doubalge. Le destinataire n’installe ni Python, ni IA, ni projet.
+
+Le fichier est encodé en **MP4 H.264, yuv420p, audio AAC stéréo 48 kHz**, avec les
+métadonnées de lecture en début de fichier (`faststart`). Le profil Compact vise
+360p à environ **4 Mo/minute** et Standard 720p à environ **14 Mo/minute**, selon
+le rapport d’image et le contenu. La taille annoncée est indicative ; les limites
+varient selon la messagerie. Si nécessaire, envoyer comme document ou utiliser
+un lien de partage. Cette version exporte toute la scène.
+
+Le MP4 incruste le nom du rôle et « bientôt » 1,5 seconde avant chaque reprise,
+« À VOUS » pendant la parole, et « CHANGEMENT DE PLAN » 0,5 seconde avant la coupe.
+Les repères suivent les corrections actuelles, sans nouvelle analyse IA. Le mixage
+reprend les règles du lecteur : l’ambiance est indépendante, mais retirer une voix
+coupe aussi les autres dialogues pendant un chevauchement. Des résidus vocaux
+peuvent rester dans le fond sonore.
+
+Le service écoute uniquement sur `127.0.0.1:8765`, avec un jeton propre à chaque
+session. L’encodage et les médias restent sur le PC, sans besoin d’Internet.
+Une seule fenêtre de lanceur peut utiliser ce port à la fois ; fermer la précédente
+avant de rouvrir une autre scène. Les fichiers temporaires sont nettoyés à l’arrêt
+normal du lanceur. Les corrections restent à sauvegarder avec **Enregistrer les
+corrections** ; le service ne réécrit pas le HTML d’origine.
+
+### Vérifications de l’export MP4
+
+Les tests sous Linux/Chromium couvrent l’export depuis l’interface, le téléchargement,
+les codecs réellement produits, les repères incrustés, les corrections réattribuées,
+le refus d’une autre source, la progression et l’annulation. Les tests mesurent le
+signal **après décodage du MP4 AAC**, pour une et deux voix retirées, avec et sans
+ambiance, y compris un chevauchement. Le binaire FFmpeg du paquet Windows 0.7.0
+contient libass et libx264 ; son exécution sur Windows et la réception effective
+dans WhatsApp/iOS/Android restent à vérifier sur les appareils réels.
+
+```bash
+python -m unittest discover -s studio/tests -p 'test_*.py' -v
+python studio/tests/make_fixture.py /chemin/resultat-test
+node studio/tests/test_mp4.cjs /chemin/resultat-test/OSS-editeur.html
+```
+
+Le test navigateur utilise Playwright, Chromium et FFprobe. La variable `PYTHON`
+peut sélectionner l’interpréteur installé pour le studio ; `CHROMIUM` sélectionne
+le navigateur de test. FFprobe sert uniquement à la validation en développement.
 
 ## Spectacle : improvisateurs, public et plusieurs scènes
 

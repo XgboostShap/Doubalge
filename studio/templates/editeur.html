@@ -24,7 +24,7 @@ main{grid-template-rows:auto minmax(236px,.8fr) auto minmax(270px,1.15fr) auto}
 @media(max-height:760px){main{grid-template-rows:auto minmax(206px,.8fr) auto minmax(260px,1.15fr) auto}.form{padding:6px 8px}.form h2{margin-bottom:4px}.fields{margin-bottom:5px}.timeline-navigation{gap:5px}}
 @media(max-width:1350px){.player{grid-template-columns:minmax(230px,.75fr) minmax(145px,.38fr) minmax(490px,1.35fr);gap:8px}.person{padding:3px 6px;min-height:27px}.person small{font-size:9px}.timeline-navigation .nav-label{display:none}.form .actions button{font-size:11px;padding:4px 6px}}
 </style></head><body><main>
-<header class="topbar"><div class="heading"><h1>Édition de la scène</h1><span class="subtitle">Paroles et plans, sur un seul écran</span></div><div class="actions"><button id="undo" title="Ctrl+Z">Annuler</button><button id="redo" title="Ctrl+Y">Rétablir</button><button id="export">Enregistrer les corrections</button><button id="import">Importer</button><input id="import-file" class="file" type="file" accept=".json,application/json"><button id="options-open">Options du lecteur</button><button id="impro" class="primary">Exporter le lecteur impro</button><button id="spectacle" class="primary">Mode spectacle</button><button id="help-open" aria-label="Aide">?</button></div></header>
+<header class="topbar"><div class="heading"><h1>Édition de la scène</h1><span class="subtitle">Paroles et plans, sur un seul écran</span></div><div class="actions"><button id="undo" title="Ctrl+Z">Annuler</button><button id="redo" title="Ctrl+Y">Rétablir</button><button id="export">Enregistrer les corrections</button><button id="import">Importer</button><input id="import-file" class="file" type="file" accept=".json,application/json"><button id="options-open">Options du lecteur</button><button id="impro" class="primary">Exporter le lecteur impro</button><button id="mp4-open" class="primary">Exporter un MP4</button><button id="spectacle" class="primary">Mode spectacle</button><button id="help-open" aria-label="Aide">?</button></div></header>
 <section class="player" aria-label="Vidéo, personnages et corrections"><div class="video-box"><video id="video" controls playsinline preload="metadata"></video></div><aside class="sidebar"><small>Choisis une voix pour affecter le bloc sélectionné.</small><div class="people" id="people"></div><div id="voice-references" hidden></div></aside>
 <section class="editors">
 <div class="form"><h2 id="selection-title">Parole — sélectionne un bloc sur la timeline</h2><div class="fields"><label>Voix <select id="character"></select></label><label>Début <input id="start" type="number" min="0" step="0.01"> s</label><label>Fin <input id="end" type="number" min="0" step="0.01"> s</label><label><input id="reviewed" type="checkbox"> Validé</label></div><div class="actions"><button id="listen">Écouter le bloc</button><button id="split" title="S">Scinder</button><button id="merge">Fusionner</button><button id="delete" class="danger">Supprimer</button><button id="add">Ajouter au curseur</button></div></div>
@@ -39,6 +39,15 @@ main{grid-template-rows:auto minmax(236px,.8fr) auto minmax(270px,1.15fr) auto}
 <dialog id="help-dialog"><button class="close" data-close>Fermer</button><h2>Corriger la scène</h2><p>Sur la timeline, clique un bloc de parole pour le sélectionner. Glisse son centre pour le déplacer, ses bords pour ajuster le début ou la fin, ou déplace-le vers la ligne d’une autre voix. Les champs à droite de la vidéo permettent une saisie précise.</p><p>La vue affiche jusqu’à trois minutes. La barre sous la timeline et ses flèches permettent de parcourir la suite sans déplacer la vidéo. Les noms des voix restent visibles à gauche. Choisis 1 minute ou 30 secondes pour ajuster les passages courts, ou Vue entière pour voir l’ensemble. Le défilement manuel désactive « Suivre la lecture » ; « Au curseur » retrouve l’image courante sans modifier les repères.</p><p>Pour un changement de plan, clique le losange blanc puis glisse-le, saisis son instant, utilise les boutons −1 / +1 image ou place-le au curseur. La vidéo reste visible pendant toutes ces actions.</p><p><kbd>Espace</kbd> lecture/pause · <kbd>←</kbd> / <kbd>→</kbd> avancer d’une image · <kbd>S</kbd> scinder un bloc · <kbd>P</kbd> ajouter un plan · <kbd>Suppr</kbd> supprimer la sélection · <kbd>Ctrl+Z</kbd> annuler.</p><p>« Voir l’analyse initiale » affiche les propositions d’origine en transparence. Elles sont conservées ; tes corrections sont prioritaires. Les hachures signalent les passages non validés. La sauvegarde du navigateur est un brouillon : utilise « Enregistrer les corrections » pour conserver le JSON.</p><button id="reset">Revenir au point de départ</button></dialog>
 <dialog id="list-dialog"><button class="close" data-close>Fermer</button><h2 id="count"></h2><div class="table-wrap"><table><thead><tr><th>Bloc</th><th>Voix</th><th>Début</th><th>Fin</th><th>État</th></tr></thead><tbody id="rows"></tbody></table></div></dialog>
 <dialog id="options-dialog"><button class="close" data-close>Fermer</button><h2>Lecteur d’impro</h2><p>Le lecteur exporté reprend tes corrections et les choix audio ci-dessous. Les repères clignotent 1,5 seconde avant la parole et la vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe.</p><div id="duo-options" hidden><p>Coche les voix à retirer. Les choix se cumulent et sont repris dans le lecteur exporté.</p><div id="remove-voices" class="toolbar"></div><p><label><input id="keep-ambience" type="checkbox" checked> Conserver l’ambiance et la musique</label></p><p><label><input id="keep-unknown" type="checkbox" checked> Conserver les paroles non attribuées</label></p><div class="toolbar"><button id="mix-keep-all">Tout conserver</button><button id="mix-remove-all">Retirer toutes les voix</button></div><p>La séparation peut laisser des restes de voix. Un chevauchement avec une voix retirée est coupé dans le dialogue ; le fond reste indépendant.</p></div><p id="no-duo-note">Ce projet n’a pas de pistes séparées : le lecteur conserve le son original. Recrée-le avec la préparation audio pour choisir les voix et l’ambiance.</p></dialog>
+
+<dialog id="mp4-dialog"><button class="close" data-close>Fermer</button><h2>Vidéo d’entraînement MP4</h2>
+<p>Les corrections actuelles seront utilisées. Choisis une ou deux voix à doubler dans « Options du lecteur », ainsi que l’ambiance. Les autres voix restent présentes sauf pendant un chevauchement avec une voix retirée.</p>
+<p id="mp4-choices"></p><button id="mp4-options">Choisir les voix et l’ambiance</button><p>Repères incrustés : annonce de parole 1,5 seconde avant, « À VOUS » pendant la parole et annonce de plan 0,5 seconde avant.</p>
+<label>Qualité <select id="mp4-profile"><option value="mail">Compact — 360p, environ 4 Mo/min</option><option value="standard">Standard — 720p, environ 14 Mo/min</option></select></label>
+<p id="mp4-estimate"></p><p>La taille dépend de la durée. Si le fichier dépasse la limite de ta messagerie, partage-le par lien ou comme document dans WhatsApp.</p>
+<p id="mp4-status" role="status"></p><progress id="mp4-progress" value="0" max="1"></progress>
+<div class="toolbar"><button id="mp4-start" class="primary">Créer le MP4</button><button id="mp4-cancel" disabled>Annuler l’export</button><button id="mp4-download" hidden>Télécharger le MP4</button></div>
+<p>Garde la fenêtre Lancer-studio ouverte pendant l’export. Aucun envoi de message n’est effectué.</p></dialog>
 <script id="editor-data" type="application/json">__EDITOR_DATA__</script><script>
 /* Moteur partagé : choix cumulables et mixage indépendant du fond sonore. */
 (() => {
@@ -356,5 +365,78 @@ function referenceFor(person,list){const candidates=list.filter(i=>i.character==
 function exportPeople(list){return people.map(p=>({...p,reference:referenceFor(p,list)}));}
 
 $('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title:DATA.title||'Scène',analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix)};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;const program={schema:'doublagebasic.show.v1',autoAdvance:false,scenes:[{title:data.title,data,performers:{}}]};DoubalgeDownloads.download(DoubalgeDownloads.htmlBlob(DATA.showTemplate,'__SHOW_DATA__',program),'spectacle.html');message('Téléchargement du spectacle demandé avec '+summaryText()+'. Vérifie avec Ctrl + J.');}catch(e){message(e.message,true);}};
+
+/* Export FFmpeg local : la requête ne contient que les corrections, jamais une nouvelle analyse. */
+(() => {
+  let running = false, exportName = '', polling = false, exportedState = null;
+  const status = text => { $('mp4-status').textContent = text; };
+  async function api(path, body) {
+    const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST',
+      headers: { 'X-Doubalge-Token': globalThis.DOUBALGE_EXPORT_TOKEN, 'Content-Type': 'application/json' },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    if (!response.ok) { let message = 'Le service local ne répond plus. Garde Lancer-studio ouvert.';
+      try { message = (await response.json()).error || message; } catch {} throw Error(message); }
+    return path === '/video' ? response.blob() : response.json();
+  }
+  function estimate() {
+    const bitrate = $('mp4-profile').value === 'mail' ? 514 : 1896;
+    $('mp4-estimate').textContent = `Durée : ${fmt(duration)} · taille indicative : ${(duration * bitrate / 8000).toFixed(1)} Mo.`;
+  }
+  async function poll() {
+    if (polling) return;
+    polling = true;
+    try {
+      const state = await api('/status');
+      $('mp4-progress').value = state.progress;
+      running = state.status === 'running';
+      $('mp4-start').disabled = running;
+      $('mp4-cancel').disabled = !running;
+      if (running) status(`Encodage sur ce PC : ${Math.round(state.progress * 100)} %…`);
+      else if (state.status === 'done') { status('MP4 prêt avec les corrections figées au lancement. Télécharge-le puis vérifie l’image et le son avant de le partager.'); $('mp4-download').hidden = false; }
+      else if (state.status === 'cancelled') status('Export annulé. Tes corrections sont conservées.');
+      else if (state.status === 'error') status(state.error);
+    } catch (error) { running = false; status(error.message); $('mp4-start').disabled = false; $('mp4-cancel').disabled = true; }
+    finally { polling = false; }
+    if (running) setTimeout(poll, 500);
+  }
+  $('mp4-open').onclick = () => {
+    $('mp4-choices').textContent = 'Voix à doubler : ' + (audioMix.removedCharacters.map(label).join(', ') || 'aucune sélectionnée')
+      + ' · Ambiance : ' + (audioMix.keepAmbience ? 'conservée' : 'retirée');
+    estimate();
+    if (!globalThis.DOUBALGE_EXPORT_TOKEN) status('Pour encoder sur ce PC : enregistre tes corrections JSON, ouvre Lancer-studio.cmd, choisis « Oui » puis cet éditeur HTML, et importe tes corrections. Aucun nouveau calcul IA.');
+    else if (!running) {
+      if (exportedState && exportedState !== JSON.stringify(documentData())) {
+        $('mp4-download').hidden = true;
+        status('Les corrections ont changé. Crée un nouveau MP4 pour les reprendre.');
+      } else status('Prêt. Les corrections seront figées au clic sur « Créer le MP4 ».');
+    }
+    $('mp4-start').disabled = running || !globalThis.DOUBALGE_EXPORT_TOKEN || !DATA.duoAudio;
+    if (!DATA.duoAudio) status('Cette scène ne contient pas les pistes séparées. Prépare-la avec le choix des voix et de l’ambiance, en fournissant ton JSON corrigé.');
+    $('mp4-dialog').showModal();
+  };
+  $('mp4-options').onclick = () => { $('mp4-dialog').close(); $('options-dialog').showModal(); };
+  $('mp4-profile').onchange = estimate;
+  $('mp4-start').onclick = async () => {
+    try {
+      validate(documentData());
+      if (![1, 2].includes(audioMix.removedCharacters.length)) throw Error('Choisis une ou deux voix à retirer dans « Options du lecteur ».');
+      $('mp4-start').disabled = true; $('mp4-download').hidden = true;
+      exportName = `entrainement-${DATA.analysis_id.slice(0,8)}-${exportStamp().filename}.mp4`;
+      exportedState = JSON.stringify(documentData());
+      status('Préparation du son et des repères…');
+      await api('/export', { edits: documentData(), profile: $('mp4-profile').value });
+      running = true; poll();
+    } catch (error) { status(error.message); $('mp4-start').disabled = false; }
+  };
+  $('mp4-cancel').onclick = async () => {
+    try { await api('/cancel', {}); status('Annulation en cours…'); } catch (error) { status(error.message); }
+  };
+  $('mp4-download').onclick = async () => {
+    $('mp4-download').disabled = true;
+    try { DoubalgeDownloads.download(await api('/video'), exportName); }
+    catch (error) { status(error.message); }
+    finally { $('mp4-download').disabled = false; }
+  };
+})();
 
 </script></body></html>
