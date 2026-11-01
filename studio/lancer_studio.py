@@ -97,7 +97,7 @@ def verifier_events(data: dict, duration: float):
 
 
 def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages=0,
-            cpu=False, token=None, corrections: Path | None = None, separation=True):
+            cpu=False, token=None, corrections: Path | None = None, separation=True, detection='auto'):
     initialiser()
     from commun import duree_et_taille, est_url
     from telecharge import extrait_audio, telecharge
@@ -146,6 +146,7 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
             known.update(p['id'] for p in saved['corrections']['characters'])
         corrected = valider_corrections(corrected, digest, duration,
                                        saved.get('analysis_id') if saved else None, known)
+    detection_info = saved.get('detection') if saved else None
     if saved is not None:
         if saved.get('source_sha256'):
             if saved['source_sha256'] != digest:
@@ -163,33 +164,15 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
         cuts = [c['time'] for c in corrected['cuts']]
         print('[analyse] Corrections manuelles réutilisées ; aucune nouvelle attribution IA.', flush=True)
     else:
-        import torch
-        from pyannote.audio import Pipeline
-        from pyannote.audio.core.task import Problem, Resolution, Specifications
-        from diarisation import diarise_pyannote
-        torch.set_num_threads(min(os.cpu_count() or 1, 4))
-        gpu = not cpu and torch.cuda.is_available()
-        print('[analyse] ' + (torch.cuda.get_device_name(0) if gpu else 'CPU'), flush=True)
-        original = Pipeline.from_pretrained.__func__
-
-        def charger(cls, *args, **kwargs):
-            pipeline = original(cls, *args, **kwargs)
-            if pipeline is not None and gpu:
-                pipeline.to(torch.device('cuda'))
-            return pipeline
-
-        Pipeline.from_pretrained = classmethod(charger)
-        try:
-            with torch.serialization.safe_globals([
-                torch.torch_version.TorchVersion, Problem, Resolution, Specifications
-            ]):
-                events = diarise_pyannote(str(wav), token if token is not None else lire_token(), personnages)
-        finally:
-            Pipeline.from_pretrained = classmethod(original)
-        events = verifier_events({'events': events}, duration)
+        from detection_parole import detecter
+        result = detecter(wav, token if token is not None else lire_token(), personnages, cpu,
+                          duration, travail, mode=detection)
+        events = verifier_events(result, duration)
+        detection_info = {k: v for k, v in result.items() if k != 'events'}
         # Sauvegarde avant les étapes suivantes : une erreur d’export ne perd plus l’analyse audio.
         ecrire_json(sortie / 'timeline.json', {'source': source, 'source_sha256': digest,
-                    'duration': duration, 'events': events, 'cuts': [], 'plans_a_recalculer': True})
+                    'duration': duration, 'events': events, 'cuts': [], 'plans_a_recalculer': True,
+                    'detection': detection_info})
         cuts = detecte_plans(str(video))
     if saved and saved.get('plans_a_recalculer'):
         cuts = detecte_plans(str(video))
@@ -197,6 +180,8 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
                 (saved.get('analysis_id', uuid.uuid4().hex) if saved else uuid.uuid4().hex),
                 'source': source, 'source_sha256': digest,
                 'duration': duration, 'fps': fps, 'events': events, 'cuts': cuts}
+    if detection_info:
+        analysis['detection'] = detection_info
     if corrected is not None:
         analysis['corrections'] = corrected
         analysis['corrected_only'] = saved is None or saved.get('corrected_only', False)
@@ -217,6 +202,8 @@ def traiter(source: str, sortie: Path, timeline: Path | None = None, personnages
 def choisir():
     import tkinter as tk
     from tkinter import filedialog, messagebox
+    from tkinter import ttk
+    from detection_parole import python_avance
     window = tk.Tk()
     window.title('Doubalge — préparer une scène')
     window.configure(bg='#11151d')
@@ -224,6 +211,10 @@ def choisir():
     source, timeline, corrections = tk.StringVar(), tk.StringVar(), tk.StringVar()
     separation = tk.BooleanVar(value=True)
     personnages = tk.IntVar(value=0)
+    advanced = python_avance() is not None
+    modes = {'Automatique (Community-1 si installé)': 'auto',
+             'Community-1 — amélioré': 'community-1', 'Classique 3.1': 'classique'}
+    detection = tk.StringVar(value='Community-1 — amélioré' if advanced else 'Classique 3.1')
     result = []
 
     def fichier(variable, title, extensions):
@@ -237,7 +228,7 @@ def choisir():
             return
         result.append((source.get().strip(), Path(timeline.get()) if timeline.get() else None,
                        Path(corrections.get()) if corrections.get() else None,
-                       separation.get(), personnages.get()))
+                       separation.get(), personnages.get(), modes[detection.get()]))
         window.destroy()
 
     tk.Label(window, text='Préparer une scène', bg='#11151d', fg='white', font=('Segoe UI', 17, 'bold')).grid(row=0, column=0, columnspan=2, sticky='w', padx=20, pady=18)
@@ -255,8 +246,13 @@ def choisir():
                    activeforeground='white').grid(row=7, column=0, columnspan=2, sticky='w', padx=20, pady=8)
     tk.Label(window, text='Nombre de voix attendu (0 = automatique, ignoré si JSON fourni)', bg='#11151d', fg='#aab8cc').grid(row=8, column=0, sticky='w', padx=20)
     tk.Spinbox(window, from_=0, to=20, textvariable=personnages, width=5).grid(row=8, column=1, sticky='w')
-    tk.Label(window, text='L’éditeur s’ouvrira dans le navigateur après la préparation.', bg='#11151d', fg='#aab8cc').grid(row=9, column=0, columnspan=2, sticky='w', padx=20, pady=8)
-    tk.Button(window, text='Créer l’éditeur', bg='#2967b2', fg='white', command=lancer).grid(row=10, column=0, columnspan=2, sticky='e', padx=20, pady=(8, 20))
+    tk.Label(window, text='Détection des voix (ignorée si un JSON est fourni)', bg='#11151d', fg='#aab8cc').grid(row=9, column=0, sticky='w', padx=20, pady=(10, 4))
+    ttk.Combobox(window, values=list(modes), textvariable=detection, state='readonly', width=34).grid(row=10, column=0, columnspan=2, sticky='w', padx=20)
+    note = ('Community-1 est prêt : la nouvelle analyse sera effectuée sur ce PC.' if advanced else
+            'Pour activer Community-1, exécutez Installer-studio.cmd à jour.')
+    tk.Label(window, text=note, bg='#11151d', fg='#aab8cc').grid(row=11, column=0, columnspan=2, sticky='w', padx=20, pady=8)
+    tk.Label(window, text='L’éditeur s’ouvrira dans le navigateur après la préparation.', bg='#11151d', fg='#aab8cc').grid(row=12, column=0, columnspan=2, sticky='w', padx=20, pady=8)
+    tk.Button(window, text='Créer l’éditeur', bg='#2967b2', fg='white', command=lancer).grid(row=13, column=0, columnspan=2, sticky='e', padx=20, pady=(8, 20))
     window.mainloop()
     return result[0] if result else None
 
@@ -271,16 +267,17 @@ def main():
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('--personnages', type=int, default=0)
     parser.add_argument('--sans-ouvrir', action='store_true')
+    parser.add_argument('--detection', choices=['auto', 'community-1', 'classique'], default='auto')
     args = parser.parse_args()
     if not args.video:
         selected = choisir()
         if selected is None:
             return
-        args.video, args.timeline, args.corrections, separation, args.personnages = selected
+        args.video, args.timeline, args.corrections, separation, args.personnages, args.detection = selected
         args.sans_audio_separe = not separation
     output = args.sortie or ROOT / 'resultats' / ('edition-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
     editor, _ = traiter(args.video, output, args.timeline, args.personnages, args.cpu,
-                        corrections=args.corrections, separation=not args.sans_audio_separe)
+                        corrections=args.corrections, separation=not args.sans_audio_separe, detection=args.detection)
     if not args.sans_ouvrir:
         webbrowser.open(editor.as_uri())
 

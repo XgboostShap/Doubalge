@@ -25,8 +25,11 @@ Le dépôt GitHub fonctionne aussi directement avec ses huit modules à la racin
    Un JSON corrigé peut aussi être placé dans le champ Timeline ; il est reconnu automatiquement.
    Garder « Préparer le choix des voix et de l’ambiance » coché pour créer les pistes audio.
 
-La clé doit permettre l’accès aux modèles pyannote speaker-diarization-3.1 et
-segmentation-3.0. Les modèles sont téléchargés lors de la première analyse.
+La nouvelle détection utilise **[pyannote Community-1](https://huggingface.co/pyannote/speaker-diarization-community-1)**.
+La clé doit permettre l’accès à ce modèle ; accepter ses conditions sur Hugging Face
+si ce n’est pas déjà fait. Le modèle classique reste disponible et nécessite l’accès
+à speaker-diarization-3.1 et segmentation-3.0. Les modèles sont téléchargés lors de
+la première analyse, puis conservés sur le PC.
 Internet reste nécessaire pour les premiers modèles et les vidéos YouTube.
 Le contrôle d’accès du service YouTube peut refuser certains téléchargements.
 
@@ -34,6 +37,42 @@ Le traitement se fait sur le PC. La diarisation et la séparation voix/fond util
 la carte NVIDIA si CUDA est disponible ; les exports vidéo utilisent le CPU. Le périphérique est affiché
 dans la console. Le mode hors ligne Hugging Face est désactivé pour ce lanceur.
 Le lancement utilise UTF-8 pour éviter les erreurs d’écriture de rapport Windows.
+
+## Détection des prises de parole
+
+Pour activer l’amélioration sur une installation existante, copier `studio` et
+`Installer-studio.cmd` depuis la nouvelle version, puis relancer **Installer-studio.cmd**
+une seule fois. Il conserve `.venv` et prépare un environnement de détection séparé
+`.venv-detection` avec pyannote 4. Cela conserve la compatibilité du traitement
+audio existant. CUDA 12.8 est utilisé pour la RTX 5060 Ti ; l’option `cpu` du script
+reste disponible.
+
+Dans **Lancer-studio.cmd**, la liste **Détection des voix** propose Community-1
+quand l’installation est prête et le modèle classique 3.1. Community-1 améliore
+généralement la séparation et le comptage des locuteurs sur les évaluations publiées,
+mais ne garantit pas une identification parfaite des personnages d’un film.
+Indiquer le **nombre de voix attendu** si on le connaît aide à limiter les groupes
+superflus. Les numéros Voix 1, Voix 2… restent des groupes acoustiques à vérifier.
+
+Les deux modes conservent maintenant les petites pauses : l’ancienne fusion
+automatique jusqu’à 0,3 seconde a été supprimée. Seules les plages qui se
+chevauchent pour une même voix sont réunies, et les voix simultanées sont conservées.
+Community-1 utilise sa sortie standard, pas sa sortie exclusive qui imposerait
+une seule voix à la fois.
+
+**Un JSON existant est toujours prioritaire.** Un JSON corrigé ne déclenche aucune
+nouvelle attribution IA, même si Community-1 est sélectionné. Pour tester une
+nouvelle détection, choisir la vidéo sans JSON et garder les anciens résultats à
+part. Les corrections ne sont pas utilisées pour réentraîner automatiquement le modèle.
+
+Le traitement reste local ; la télémétrie pyannote est désactivée. Le modèle est
+chargé directement depuis son cache complet, sans requête réseau quand les fichiers
+sont déjà présents. L’audio est chargé en mémoire pour éviter de dépendre des DLL
+de décodage FFmpeg sur Windows.
+Le processus de détection libère son GPU avant la séparation audio. Le modèle,
+sa révision et le périphérique sont enregistrés dans `timeline.json` pour identifier
+la détection réellement utilisée. Une erreur du modèle avancé est signalée, sans
+substitution silencieuse par l’ancien modèle.
 
 ## Corriger la scène
 
@@ -217,6 +256,7 @@ codés en dur dans le générateur. Chaque vidéo produit ses propres données.
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 studio\lancer_studio.py --video "D:\Videos\scene.mp4"
+.\.venv\Scripts\python.exe -X utf8 studio\lancer_studio.py --video "D:\Videos\scene.mp4" --detection community-1 --personnages 3
 .\.venv\Scripts\python.exe -X utf8 studio\lancer_studio.py --video "D:\Videos\scene.mp4" --timeline "D:\Resultats\timeline.json"
 .\.venv\Scripts\python.exe -X utf8 studio\lancer_studio.py --video "D:\Videos\scene.mp4" --corrections "D:\Resultats\timeline-corrigee.json"
 ```
@@ -229,6 +269,13 @@ Il suffit du même fichier vidéo et du JSON ; l’ancienne attribution automati
 n’est pas nécessaire. Une nouvelle copie vidéo réencodée ne possède pas la même empreinte.
 
 ## Vérifications et limites
+
+Les tests de détection vérifient les pauses courtes, les chevauchements, l’ordre
+d’apparition des voix, les installations incomplètes et la réutilisation exacte
+des corrections sans appel IA. Community-1 est également essayé sur une vidéo
+réelle, sur CPU. Les performances et la qualité d’attribution sur le PC Windows
+et sur chaque nouvel extrait restent à contrôler ; aucun taux d’erreur garanti
+n’est annoncé pour les scènes de film.
 
 Le test local génère une vidéo synthétique, effectue de vrais glissements et
 exports dans Chromium, puis lit le lecteur exporté. Les écrans 1280×720,

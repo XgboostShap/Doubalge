@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-detection/
 .cache/
 resultats/
 token_hf.txt

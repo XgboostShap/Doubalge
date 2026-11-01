@@ -18,6 +18,19 @@ if errorlevel 1 goto error
 if errorlevel 1 goto error
 ".venv\Scripts\python.exe" -m pip check
 if errorlevel 1 goto error
+if exist ".venv-detection\installation-ok.txt" del ".venv-detection\installation-ok.txt"
+if exist ".venv-detection\Scripts\python.exe" goto detection_dependencies
+".venv\Scripts\python.exe" -m venv .venv-detection
+if errorlevel 1 goto error
+:detection_dependencies
+".venv-detection\Scripts\python.exe" -m pip install "torch==2.8.0+%STUDIO_BUILD%" "torchaudio==2.8.0+%STUDIO_BUILD%" --index-url https://download.pytorch.org/whl/%STUDIO_BUILD%
+if errorlevel 1 goto error
+".venv-detection\Scripts\python.exe" -m pip install -r studio\requirements-detection.txt
+if errorlevel 1 goto error
+".venv-detection\Scripts\python.exe" -m pip check
+if errorlevel 1 goto error
+".venv-detection\Scripts\python.exe" -c "from pathlib import Path; Path('.venv-detection/installation-ok.txt').write_text('community-1-v1', encoding='utf-8')"
+if errorlevel 1 goto error
 echo Installation terminee. Ouvrez Lancer-studio.cmd.
 pause
 exit /b 0
