@@ -211,10 +211,14 @@ reprend les règles du lecteur : l’ambiance est indépendante, mais retirer un
 coupe aussi les autres dialogues pendant un chevauchement. Des résidus vocaux
 peuvent rester dans le fond sonore.
 
-Le service écoute uniquement sur `127.0.0.1:8765`, avec un jeton propre à chaque
-session. L’encodage et les médias restent sur le PC, sans besoin d’Internet.
-Une seule fenêtre de lanceur peut utiliser ce port à la fois ; fermer la précédente
-avant de rouvrir une autre scène. Les fichiers temporaires sont nettoyés à l’arrêt
+Le service écoute uniquement sur le PC (`127.0.0.1`). Le lanceur affiche l’adresse
+simple de l’éditeur, sans clé dans l’URL. Les commandes d’export restent protégées
+par une clé propre à la session. Si le port 8765 est occupé, un autre port libre
+est choisi automatiquement ; ouvrir l’adresse affichée pour cette scène.
+Sous Windows, les sessions ne peuvent plus partager le même port. Une ancienne
+adresse avec clé propose de revenir à la page de la session courante.
+L’encodage et les médias restent sur le PC, sans besoin d’Internet.
+Les fichiers temporaires sont nettoyés à l’arrêt
 normal du lanceur. Les corrections restent à sauvegarder avec **Enregistrer les
 corrections** ; le service ne réécrit pas le HTML d’origine.
 
@@ -386,3 +390,14 @@ Les gabarits proviennent des HTML fournis par l’utilisateur et de la branche
 `video-controle-20261028-6c04ef`, notamment pour retrouver les corrections OSS.
 Le travail porte sur la disposition compacte, les contrôles d’image et de plan,
 la génération depuis une nouvelle vidéo et les lanceurs PC.
+
+### Si l’ancien navigateur affiche « Accès refusé »
+
+La préparation peut être terminée même si l’éditeur local ne s’est pas ouvert.
+Quand la console affiche `[terminé] Éditeur : …`, conserver ce dossier de résultats.
+Après mise à jour du dossier `studio`, fermer les anciennes consoles Lancer-studio,
+relancer `Lancer-studio.cmd`, répondre **Oui** et choisir le **OSS-editeur.html**
+indiqué par ce message. Aucune détection ni séparation n’est relancée. Importer
+le dernier JSON corrigé si des modifications avaient déjà été enregistrées.
+Le lanceur affiche désormais une adresse simple telle que `http://127.0.0.1:8765/` ;
+utiliser celle de la console courante si le navigateur conserve un ancien onglet.
