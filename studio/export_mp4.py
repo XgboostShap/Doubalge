@@ -115,45 +115,6 @@ def mix_audio(dialogue, background, output, intervals, mix, duration, cancel):
             offset += n
 
 
-def ass_time(seconds):
-    cs = round(seconds * 100)
-    return f'{cs//360000}:{cs//6000%60:02}:{cs//100%60:02}.{cs%100:02}'
-
-
-def cues(edits, path):
-    text = ('[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n'
-            '[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n'
-            'Style: Default,Arial,20,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,3,2,0,7,12,12,12,1\n'
-            '[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n')
-    def event(a, b, label, position):
-        nonlocal text
-        if b > a:
-            text += f'Dialogue: 0,{ass_time(a)},{ass_time(b)},Default,,0,0,0,,{{\\pos(12,{position})}}{label}\n'
-    for row, character in enumerate(c for c in edits['characters'] if c['id'] in edits['audioMix']['removedCharacters']):
-        label = ''.join(c for c in character['label'] if c not in '{}\\\r\n')[:60]
-        ranges = sorted((i['start'], i['end']) for i in edits['intervals'] if i['character'] == character['id'])
-        # Balayage des débuts/fins : un seul repère par voix, même en chevauchement.
-        changes = {}
-        for start, end in ranges:
-            for instant, active_delta, upcoming_delta in [(max(0, start-1.5), 0, 1),
-                                                          (start, 1, -1), (end, -1, 0)]:
-                delta = changes.setdefault(instant, [0, 0])
-                delta[0] += active_delta
-                delta[1] += upcoming_delta
-        points = sorted(changes)
-        active = upcoming = 0
-        for a, b in zip(points, points[1:]):
-            active += changes[a][0]
-            upcoming += changes[a][1]
-            if active:
-                event(a, b, f'{label} : À VOUS', 12+row*55)
-            elif upcoming:
-                event(a, b, f'{label} : bientôt', 12+row*55)
-    for cut in edits['cuts']:
-        event(max(0, cut['time']-.5), min(edits['duration'], cut['time']+.15), 'CHANGEMENT DE PLAN', 320)
-    path.write_text(text, encoding='utf-8')
-
-
 def render(document, request, directory, cancel, progress):
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -166,9 +127,6 @@ def render(document, request, directory, cancel, progress):
         raise ValueError('Les pistes dialogue et ambiance sont nécessaires.')
     profile = PROFILES[request['profile']]
     directory = Path(directory).resolve()
-    filters = subprocess.run([FFMPEG, '-hide_banner', '-filters'], capture_output=True, text=True).stdout
-    if ' ass ' not in filters:
-        raise RuntimeError('Ce FFmpeg ne dispose pas de libass pour les repères. Mettez imageio-ffmpeg à jour.')
     progress(.01)
     video = directory / 'source.mp4'
     write_media(document.get('improMedia', document['media']), video)
@@ -180,17 +138,9 @@ def render(document, request, directory, cancel, progress):
     mixed = directory / 'mix.wav'
     mix_audio(directory/'dialogue.wav', directory/'background.wav', mixed, edits['intervals'],
               edits['audioMix'], edits['duration'], cancel)
-    subtitles = directory / 'cues.ass'
-    cues(edits, subtitles)
-    width, height, bitrate, audio = profile
-    output = directory / 'entrainement.mp4'
-    command = [FFMPEG, '-hide_banner', '-loglevel', 'error', '-y', '-i', str(video), '-i', str(mixed),
-               '-map', '0:v:0', '-map', '1:a:0', '-vf',
-               f'scale={width}:{height}:force_original_aspect_ratio=decrease:force_divisible_by=2,ass=filename=cues.ass',
-               '-c:v', 'libx264', '-threads', '2', '-preset', 'veryfast', '-pix_fmt', 'yuv420p',
-               '-b:v', f'{bitrate}k', '-maxrate', f'{bitrate}k', '-bufsize', f'{bitrate*2}k',
-               '-c:a', 'aac', '-b:a', f'{audio}k', '-ar', '48000', '-ac', '2',
-               '-t', str(edits['duration']), '-movflags', '+faststart', '-progress', 'pipe:1', str(output)]
-    run(command, cancel, lambda n: progress(.15+.84*n), edits['duration'], cwd=directory)
+    from mp4_visuals import encode_video
+    encode_video(document, edits, video, mixed, directory/'entrainement.mp4', profile,
+                 cancel, progress, FFMPEG)
+    output = directory/'entrainement.mp4'
     progress(1.)
     return output

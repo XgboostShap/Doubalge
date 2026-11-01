@@ -10,7 +10,7 @@ import threading
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from export_mp4 import Cancelled, cues, render, run, windows
+from export_mp4 import Cancelled, render, run, windows
 
 
 class MixRulesTests(unittest.TestCase):
@@ -82,14 +82,11 @@ class RenderTests(unittest.TestCase):
                 for t, retained in [(.4, len(removed) == 1), (.9, False), (1.5, len(removed) == 1), (2.45, True)]:
                     self.assertGreater(amplitude(t, 440), .08) if retained else self.assertLess(amplitude(t, 440), .015)
                     self.assertGreater(amplitude(t, 110), .08) if ambience else self.assertLess(amplitude(t, 110), .015)
-                ass = (Path(work)/'cues.ass').read_text(encoding='utf-8')
-                self.assertIn('0:00:00.50,0:00:01.15', ass)  # plan corrigé à 1.0 s
-                self.assertNotIn('{\\test}', ass)
-                # Comparer les pixels avec/sans incrustation en haut à gauche.
+                # Comparer les pixels avec/sans vignettes en bas de l'image.
                 def frame(path):
                     return np.frombuffer(subprocess.check_output(['ffmpeg', '-v', 'error', '-ss', '0.9', '-i', str(path), '-frames:v', '1', '-vf', 'scale=480:360', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']), dtype=np.uint8).reshape(360, 480, 3).astype(float)
                 a, b = frame(output), frame(Path(work)/'source.mp4')
-                self.assertGreater(np.mean(abs(a[:110,:300]-b[:110,:300])), 8)
+                self.assertGreater(np.mean(abs(a[210:310,400:470]-b[210:310,400:470])), 8)
 
     def test_mismatched_corrections_and_invalid_selection_rejected(self):
         request = self.request([], True)

@@ -197,8 +197,15 @@ le rapport d’image et le contenu. La taille annoncée est indicative ; les lim
 varient selon la messagerie. Si nécessaire, envoyer comme document ou utiliser
 un lien de partage. Cette version exporte toute la scène.
 
-Le MP4 incruste le nom du rôle et « bientôt » 1,5 seconde avant chaque reprise,
-« À VOUS » pendant la parole, et « CHANGEMENT DE PLAN » 0,5 seconde avant la coupe.
+Le MP4 conserve les vignettes du lecteur impro : portraits lorsqu’ils sont présents,
+sinon symboles V1, V2… avec les couleurs et noms corrigés. Toutes les voix sont
+visibles à droite, avec « Film » ou « À vous » selon les rôles choisis. Les cartes
+restent atténuées à 35 % au repos, clignotent toutes les 0,25 seconde dès 1,5 seconde
+avant la parole, puis restent allumées pendant la réplique. Les photos sont empilées
+et les symboles sans photo sont alignés horizontalement, comme dans le lecteur.
+La vignette en bas à gauche montre une image du prochain plan corrigé, clignote
+0,5 seconde avant la coupe et reste allumée 0,25 seconde après. Les paroles non
+attribuées conservent leur avertissement. La vidéo reste cadrée dans une scène 16:9.
 Les repères suivent les corrections actuelles, sans nouvelle analyse IA. Le mixage
 reprend les règles du lecteur : l’ambiance est indépendante, mais retirer une voix
 coupe aussi les autres dialogues pendant un chevauchement. Des résidus vocaux
@@ -217,14 +224,15 @@ Les tests sous Linux/Chromium couvrent l’export depuis l’interface, le tél�
 les codecs réellement produits, les repères incrustés, les corrections réattribuées,
 le refus d’une autre source, la progression et l’annulation. Les tests mesurent le
 signal **après décodage du MP4 AAC**, pour une et deux voix retirées, avec et sans
-ambiance, y compris un chevauchement. Le binaire FFmpeg du paquet Windows 0.7.0
-contient libass et libx264 ; son exécution sur Windows et la réception effective
+ambiance, y compris un chevauchement. Le rendu utilise OpenCV et Pillow (déjà installés avec le studio), puis FFmpeg
+pour le H.264/AAC. Son exécution sur Windows et la réception effective
 dans WhatsApp/iOS/Android restent à vérifier sur les appareils réels.
 
 ```bash
 python -m unittest discover -s studio/tests -p 'test_*.py' -v
 python studio/tests/make_fixture.py /chemin/resultat-test
 node studio/tests/test_mp4.cjs /chemin/resultat-test/OSS-editeur.html
+node studio/tests/test_mp4_visuals.cjs /chemin/resultat-test/OSS.html
 ```
 
 Le test navigateur utilise Playwright, Chromium et FFprobe. La variable `PYTHON`

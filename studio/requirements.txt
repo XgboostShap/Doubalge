@@ -8,3 +8,4 @@ imageio-ffmpeg==0.7.0
 soundfile==0.14.0
 yt-dlp[default,deno]==2026.10.26
 deno==2.9.8
+pillow
