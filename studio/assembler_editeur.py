@@ -8,8 +8,9 @@ def assembler():
     layout = (root / 'editor-layout.html').read_text(encoding='utf-8')
     script = (root / 'editor.js').read_text(encoding='utf-8')
     audio = (root / 'audio.js').read_text(encoding='utf-8')
+    downloads = (root / 'downloads.js').read_text(encoding='utf-8')
     text = (layout + '<script id="editor-data" type="application/json">__EDITOR_DATA__</script>'
-            + '<script>\n' + audio + '\n' + script + '\n</script></body></html>')
+            + '<script>\n' + audio + '\n' + downloads + '\n' + script + '\n</script></body></html>')
     (root / 'templates' / 'editeur.html').write_text(text, encoding='utf-8')
     player = (root / 'player-layout.html').read_text(encoding='utf-8')
     script = (root / 'player.js').read_text(encoding='utf-8')

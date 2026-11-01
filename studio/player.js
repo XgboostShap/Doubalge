@@ -18,6 +18,11 @@ for (const [n, person] of DATA.characters.entries()) {
 $('portraits').classList.toggle('audio-only', DATA.characters.every(p => !p.photo));
 const pending = intervals.filter(i => !i.reviewed).length, pendingCuts = cuts.filter(c => !c.reviewed).length;
 $('note').textContent = pending || pendingCuts ? `Repères provisoires : ${pending} passage(s) et ${pendingCuts} plan(s) restent à vérifier.` : 'Repères validés.';
+if (DATA.exportedAt) {
+  const summary = DATA.correctionSummary;
+  $('note').textContent += ' Export du ' + new Date(DATA.exportedAt).toLocaleString('fr-FR')
+    + (summary ? ` · ${summary.passages} passages, ${summary.added} ajoutés, ${summary.modified} modifiés, ${summary.removed} supprimés.` : '');
+} else $('note').textContent += ' Fichier créé à la préparation de la scène. Exporte un nouveau lecteur depuis l’éditeur pour reprendre les corrections ultérieures.';
 const fmt = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(Math.floor(t % 60)).padStart(2, '0');
 let audioContext = null, audioReady = null, buffers = null, graph = null, generation = 0;
 

@@ -24,9 +24,11 @@ async function downloadText(download) {
         bottom: Math.max(...['video', 'timeline', 'cut-delete', 'delete', 'status'].map(
           id => document.getElementById(id).getBoundingClientRect().bottom)),
         timeline: $('timeline').getBoundingClientRect().height, room: $('scroll').clientHeight,
+        wave: waveH,
       }));
       assert.ok(geometry.scroll <= height && geometry.bottom <= height, JSON.stringify(geometry));
       assert.ok(geometry.timeline <= geometry.room, 'Timeline tronquée');
+      assert.ok(geometry.wave >= 40, 'Forme d’onde trop petite');
       await page.close();
       console.log(`Écran ${width}×${height} : tous les contrôles visibles.`);
     }
@@ -36,6 +38,11 @@ async function downloadText(download) {
     await page.setContent(fixture);
     await page.waitForFunction(() => $('video').readyState >= 2);
     const automatic = await page.evaluate(() => JSON.stringify([DATA.automatic, DATA.automaticCuts]));
+    await page.locator('#wave-options').click();
+    await page.locator('#wave-size').selectOption('160');
+    await page.locator('#wave-gain').evaluate(input => { input.value = 4; input.dispatchEvent(new Event('input')); });
+    await page.locator('#wave-dialog [data-close]').click();
+    assert.equal(await page.evaluate(() => waveGain), 4);
     await page.locator('[data-kind="edit"][data-id="e000000"]').click();
     await page.locator('#start').fill('0.12');
     await page.locator('#start').press('Tab');
@@ -85,6 +92,15 @@ async function downloadText(download) {
     await page.locator('#remove-voices input[data-character="voice:1"]').check();
     await page.locator('#keep-ambience').uncheck();
     await page.locator('#options-dialog [data-close]').click();
+    // Ajout, nouvelle attribution et suppression doivent aussi traverser l’export.
+    await page.locator('#seek').fill('2.85');
+    await page.locator('#go').click();
+    await page.locator('#add').click();
+    await page.locator('#character').selectOption('voice:3');
+    const addedId = await page.evaluate(() => current().id);
+    assert.ok(addedId.startsWith('edit-'));
+    await page.locator('[data-kind="edit"][data-id="e000004"]').click();
+    await page.locator('#delete').click();
     // Les données de correction et le lecteur exporté doivent contenir les modifications courantes.
     await page.evaluate(() => { people[0].label = '</script><script>globalThis.__bad=true</script>'; });
     let pending = page.waitForEvent('download');
@@ -94,12 +110,20 @@ async function downloadText(download) {
     await page.locator('#impro').click();
     const html = await downloadText(await pending);
     const playerData = JSON.parse(html.match(/<script id="impro-data" type="application\/json">(.*?)<\/script>/s)[1]);
+    assert.ok((await pending).suggestedFilename().startsWith('version-impro-test-edi-'));
     assert.deepEqual(playerData.intervals, corrections.intervals);
     assert.deepEqual(playerData.cuts, corrections.cuts);
     assert.deepEqual(playerData.audioMix, corrections.audioMix);
     assert.deepEqual(playerData.audioMix.removedCharacters, ['voice:0', 'voice:1']);
     assert.equal(playerData.audioMix.keepAmbience, false);
     assert.equal(playerData.characters[0].label, '</script><script>globalThis.__bad=true</script>');
+    assert.equal(playerData.intervals.find(i => i.id === addedId).character, 'voice:3');
+    assert.equal(playerData.intervals.some(i => i.id === 'e000004'), false);
+    assert.equal(playerData.correctionSummary.added, 1);
+    assert.equal(playerData.correctionSummary.removed, 1);
+    assert.ok(playerData.correctionSummary.modified > 0);
+    assert.ok(Number.isFinite(Date.parse(playerData.exportedAt)));
+    assert.deepEqual(playerData.correctionSummary, corrections.correctionSummary);
     pending = page.waitForEvent('download');
     await page.locator('#spectacle').click();
     const showHtml = await downloadText(await pending);
@@ -113,15 +137,20 @@ async function downloadText(download) {
     assert.equal(await show.evaluate(() => globalThis.__bad), undefined);
     console.log('Exports : JSON et lecteur impro conservent les corrections et les choix audio cumulés.');
 
-    const player = await browser.newPage();
+    const previewOpened = page.waitForEvent('popup');
+    await page.locator('#reader-preview').click();
+    const player = await previewOpened;
     player.on('pageerror', error => failures.push(error.message));
-    await player.setContent(html);
     await player.waitForFunction(() => document.getElementById('video').readyState >= 2);
+    assert.deepEqual(await player.evaluate(() => DATA.intervals), corrections.intervals);
+    assert.deepEqual(await player.evaluate(() => DATA.cuts), corrections.cuts);
     assert.equal(await player.evaluate(() => globalThis.__bad), undefined);
     await player.locator('#play').click();
     await player.waitForFunction(() => document.getElementById('video').currentTime > .1);
     await player.locator('#play').click();
     assert.ok(await player.evaluate(() => document.getElementById('video').paused));
+    await page.locator('#add').click();
+    assert.equal(await page.locator('#reader-preview').isVisible(), false, 'Un ancien export ne doit pas être proposé après une nouvelle correction.');
     console.log('Lecteur impro : vidéo autonome, lecture et pause vérifiées.');
     assert.deepEqual(failures, []);
   } finally {

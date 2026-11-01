@@ -6,7 +6,7 @@
 @media(max-height:760px){main{padding:7px 10px;gap:6px;grid-template-rows:auto minmax(118px,.8fr) auto minmax(166px,1fr) auto auto}.subtitle{display:none}h1{font-size:18px}.form{padding:7px 8px}.form h2{margin-bottom:5px}.form .actions button{font-size:11px;padding:4px 6px}.fields{margin-bottom:6px}.transport button,.transport select{padding:5px 7px}.status-row .hint{font-size:10px}.player{padding:6px}}
 @media(max-width:1150px){.subtitle{display:none}.player{grid-template-columns:minmax(0,1fr) 250px}.status-row .hint{display:none}.form .fields{gap:5px}.form select{max-width:115px}.form input[type=number]{width:66px}.form .actions button{font-size:11px;padding:4px 5px}.topbar button{font-size:11px;padding:5px 7px}.transport{gap:4px}#clock{font-size:13px;min-width:165px}.transport .toolbar{gap:4px}#zoom{width:95px}}
 /* Vidéo à gauche, voix et corrections dans l’espace à droite. */
-main{grid-template-rows:auto minmax(236px,.85fr) auto minmax(215px,1fr) auto}
+main{grid-template-rows:auto minmax(236px,.8fr) auto minmax(270px,1.15fr) auto}
 .player{grid-template-columns:minmax(240px,.85fr) minmax(160px,.4fr) minmax(490px,1.2fr)}
 .video-box video{object-position:left center}
 .editors{grid-template-columns:minmax(0,1fr);gap:6px;align-content:center;min-height:0}
@@ -20,7 +20,8 @@ main{grid-template-rows:auto minmax(236px,.85fr) auto minmax(215px,1fr) auto}
 .timeline-navigation label{display:flex;align-items:center;gap:5px;white-space:nowrap}
 #timeline-position{flex:1;min-width:80px;accent-color:#7eb4ff;padding:0;cursor:ew-resize}
 #visible-range{font:12px ui-monospace,monospace;white-space:nowrap;min-width:165px;text-align:center}
-@media(max-height:760px){main{grid-template-rows:auto minmax(220px,.85fr) auto minmax(205px,1fr) auto}.form{padding:6px 8px}.form h2{margin-bottom:4px}.fields{margin-bottom:5px}.timeline-navigation{gap:5px}}
+#reader-preview{color:#c9e3ff;background:#263f60;border:1px solid #547aab;border-radius:5px;padding:3px 7px;font-size:12px;white-space:nowrap;text-decoration:none}#reader-preview[hidden]{display:none}
+@media(max-height:760px){main{grid-template-rows:auto minmax(206px,.8fr) auto minmax(260px,1.15fr) auto}.form{padding:6px 8px}.form h2{margin-bottom:4px}.fields{margin-bottom:5px}.timeline-navigation{gap:5px}}
 @media(max-width:1350px){.player{grid-template-columns:minmax(230px,.75fr) minmax(145px,.38fr) minmax(490px,1.35fr);gap:8px}.person{padding:3px 6px;min-height:27px}.person small{font-size:9px}.timeline-navigation .nav-label{display:none}.form .actions button{font-size:11px;padding:4px 6px}}
 </style></head><body><main>
 <header class="topbar"><div class="heading"><h1>Édition de la scène</h1><span class="subtitle">Paroles et plans, sur un seul écran</span></div><div class="actions"><button id="undo" title="Ctrl+Z">Annuler</button><button id="redo" title="Ctrl+Y">Rétablir</button><button id="export">Enregistrer les corrections</button><button id="import">Importer</button><input id="import-file" class="file" type="file" accept=".json,application/json"><button id="options-open">Options du lecteur</button><button id="impro" class="primary">Exporter le lecteur impro</button><button id="spectacle" class="primary">Mode spectacle</button><button id="help-open" aria-label="Aide">?</button></div></header>
@@ -31,9 +32,10 @@ main{grid-template-rows:auto minmax(236px,.85fr) auto minmax(215px,1fr) auto}
 </section>
 </section>
 <section class="toolbar transport" aria-label="Lecture et affichage"><div class="toolbar"><button id="play" class="primary" title="Espace">Lire / Pause</button><button id="frame-back" title="Image précédente, flèche gauche">◀ Image</button><button id="frame-next" title="Image suivante, flèche droite">Image ▶</button><span id="clock">00:00.00</span><label>Aller à <input id="seek" type="number" min="0" step="0.01" value="0"> s</label><button id="go">Aller</button></div><div class="toolbar"><label><input id="compare-auto" type="checkbox"> Voir l’analyse initiale</label><label>Vue <select id="zoom"><option value="180s" selected>3 minutes</option><option value="60s">1 minute</option><option value="30s">30 secondes</option><option value="1">Vue entière</option><option value="2">×2</option><option value="4">×4</option><option value="8">×8</option></select></label><button id="list-open">Liste</button></div></section>
-<section class="timeline-panel"><div class="scroll" id="scroll"><svg id="timeline" aria-label="Timeline modifiable des paroles, des plans et de la forme d’onde"></svg></div><nav class="timeline-navigation" aria-label="Navigation dans la timeline"><span class="nav-label">Défiler</span><button id="timeline-back" aria-label="Voir la partie précédente">◀</button><input id="timeline-position" type="range" min="0" max="0" value="0" step="0.01" aria-label="Début de la partie visible de la timeline"><button id="timeline-next" aria-label="Voir la partie suivante">▶</button><output id="visible-range">00:00 – 03:00</output><button id="timeline-cursor">Au curseur</button><label><input id="follow-playback" type="checkbox" checked> Suivre la lecture</label></nav></section>
-<footer class="status-row"><p id="status" role="status">Prêt. Sélectionne un bloc ou un repère de plan pour le corriger.</p><span class="hint">Glisser : déplacer · Bords : ajuster · Maj + glisser : créer · Espace : lire</span></footer>
+<section class="timeline-panel"><div class="scroll" id="scroll"><svg id="timeline" aria-label="Timeline modifiable des paroles, des plans et de la forme d’onde"></svg></div><nav class="timeline-navigation" aria-label="Navigation dans la timeline"><span class="nav-label">Défiler</span><button id="timeline-back" aria-label="Voir la partie précédente">◀</button><input id="timeline-position" type="range" min="0" max="0" value="0" step="0.01" aria-label="Début de la partie visible de la timeline"><button id="timeline-next" aria-label="Voir la partie suivante">▶</button><output id="visible-range">00:00 – 03:00</output><button id="timeline-cursor">Au curseur</button><label><input id="follow-playback" type="checkbox" checked> Suivre la lecture</label><button id="wave-options">Forme d’onde</button></nav></section>
+<footer class="status-row"><p id="status" role="status">Prêt. Sélectionne un bloc ou un repère de plan pour le corriger.</p><a id="reader-preview" hidden target="_blank" rel="noopener">Voir ce lecteur</a><span id="edit-summary" class="hint"></span></footer>
 </main>
+<dialog id="wave-dialog"><button class="close" data-close>Fermer</button><h2>Forme d’onde du son</h2><p>Une forme d’onde plus haute aide à placer les débuts et fins de parole. Le gain ci-dessous amplifie uniquement le dessin, pas le volume sonore.</p><div class="fields"><label>Hauteur <select id="wave-size"><option value="56">Normale</option><option value="96" selected>Grande</option><option value="160">Très grande</option></select></label><label>Gain visuel <input id="wave-gain" type="range" min="1" max="8" step="1" value="2"><output id="wave-gain-value">×2</output></label></div><p>La hauteur s’adapte à la place disponible pour garder la vidéo, toutes les pistes et les commandes à l’écran.</p></dialog>
 <dialog id="help-dialog"><button class="close" data-close>Fermer</button><h2>Corriger la scène</h2><p>Sur la timeline, clique un bloc de parole pour le sélectionner. Glisse son centre pour le déplacer, ses bords pour ajuster le début ou la fin, ou déplace-le vers la ligne d’une autre voix. Les champs à droite de la vidéo permettent une saisie précise.</p><p>La vue affiche jusqu’à trois minutes. La barre sous la timeline et ses flèches permettent de parcourir la suite sans déplacer la vidéo. Les noms des voix restent visibles à gauche. Choisis 1 minute ou 30 secondes pour ajuster les passages courts, ou Vue entière pour voir l’ensemble. Le défilement manuel désactive « Suivre la lecture » ; « Au curseur » retrouve l’image courante sans modifier les repères.</p><p>Pour un changement de plan, clique le losange blanc puis glisse-le, saisis son instant, utilise les boutons −1 / +1 image ou place-le au curseur. La vidéo reste visible pendant toutes ces actions.</p><p><kbd>Espace</kbd> lecture/pause · <kbd>←</kbd> / <kbd>→</kbd> avancer d’une image · <kbd>S</kbd> scinder un bloc · <kbd>P</kbd> ajouter un plan · <kbd>Suppr</kbd> supprimer la sélection · <kbd>Ctrl+Z</kbd> annuler.</p><p>« Voir l’analyse initiale » affiche les propositions d’origine en transparence. Elles sont conservées ; tes corrections sont prioritaires. Les hachures signalent les passages non validés. La sauvegarde du navigateur est un brouillon : utilise « Enregistrer les corrections » pour conserver le JSON.</p><button id="reset">Revenir au point de départ</button></dialog>
 <dialog id="list-dialog"><button class="close" data-close>Fermer</button><h2 id="count"></h2><div class="table-wrap"><table><thead><tr><th>Bloc</th><th>Voix</th><th>Début</th><th>Fin</th><th>État</th></tr></thead><tbody id="rows"></tbody></table></div></dialog>
 <dialog id="options-dialog"><button class="close" data-close>Fermer</button><h2>Lecteur d’impro</h2><p>Le lecteur exporté reprend tes corrections et les choix audio ci-dessous. Les repères clignotent 1,5 seconde avant la parole et la vignette de gauche annonce le prochain plan 0,5 seconde avant la coupe.</p><div id="duo-options" hidden><p>Coche les voix à retirer. Les choix se cumulent et sont repris dans le lecteur exporté.</p><div id="remove-voices" class="toolbar"></div><p><label><input id="keep-ambience" type="checkbox" checked> Conserver l’ambiance et la musique</label></p><p><label><input id="keep-unknown" type="checkbox" checked> Conserver les paroles non attribuées</label></p><div class="toolbar"><button id="mix-keep-all">Tout conserver</button><button id="mix-remove-all">Retirer toutes les voix</button></div><p>La séparation peut laisser des restes de voix. Un chevauchement avec une voix retirée est coupé dans le dialogue ; le fond reste indépendant.</p></div><p id="no-duo-note">Ce projet n’a pas de pistes séparées : le lecteur conserve le son original. Recrée-le avec la préparation audio pour choisir les voix et l’ambiance.</p></dialog>
@@ -126,6 +128,45 @@ main{grid-template-rows:auto minmax(236px,.85fr) auto minmax(215px,1fr) auto}
   globalThis.DoubalgeAudio = { normaliseMix, union, windows, createGraph };
 })();
 
+/* Assemble les exports sans construire une chaîne contenant tous les médias. */
+(() => {
+  'use strict';
+  const CHUNK = 256 * 1024;
+  function* jsonParts(value) {
+    if (typeof value === 'string') {
+      yield '"';
+      for (let at = 0; at < value.length; at += CHUNK)
+        yield JSON.stringify(value.slice(at, at + CHUNK)).slice(1, -1).replace(/</g, '\\u003c');
+      yield '"';
+    } else if (Array.isArray(value)) {
+      yield '[';
+      for (let n = 0; n < value.length; n++) { if (n) yield ','; yield* jsonParts(value[n] ?? null); }
+      yield ']';
+    } else if (value && typeof value === 'object') {
+      yield '{'; let separator = '';
+      for (const [key, child] of Object.entries(value)) {
+        if (child === undefined) continue;
+        yield separator; yield* jsonParts(key); yield ':'; yield* jsonParts(child); separator = ',';
+      }
+      yield '}';
+    } else yield JSON.stringify(value);
+  }
+  function htmlBlob(template, marker, data) {
+    if (typeof template !== 'string' || template.split(marker).length !== 2)
+      throw Error('Gabarit d’export absent ou incomplet. Actualise cet éditeur avec la dernière version de studio.');
+    const at = template.indexOf(marker);
+    return new Blob([template.slice(0, at), ...jsonParts(data), template.slice(at + marker.length)],
+      { type: 'text/html;charset=utf-8' });
+  }
+  function download(blob, filename) {
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove();
+    // Laisser au navigateur le temps de prendre en charge les fichiers volumineux.
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  globalThis.DoubalgeDownloads = { jsonParts, htmlBlob, download };
+})();
+
 
 'use strict';
 const DATA=JSON.parse(document.getElementById('editor-data').textContent);
@@ -134,6 +175,8 @@ const clone=x=>JSON.parse(JSON.stringify(x)), round=x=>Math.round(x*100)/100;
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const duration=DATA.duration, people=DATA.characters, known=new Set(people.map(p=>p.id));
 let audioMix=DoubalgeAudio.normaliseMix(DATA,people);
+let waveSize=96,waveGain=2;
+let lastReaderURL=null,lastExportState=null;
 const person=id=>people.find(p=>p.id===id), label=id=>person(id)?.label||'Inconnu / hors champ';
 const color=id=>person(id)?.color||'#758398';
 const fmt=t=>{const n=Math.round(Math.max(0,t)*100);return String(Math.floor(n/6000)).padStart(2,'0')+':'+String(Math.floor(n/100)%60).padStart(2,'0')+'.'+String(n%100).padStart(2,'0');};
@@ -145,6 +188,9 @@ function message(text,error=false){$('status').textContent=text;$('status').titl
 function snapshot(){return {intervals:clone(intervals),cuts:clone(cuts),audioMix:clone(audioMix)};}
 function restore(state){intervals=clone(state.intervals);cuts=clone(state.cuts);if(state.audioMix)audioMix=clone(state.audioMix);}
 function documentData(){return {schema:DATA.schema,analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,characters:people.map(p=>({id:p.id,label:p.label,color:p.color})),...snapshot()};}
+function editSummary(){const baseline=DATA.automatic?.length?DATA.automatic:DATA.initial,originals=new Map(baseline.map(i=>[i.id,i])),ids=new Set(intervals.map(i=>i.id));return {basis:DATA.automatic?.length?'automatic':'initial',passages:intervals.length,added:intervals.filter(i=>!originals.has(i.id)).length,modified:intervals.filter(i=>{const old=originals.get(i.id);return old&&['start','end','character','reviewed'].some(k=>i[k]!==old[k]);}).length,removed:baseline.filter(i=>!ids.has(i.id)).length};}
+function summaryText(s=editSummary()){return `${s.passages} passages · ${s.added} ajoutés · ${s.modified} modifiés · ${s.removed} supprimés`;}
+function exportStamp(){const date=new Date();return {exportedAt:date.toISOString(),correctionSummary:editSummary(),filename:date.toISOString().replace(/[-:]/g,'').replace(/\..*$/,'').replace('T','-')};}
 function validateCuts(list){if(!Array.isArray(list)||list.length>10000)throw Error('Liste de plans invalide.');const ids=new Set();const result=list.map(c=>{if(!c||typeof c.id!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(c.id)||ids.has(c.id))throw Error('Identifiant de plan invalide ou répété.');ids.add(c.id);if(typeof c.time!=='number'||!Number.isFinite(c.time)||c.time<=0||c.time>=duration||typeof c.reviewed!=='boolean')throw Error('Chaque plan doit être à l’intérieur de la vidéo et avoir un état de validation.');return {id:c.id,time:c.time,reviewed:c.reviewed};}).sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id));if(result.some((c,n)=>n&&Math.abs(c.time-result[n-1].time)<.005))throw Error('Deux changements de plan ne peuvent pas occuper le même instant.');return result;}
 function validate(d){
  if(!d||d.schema!==DATA.schema||d.analysis_id!==DATA.analysis_id||d.source_sha256!==DATA.source_sha256)throw Error('Ce fichier concerne une autre vidéo ou une autre analyse.');
@@ -194,9 +240,9 @@ function renderTimeline(){
  W=LEFT+Math.max(1,$('scroll').clientWidth-LEFT-12)*zoom+12;
  timelineScale=(W-LEFT-12)/duration;
  timelineWidth=$('scroll').clientWidth;
- RH=Math.max(16,Math.min(42,Math.floor((available-126)/lanes.length)));
- editTop=20;cutTop=editTop+lanes.length*RH+12;waveTop=cutTop+CUT_H+14;
- waveH=Math.max(22,Math.min(56,available-waveTop-22));H=waveTop+waveH+22;
+ RH=Math.max(16,Math.min(42,Math.floor((available-waveSize-90)/lanes.length)));
+ editTop=20;cutTop=editTop+lanes.length*RH+8;waveTop=cutTop+CUT_H+8;
+ waveH=Math.max(40,Math.min(waveSize,available-waveTop-22));H=waveTop+waveH+22;
  svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
  let content='<defs><pattern id="unreviewed" width="7" height="7" patternUnits="userSpaceOnUse"><path d="M-2 2L2-2M0 7L7 0M5 9L9 5" stroke="#fff" stroke-opacity=".18"/></pattern></defs>';
  content+='<text x="3" y="12" fill="#b9c9df" font-size="11">Paroles</text>';
@@ -213,7 +259,7 @@ function renderTimeline(){
  if($('compare-auto').checked)for(const c of DATA.automaticCuts||[]){const x=xAt(c.time);content+=`<line x1="${x}" x2="${x}" y1="${cutTop}" y2="${cutTop+CUT_H}" stroke="#7b8a9e" stroke-dasharray="3 3" pointer-events="none"/>`;}
  for(const c of cuts){const x=xAt(c.time),y=cutTop+CUT_H/2,sel=c.id===selectedCut;content+=`<g class="segment cut" data-kind="cut" data-id="${esc(c.id)}"><rect x="${x-10}" y="${cutTop-3}" width="20" height="${CUT_H+6}" fill="transparent"/><path d="M${x} ${y-8}L${x+7} ${y}L${x} ${y+8}L${x-7} ${y}Z" fill="${c.reviewed?'#fff':'#64768e'}" stroke="${sel?'#ffe044':'#fff'}" stroke-width="${sel?3:1}"/><title>${fmt(c.time)} · ${c.reviewed?'validé':'à vérifier'}</title></g>`;}
  content+=`<text x="3" y="${waveTop+16}" fill="#b9c9df" font-size="11">Son</text><rect x="${LEFT}" y="${waveTop}" width="${W-LEFT-12}" height="${waveH}" fill="#0e1721"/>`;
- let path='';DATA.peaks.forEach((v,n)=>{const x=LEFT+n/Math.max(1,DATA.peaks.length-1)*(W-LEFT-12),a=Math.max(0,Math.min(1,v))*(waveH/2-3);path+=`M${x.toFixed(1)} ${(waveTop+waveH/2-a).toFixed(1)}V${(waveTop+waveH/2+a).toFixed(1)}`;});content+=`<path d="${path}" stroke="#52d3de" stroke-width="1" pointer-events="none"/>`;
+ let path='';DATA.peaks.forEach((v,n)=>{const x=LEFT+n/Math.max(1,DATA.peaks.length-1)*(W-LEFT-12),a=Math.max(0,Math.min(1,v*waveGain))*(waveH/2-3);path+=`M${x.toFixed(1)} ${(waveTop+waveH/2-a).toFixed(1)}V${(waveTop+waveH/2+a).toFixed(1)}`;});content+=`<path id="waveform" d="${path}" stroke="#52d3de" stroke-width="1" pointer-events="none"/>`;
  const i=current();if(i)content+=`<rect x="${xAt(i.start)}" y="${waveTop}" width="${Math.max(1,xAt(i.end)-xAt(i.start))}" height="${waveH}" fill="${color(i.character)}" fill-opacity=".17" pointer-events="none"/>`;
  const step=[1,2,5,10,15,30,60,120,300,600].find(n=>n>=duration/(7*zoom))||600;
  for(let t=0;t<=duration;t+=step){const x=xAt(t);content+=`<line x1="${x}" x2="${x}" y1="${waveTop+waveH}" y2="${waveTop+waveH+4}" stroke="#9badc4"/><text x="${x}" y="${waveTop+waveH+17}" fill="#9badc4" font-size="10" text-anchor="middle">${fmt(t).slice(0,5)}</text>`;}
@@ -232,7 +278,7 @@ function renderRows(){const rows=$('rows');rows.replaceChildren();for(const [n,i
  for(const text of [label(i.character),fmt(i.start),fmt(i.end),i.reviewed?'Validé':'À vérifier']){const cell=document.createElement('td');cell.textContent=text;tr.append(cell);}rows.append(tr);}
  $('count').textContent=intervals.length+' intervalles · '+intervals.filter(i=>!i.reviewed).length+' à vérifier';}
 function renderCuts(){const select=$('cut-select');select.replaceChildren(new Option('Sélectionner un plan',''));for(const [n,c] of cuts.entries())select.add(new Option(`Plan ${n+1} · ${fmt(c.time)}${c.reviewed?' ✓':' ?'}`,c.id));if(!currentCut())selectedCut=null;select.value=selectedCut||'';const c=currentCut();for(const name of ['cut-time','cut-reviewed','cut-before','cut-after','cut-delete','cut-cursor','cut-nudge-back','cut-nudge-next'])$(name).disabled=!c;$('cut-time').value=c?c.time:'';$('cut-reviewed').checked=!!c?.reviewed;$('cut-count').textContent=cuts.length+' changement(s) de plan · '+cuts.filter(c=>!c.reviewed).length+' à vérifier';}
-function render(){sort();renderForm();renderCuts();renderTimeline();renderRows();renderMix();}
+function render(){sort();renderForm();renderCuts();renderTimeline();renderRows();renderMix();$('edit-summary').textContent=summaryText();$('reader-preview').hidden=!lastReaderURL||lastExportState!==JSON.stringify(snapshot());}
 function updateCursor(){const t=video.currentTime||0,x=xAt(t),cursor=$('playhead');if(cursor){cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);}$('clock').textContent=fmt(t)+' / '+fmt(duration);
  if(document.activeElement!==$('seek'))$('seek').value=round(t);
  for(const button of $('people').querySelectorAll('button')){const character=button.dataset.character||null,active=intervals.some(i=>i.character===character&&i.start<=t&&t<i.end),soon=!active&&intervals.some(i=>i.character===character&&i.start-1.5<=t&&t<i.start);button.classList.toggle('speaking',active);button.classList.toggle('upcoming',soon);const status=button.querySelector('small');status.textContent=active?'Parole en cours':soon?'Bientôt':'Cliquer pour affecter';}
@@ -274,7 +320,7 @@ $('cut-before').onclick=()=>{if(currentCut())seek(currentCut().time-.12);};$('cu
 $('undo').onclick=()=>{if(!undo.length)return;redo.push(snapshot());restore(undo.pop());persist();render();};
 $('redo').onclick=()=>{if(!redo.length)return;undo.push(snapshot());restore(redo.pop());persist();render();};
 $('reset').onclick=()=>change(()=>{intervals=clone(DATA.initial);cuts=clone(DATA.initialCuts||[]);selected=null;selectedCut=null;});
-$('export').onclick=()=>{try{validate(documentData());const blob=new Blob([JSON.stringify(documentData(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='timeline-corrigee-'+DATA.analysis_id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Corrections enregistrées. Le lecteur impro exporté reprend vos modifications.');}catch(e){message(e.message,true);}};
+$('export').onclick=()=>{try{const edits=validate(documentData()),stamp=exportStamp(),filename='timeline-corrigee-'+DATA.analysis_id+'-'+stamp.filename+'.json';DoubalgeDownloads.download(new Blob([JSON.stringify({...documentData(),exportedAt:stamp.exportedAt,correctionSummary:stamp.correctionSummary},null,2)],{type:'application/json'}),filename);message('Téléchargement demandé : '+filename+' · '+summaryText()+'. Vérifie avec Ctrl + J.');}catch(e){message(e.message,true);}};
 $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async event=>{const file=event.target.files[0];if(!file)return;try{const loaded=validate(JSON.parse(await file.text()));change(()=>{restore(loaded);selected=null;selectedCut=null;});message('Corrections importées. Les pistes automatiques sont inchangées.');}catch(e){message(e.message,true);}event.target.value='';};
 for(const p of people){if(!p.reference)continue;$('voice-references').hidden=false;const b=document.createElement('button');b.textContent='▶ '+p.label;b.title=p.reference.text||'';b.onclick=()=>{const ref=referenceFor(p,intervals);if(!ref){message('Aucun passage attribué à '+p.label,true);return;}seek(ref.start);stopAt=ref.end;video.play().catch(e=>message(e.message,true));message(p.label+' · Extrait repère · '+fmt(ref.start));};$('voice-references').append(b);}
 function validateMix(value){if(!value||!Array.isArray(value.removedCharacters)||value.removedCharacters.some(id=>!known.has(id))||typeof value.keepAmbience!=='boolean'||typeof value.keepUnknown!=='boolean')throw Error('Choix des voix ou de l’ambiance invalide.');return {removedCharacters:[...new Set(value.removedCharacters)],keepAmbience:value.keepAmbience,keepUnknown:value.keepUnknown};}
@@ -284,7 +330,8 @@ $('keep-ambience').onchange=()=>change(()=>{audioMix.keepAmbience=$('keep-ambien
 $('keep-unknown').onchange=()=>change(()=>{audioMix.keepUnknown=$('keep-unknown').checked;});
 $('mix-keep-all').onclick=()=>change(()=>{audioMix={removedCharacters:[],keepAmbience:true,keepUnknown:true};});
 $('mix-remove-all').onclick=()=>change(()=>{audioMix.removedCharacters=people.map(p=>p.id);audioMix.keepUnknown=false;});
-$('impro').onclick=()=>{try{const edits=validate(documentData()),data={duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix)};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;data.title=DATA.title||'Scène';data.analysis_id=DATA.analysis_id;data.source_sha256=DATA.source_sha256;data.showTemplate=DATA.showTemplate;const serialized=JSON.stringify(data).replace(/</g,'\\u003c'),html=DATA.improTemplate.replace('__IMPRO_DATA__',()=>serialized),url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='version-impro.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Lecteur impro exporté avec vos corrections et vos choix audio.');}catch(e){message(e.message,true);}};
+$('reader-preview').onclick=()=>video.pause();
+$('impro').onclick=()=>{try{const edits=validate(documentData()),stamp=exportStamp(),data={duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix),exportedAt:stamp.exportedAt,correctionSummary:stamp.correctionSummary};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;data.title=DATA.title||'Scène';data.analysis_id=DATA.analysis_id;data.source_sha256=DATA.source_sha256;data.showTemplate=DATA.showTemplate;const filename='version-impro-'+DATA.analysis_id.slice(0,8)+'-'+stamp.filename+'.html';const blob=DoubalgeDownloads.htmlBlob(DATA.improTemplate,'__IMPRO_DATA__',data);DoubalgeDownloads.download(blob,filename);if(lastReaderURL)URL.revokeObjectURL(lastReaderURL);lastReaderURL=URL.createObjectURL(blob);lastExportState=JSON.stringify(snapshot());$('reader-preview').href=lastReaderURL;$('reader-preview').hidden=false;message('Téléchargement demandé : '+filename+' · '+summaryText()+'. Ouvre ce fichier avec Ctrl + J.');}catch(e){message(e.message+' Enregistre le JSON corrigé pour conserver ton travail.',true);}};
 document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea'))return;if(e.code==='Space'){e.preventDefault();play();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();$(e.shiftKey?'redo':'undo').click();}else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();$('redo').click();}else if(e.key==='Delete'){if(currentCut())removeCut();else remove();}else if(e.key.toLowerCase()==='s')split();});
 video.src=DATA.media;video.addEventListener('error',()=>message('Lecture impossible dans cet aperçu. Téléchargez le HTML complet puis ouvrez-le dans Chrome, Firefox ou Edge.',true));
 video.addEventListener('timeupdate',updateCursor);video.addEventListener('seeked',updateCursor);video.addEventListener('ended',()=>{stopAt=null;updateCursor();});
@@ -298,7 +345,8 @@ $('frame-back').onclick=()=>nextFrame(-1);$('frame-next').onclick=()=>nextFrame(
 $('cut-nudge-back').onclick=()=>nudgeCut(-1);$('cut-nudge-next').onclick=()=>nudgeCut(1);
 $('cut-cursor').onclick=()=>{const c=currentCut();if(!c)return;video.pause();change(()=>{c.time=round(Math.min(duration-.01,Math.max(.01,video.currentTime||0)));c.reviewed=true;});};
 $('compare-auto').onchange=renderTimeline;
-for(const [button,dialog] of [['help-open','help-dialog'],['list-open','list-dialog'],['options-open','options-dialog']])$(button).onclick=()=>$(dialog).showModal();
+for(const [button,dialog] of [['help-open','help-dialog'],['list-open','list-dialog'],['options-open','options-dialog'],['wave-options','wave-dialog']])$(button).onclick=()=>$(dialog).showModal();
+for(const id of ['wave-size','wave-gain'])$(id).oninput=()=>{waveSize=Number($('wave-size').value);waveGain=Number($('wave-gain').value);$('wave-gain-value').textContent='×'+waveGain;renderTimeline();};
 for(const b of document.querySelectorAll('[data-close]'))b.onclick=()=>b.closest('dialog').close();
 $('no-duo-note').hidden=!!DATA.duoAudio;
 video.addEventListener('play',()=>{$('play').textContent='Pause';});video.addEventListener('pause',()=>{$('play').textContent='Lire / Pause';});
@@ -307,6 +355,6 @@ document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textar
 function referenceFor(person,list){const candidates=list.filter(i=>i.character===person.id).slice().sort((a,b)=>Number(b.reviewed)-Number(a.reviewed)||(b.end-b.start)-(a.end-a.start));const i=candidates[0];return i?{character:person.id,start:i.start,end:Math.min(i.end,i.start+5),text:'Extrait repère'}:null;}
 function exportPeople(list){return people.map(p=>({...p,reference:referenceFor(p,list)}));}
 
-$('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title:DATA.title||'Scène',analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix)};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;const program={schema:'doublagebasic.show.v1',autoAdvance:false,scenes:[{title:data.title,data,performers:{}}]},serialized=JSON.stringify(program).split('<').join(String.fromCharCode(92)+'u003c'),html=DATA.showTemplate.replace('__SHOW_DATA__',()=>serialized),url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='spectacle.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Spectacle exporté avec cette scène. Ouvre-le pour ajouter les autres vidéos et l’écran public.');}catch(e){message(e.message,true);}};
+$('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title:DATA.title||'Scène',analysis_id:DATA.analysis_id,source_sha256:DATA.source_sha256,duration,characters:exportPeople(edits.intervals),intervals:edits.intervals,cuts:edits.cuts,media:DATA.duoAudio?DATA.improMedia:DATA.media,audioMix:clone(audioMix)};if(DATA.duoAudio)data.duoAudio=DATA.duoAudio;const program={schema:'doublagebasic.show.v1',autoAdvance:false,scenes:[{title:data.title,data,performers:{}}]};DoubalgeDownloads.download(DoubalgeDownloads.htmlBlob(DATA.showTemplate,'__SHOW_DATA__',program),'spectacle.html');message('Téléchargement du spectacle demandé avec '+summaryText()+'. Vérifie avec Ctrl + J.');}catch(e){message(e.message,true);}};
 
 </script></body></html>

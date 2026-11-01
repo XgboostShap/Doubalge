@@ -50,6 +50,11 @@ ne change ni l’image courante ni les corrections et désactive **Suivre la lec
 **Au curseur** retrouve la position de lecture ; recocher **Suivre la lecture**
 permet à la timeline d’accompagner la vidéo.
 
+La forme d’onde est affichée plus haut, avec un gain visuel ×2. Le bouton
+**Forme d’onde** permet de choisir la hauteur et un gain de ×1 à ×8 pour repérer
+les passages faibles. Ce gain ne change pas le son. La hauteur s’adapte à la place
+disponible pour garder toutes les pistes à l’écran.
+
 - Cliquer un bloc de parole, puis glisser son centre pour le déplacer ou ses
   poignées pour ajuster ses bornes. Déplacer un bloc sur une autre ligne change sa voix.
 - Utiliser les champs Début / Fin ou le choix de voix pour une correction précise.
@@ -67,6 +72,20 @@ permet à la timeline d’accompagner la vidéo.
   indépendamment de conserver ou non l’ambiance/musique. Ces choix sont conservés
   dans le JSON et dans le lecteur exporté. Le lecteur permet aussi de les changer
   pendant la lecture. Par défaut, toutes les voix et l’ambiance sont conservées.
+
+Le bas de l’éditeur indique le nombre de passages ajoutés, modifiés et supprimés
+par rapport à l’analyse initiale, ou au point de départ si elle n’est pas disponible.
+Les exports JSON et impro portent la date et
+l’heure dans leur nom ; le lecteur affiche aussi ce récapitulatif et sa date
+d’export. **Ctrl + J** ouvre les téléchargements du navigateur : ouvrir le fichier
+`version-impro-…-date-heure.html` qui vient d’être créé. L’ancien `OSS.html` produit
+pendant la préparation ne change pas lorsqu’on corrige la scène dans le navigateur.
+Le message « Téléchargement demandé » ne garantit pas que le navigateur a enregistré
+le fichier : vérifier sa présence dans les téléchargements.
+Après l’export, **Voir ce lecteur** ouvre exactement les données qui viennent
+d’être préparées. Le lien disparaît dès qu’une nouvelle modification rend cet
+export ancien ; exporter à nouveau pour vérifier le dernier état. La vidéo de
+l’éditeur se met en pause à l’ouverture du lecteur.
 
 Espace : lire/pause ; flèches : image précédente/suivante ; S : scinder ; P :
 ajouter un plan ; Suppr : supprimer la sélection ; Ctrl+Z / Ctrl+Y : historique.
