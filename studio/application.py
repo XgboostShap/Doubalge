@@ -52,6 +52,7 @@ class Application:
         self._ui = Path(self._temp.name)
         self._home = self._ui/'accueil.html'
         self._home.write_text((STUDIO/'app-layout.html').read_text(encoding='utf-8'),encoding='utf-8')
+        self._destination = ROOT/'projets'
         self._approved = {}  # Les chemins viennent des dialogues natifs, pas du contenu importé.
 
     def _choose(self, kind, title, types=(), filename=''):
@@ -224,6 +225,17 @@ class Application:
             self._approved[field] = path
         return path
 
+    def preparation_settings(self):
+        return {'destination':str(self._destination)}
+
+    def choose_destination(self):
+        with self._lock:
+            self._idle()
+            path = self._choose('folder','Dossier des nouveaux projets')
+            if path:
+                self._destination = Path(path).resolve()
+            return self.preparation_settings()
+
     def prepare(self, options):
         with self._lock:
             self._idle()
@@ -231,13 +243,9 @@ class Application:
             if not source:
                 raise ValueError('Choisissez une vidéo ou une URL YouTube.')
             if not source.startswith(('https://','http://')) and source != self._approved.get('video'):
-                raise ValueError('Choisissez la vidéo avec le bouton Parcourir.')
-            parent = self._choose('folder','Dossier où conserver le nouveau projet')
-            if not parent:
-                return None
-            folder = Path(parent)/('scene-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
+                raise ValueError('Choisissez le fichier avec « Choisir une vidéo locale », ou collez une URL YouTube.')
+            folder = self._destination/('scene-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
             output = folder/'preparation'
-            folder.mkdir()
             command = [sys.executable,'-X','utf8','-u',str(STUDIO/'lancer_studio.py'),'--sans-ouvrir',
                        '--video',source,'--sortie',str(output)]
             for name in ('timeline','corrections'):
@@ -255,6 +263,7 @@ class Application:
             if options.get('cpu'):
                 command.append('--cpu')
             def task():
+                folder.mkdir(parents=True,exist_ok=False)
                 creation = {'creationflags':subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session':True}
                 self._process = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                     text=True,encoding='utf-8',errors='replace',cwd=ROOT,**creation)

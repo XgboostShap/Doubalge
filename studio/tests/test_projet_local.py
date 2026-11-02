@@ -81,6 +81,7 @@ class BridgeTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory()
         self.folder=Path(self.temp.name)
         self.app=Application()
+        self.app._destination=self.folder/'projets'
         class Window:
             def __init__(self):self.urls=[]
             def load_url(self,url):self.urls.append(url)
@@ -126,6 +127,25 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(self.app.job_status()['status'],'cancelled')
         self.assertEqual(destination.read_bytes(),b'previous-video')
 
+    def test_destination_changes_only_through_explicit_folder_button(self):
+        initial=self.app.preparation_settings()['destination']
+        with patch.object(self.app,'_choose',return_value=None):
+            self.assertEqual(self.app.choose_destination()['destination'],initial)
+        parent=self.folder/'destination-personnalisee'
+        with patch.object(self.app,'_choose',return_value=str(parent)) as choose:
+            self.assertEqual(self.app.choose_destination()['destination'],str(parent.resolve()))
+            self.assertEqual(choose.call_args.args[0],'folder')
+        self.assertFalse(parent.exists())
+
+    def test_default_destination_is_project_folder_without_dialog(self):
+        with patch('application.ROOT',self.folder):
+            other=Application()
+        try:
+            self.assertEqual(other.preparation_settings()['destination'],str(self.folder/'projets'))
+            self.assertFalse((self.folder/'projets').exists())
+        finally:
+            other.cleanup()
+
     def test_preparation_keeps_supplied_json_and_opens_new_project(self):
         corrected=self.folder/'corrige.json'
         corrected.write_text(json.dumps(document()))
@@ -138,11 +158,13 @@ class BridgeTests(unittest.TestCase):
                 (output/'OSS-editeur.html').write_text('<script id="editor-data" type="application/json">'+json.dumps(document())+'</script>')
                 self.stdout=iter(['[analyse] Corrections manuelles réutilisées\n'])
             def wait(self):return 0
-        with patch.object(self.app,'_choose',return_value=str(self.folder)),patch('application.subprocess.Popen',Process):
+        with patch.object(self.app,'_choose',side_effect=AssertionError('Aucun dialogue pour une URL')),patch('application.subprocess.Popen',Process):
             self.app.prepare({'source':'https://www.youtube.com/watch?v=test','corrections':str(corrected)})
             self.app._worker.join(5)
         self.assertEqual(self.app.job_status()['status'],'done')
         self.assertIn('--sans-ouvrir',calls[0])
+        self.assertEqual(calls[0][calls[0].index('--video')+1],'https://www.youtube.com/watch?v=test')
+        self.assertTrue(Path(calls[0][calls[0].index('--sortie')+1]).is_relative_to(self.app._destination))
         self.assertEqual(calls[0][calls[0].index('--corrections')+1],str(corrected))
         self.app.open_prepared()
         self.assertEqual(self.app._project.document()['analysis_id'],'test-project')

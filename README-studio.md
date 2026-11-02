@@ -31,7 +31,12 @@ encore empaquetée en un exécutable Windows indépendant.
 ## Parcours dans la fenêtre unique
 
 - **Nouvelle scène** : vidéo locale ou URL YouTube, timeline/corrections facultatives,
-  choix de la détection, nombre de voix et séparation audio. Le journal et
+  choix de la détection, nombre de voix et séparation audio. Pour une URL, cliquer
+  directement sur **Préparer la scène** : aucun fichier ni dossier n’est demandé.
+  La destination par défaut est le dossier `projets` de l’installation, affiché dans
+  le formulaire ; **Changer le dossier** reste facultatif. Le bouton **Choisir une
+  vidéo locale** sert aux fichiers déjà sur le PC et est désactivé lorsqu’une URL
+  est saisie. Le journal et
   l’annulation restent dans la fenêtre. Après préparation, **Éditer la scène préparée**.
 - **Ouvrir un projet** : sélectionner son fichier `projet.doubalge`.
 - L’éditeur conserve la vidéo, les blocs, les plans, la forme d’onde et annuler/rétablir.
@@ -53,7 +58,8 @@ premiers modèles et au téléchargement d’une nouvelle vidéo YouTube.
 
 ## Contenu d’un projet
 
-Chaque scène occupe un dossier distinct, contenant :
+Chaque nouvelle scène occupe un sous-dossier distinct de `projets` (ou de la
+destination choisie explicitement), contenant :
 
 - `projet.doubalge` : le fichier à ouvrir dans l’application ;
 - `document.json` : la scène et ses médias intégrés ;
