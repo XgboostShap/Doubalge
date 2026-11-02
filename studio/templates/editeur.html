@@ -207,8 +207,8 @@ function validate(d){
  const ids=new Set();const clean=d.intervals.map(i=>{if(!i||typeof i.id!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(i.id)||ids.has(i.id))throw Error('Identifiant invalide ou répété.');ids.add(i.id);
  if(typeof i.start!=='number'||typeof i.end!=='number'||!Number.isFinite(i.start)||!Number.isFinite(i.end)||i.start<0||i.end>duration||i.end<=i.start)throw Error('Chaque intervalle doit avoir 0 ≤ début < fin ≤ durée.');
  if(i.character!==null&&!known.has(i.character))throw Error('Personnage inconnu.');if(typeof i.reviewed!=='boolean')throw Error('État de validation invalide.');return {id:i.id,start:i.start,end:i.end,character:i.character,reviewed:i.reviewed};});return {intervals:clean,cuts:validateCuts(Object.hasOwn(d,'cuts')?d.cuts:cuts),audioMix:validateMix(d.audioMix??audioMix)};}
-function persist(){try{localStorage.setItem(storageKey,JSON.stringify({base,document:documentData()}));message('Brouillon enregistré dans ce navigateur. Enregistrez les corrections pour les conserver.');}catch(e){message('Sauvegarde locale indisponible : téléchargez les corrections avant de fermer cette page.',true);}}
-try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&saved.base===base){restore(validate(saved.document));message('Votre brouillon local a été restauré.');}}catch(e){}
+function persist(){if(globalThis.DOUBALGE_DESKTOP){DoubalgeDesktop.changed();return;}try{localStorage.setItem(storageKey,JSON.stringify({base,document:documentData()}));message('Brouillon enregistré dans ce navigateur. Enregistrez les corrections pour les conserver.');}catch(e){message('Sauvegarde locale indisponible : téléchargez les corrections avant de fermer cette page.',true);}}
+try{const saved=globalThis.DOUBALGE_DESKTOP?null:JSON.parse(localStorage.getItem(storageKey));if(saved&&saved.base===base){restore(validate(saved.document));message('Votre brouillon local a été restauré.');}}catch(e){}
 function sort(){intervals.sort((a,b)=>a.start-b.start||a.end-b.end||a.id.localeCompare(b.id));cuts.sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id));}
 function commit(before){sort();if(JSON.stringify(before)===JSON.stringify(snapshot()))return;validate(documentData());undo.push(before);if(undo.length>100)undo.shift();redo=[];persist();render();}
 function change(action){const before=snapshot();try{action();commit(before);}catch(e){restore(before);message(e.message,true);render();}}
@@ -371,6 +371,7 @@ $('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title
   let running = false, exportName = '', polling = false, exportedState = null;
   const status = text => { $('mp4-status').textContent = text; };
   async function api(path, body) {
+    if (globalThis.DOUBALGE_DESKTOP) return DoubalgeDesktop.mp4(path, body);
     const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST',
       headers: { 'X-Doubalge-Token': globalThis.DOUBALGE_EXPORT_TOKEN, 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -392,6 +393,7 @@ $('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title
       $('mp4-start').disabled = running;
       $('mp4-cancel').disabled = !running;
       if (running) status(`Encodage sur ce PC : ${Math.round(state.progress * 100)} %…`);
+      else if (state.status === 'done' && globalThis.DOUBALGE_DESKTOP) { status('MP4 enregistré : '+state.path+'. Vérifie le son et les vignettes avant de le partager.'); $('mp4-download').hidden = true; }
       else if (state.status === 'done') { status('MP4 prêt avec les corrections figées au lancement. Télécharge-le puis vérifie l’image et le son avant de le partager.'); $('mp4-download').hidden = false; }
       else if (state.status === 'cancelled') status('Export annulé. Tes corrections sont conservées.');
       else if (state.status === 'error') status(state.error);
@@ -403,14 +405,14 @@ $('spectacle').onclick=()=>{try{const edits=validate(documentData()),data={title
     $('mp4-choices').textContent = 'Voix à doubler : ' + (audioMix.removedCharacters.map(label).join(', ') || 'aucune sélectionnée')
       + ' · Ambiance : ' + (audioMix.keepAmbience ? 'conservée' : 'retirée');
     estimate();
-    if (!globalThis.DOUBALGE_EXPORT_TOKEN) status('Pour encoder sur ce PC : enregistre tes corrections JSON, ouvre Lancer-studio.cmd, choisis « Oui » puis cet éditeur HTML, et importe tes corrections. Aucun nouveau calcul IA.');
+    if (!(globalThis.DOUBALGE_EXPORT_TOKEN || globalThis.DOUBALGE_DESKTOP)) status('Pour encoder sur ce PC : enregistre tes corrections JSON, ouvre Lancer-studio.cmd, choisis « Importer une ancienne scène HTML », puis importe tes corrections dans l’éditeur. Aucun nouveau calcul IA.');
     else if (!running) {
       if (exportedState && exportedState !== JSON.stringify(documentData())) {
         $('mp4-download').hidden = true;
         status('Les corrections ont changé. Crée un nouveau MP4 pour les reprendre.');
       } else status('Prêt. Les corrections seront figées au clic sur « Créer le MP4 ».');
     }
-    $('mp4-start').disabled = running || !globalThis.DOUBALGE_EXPORT_TOKEN || !DATA.duoAudio;
+    $('mp4-start').disabled = running || !(globalThis.DOUBALGE_EXPORT_TOKEN || globalThis.DOUBALGE_DESKTOP) || !DATA.duoAudio;
     if (!DATA.duoAudio) status('Cette scène ne contient pas les pistes séparées. Prépare-la avec le choix des voix et de l’ambiance, en fournissant ton JSON corrigé.');
     $('mp4-dialog').showModal();
   };

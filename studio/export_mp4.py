@@ -117,7 +117,9 @@ def mix_audio(dialogue, background, output, intervals, mix, duration, cancel):
 
 def render(document, request, directory, cancel, progress):
     import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    root = Path(__file__).resolve().parent.parent
+    modules = root/'projet' if (root/'projet'/'commun.py').exists() else root
+    sys.path.insert(0, str(modules))
     from commun import FFMPEG
     edits = valider_corrections(request['edits'], document['source_sha256'], document['duration'],
                                document['analysis_id'], {p['id'] for p in document['characters']})

@@ -7,8 +7,15 @@ if not exist ".venv\Scripts\python.exe" (
   pause
   exit /b 1
 )
-".venv\Scripts\python.exe" -X utf8 -u studio\lancer_studio.py
-set "STUDIO_RESULT=%ERRORLEVEL%"
-if not "%STUDIO_RESULT%"=="0" echo Le traitement a echoue. Conservez le message ci-dessus.
-pause
-exit /b %STUDIO_RESULT%
+".venv\Scripts\python.exe" -c "import webview" >nul 2>&1
+if errorlevel 1 (
+  echo Installation de la fenetre Doubalge...
+  ".venv\Scripts\python.exe" -m pip install -r studio\requirements-app.txt
+  if errorlevel 1 (
+    echo Installation interrompue. Conservez le message ci-dessus.
+    pause
+    exit /b 1
+  )
+)
+start "" ".venv\Scripts\pythonw.exe" -X utf8 studio\application.py
+exit /b 0

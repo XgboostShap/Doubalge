@@ -1,10 +1,98 @@
-# Éditeur local Doubalge
+# Doubalge — application locale
 
-Cette version reprend les interfaces des fichiers OSS fournis, avec l’édition
-des paroles et des plans sur un seul écran. Les huit modules Python historiques
-restent inchangés. Le lecteur HTML et son éditeur sont autonomes : la vidéo est
-intégrée aux fichiers, sans téléchargement au moment de leur lecture. L’export MP4
-utilise un service local ouvert par le lanceur ; les lecteurs HTML restent autonomes.
+Doubalge regroupe désormais la préparation, l’éditeur de scène, la sauvegarde des
+corrections et l’export MP4 dans **une seule fenêtre Windows**. Les visuels de
+l’éditeur et les vignettes du lecteur sont conservés. Le spectacle reste un export
+HTML autonome. Les huit modules Python historiques ne sont pas modifiés.
+
+## Mettre à jour une installation existante
+
+1. Enregistrer le dernier JSON corrigé depuis l’ancien onglet avant de le fermer.
+2. Extraire le ZIP GitHub puis copier **tout `studio` et `Lancer-studio.cmd`** dans
+   le dossier existant. Conserver `.venv`, `.venv-detection`, `.cache`, `resultats`
+   et `token_hf.txt`.
+3. Ouvrir **Lancer-studio.cmd**. Au premier lancement, il installe uniquement
+   `pywebview` et ses dépendances de fenêtre si nécessaire. Cette étape demande
+   Internet ; les modèles existants et les environnements IA sont conservés.
+4. Dans la fenêtre Doubalge, choisir **Importer une ancienne scène HTML**, ouvrir
+   son `OSS-editeur.html` et choisir où conserver le nouveau projet. L’ancien HTML
+   reste intact ; aucune analyse ni séparation n’est relancée.
+5. Dans l’éditeur, utiliser **Importer** pour reprendre le dernier JSON corrigé
+   s’il n’était pas déjà intégré à l’ancien HTML. Les brouillons de l’ancien
+   navigateur ne peuvent pas être récupérés automatiquement.
+
+Le moteur de fenêtre Windows est **Microsoft Edge WebView2**, qui doit être installé
+sur le PC (il est présent sur de nombreuses installations Windows 10/11). Si le
+lancement signale son absence, installer le runtime Evergreen depuis la page
+[Microsoft WebView2](https://developer.microsoft.com/microsoft-edge/webview2/).
+Cette livraison reste une application Python lancée par le CMD ; elle n’est pas
+encore empaquetée en un exécutable Windows indépendant.
+
+## Parcours dans la fenêtre unique
+
+- **Nouvelle scène** : vidéo locale ou URL YouTube, timeline/corrections facultatives,
+  choix de la détection, nombre de voix et séparation audio. Le journal et
+  l’annulation restent dans la fenêtre. Après préparation, **Éditer la scène préparée**.
+- **Ouvrir un projet** : sélectionner son fichier `projet.doubalge`.
+- L’éditeur conserve la vidéo, les blocs, les plans, la forme d’onde et annuler/rétablir.
+  Les modifications sont enregistrées sur disque après chaque changement. Le bouton
+  **Enregistrer le projet** force une sauvegarde ; **Copie JSON** crée une sauvegarde
+  indépendante. Le retour aux projets et la fermeture attendent la sauvegarde.
+- **Exporter un MP4** : choisir les voix et l’ambiance, la qualité, puis **Créer le MP4**.
+  Un dialogue demande le fichier de destination. Le MP4 est directement écrit sur
+  le PC, avec les vignettes clignotantes et le prochain plan. Progression et annulation
+  restent disponibles ; aucun téléchargement depuis un navigateur n’est nécessaire.
+- **Exporter pour le spectacle** : crée le spectacle HTML autonome avec les
+  corrections actuelles. Le lecteur impro autonome reste également exportable.
+
+La fenêtre communique directement avec Python. Elle n’ouvre ni navigateur externe,
+ni serveur HTTP, ni adresse `127.0.0.1`. L’HTML/JavaScript est seulement utilisé à
+l’intérieur de la fenêtre pour conserver les visuels existants. L’usage local
+n’exige pas de cloud. Internet est nécessaire aux installations initiales, aux
+premiers modèles et au téléchargement d’une nouvelle vidéo YouTube.
+
+## Contenu d’un projet
+
+Chaque scène occupe un dossier distinct, contenant :
+
+- `projet.doubalge` : le fichier à ouvrir dans l’application ;
+- `document.json` : la scène et ses médias intégrés ;
+- `corrections.json` : le dernier état enregistré ;
+- `corrections-precedentes.json` : la version précédant la dernière sauvegarde ;
+- `preparation/` : les résultats intermédiaires, pour les nouvelles préparations.
+
+Pour déplacer ou sauvegarder un projet, copier **tout son dossier**, pas seulement
+`projet.doubalge`. Les écritures des corrections sont atomiques. Une sauvegarde
+illisible est signalée au lieu d’être remplacée par l’analyse initiale. Une autre
+fenêtre ne peut pas ouvrir le même projet en écriture. Les médias et données de
+projet sont privés : ne pas les publier dans le dépôt GitHub.
+
+## Validation de l’application de bureau
+
+Les tests couvrent la sauvegarde/réouverture, la conservation de l’analyse de départ,
+les erreurs de disque, les corrections d’une autre source, le verrouillage entre
+fenêtres, l’import d’un ancien HTML sans exécuter ses scripts, la préparation avec
+JSON et l’annulation sans écraser un ancien MP4.
+
+Un test réel pywebview/Qt sous Linux vérifie le pont Python, la lecture vidéo, les
+corrections enregistrées, le MP4 H.264/AAC, l’export spectacle, la fermeture sauvegardée
+et l’absence de serveur HTTP. Qt Linux n’inclut pas les codecs H.264 : la lecture de
+l’interface y est testée avec une copie VP8/Opus synthétique ; les médias du rendu
+MP4 et les MP4 produits restent en H.264/AAC. **Le moteur Edge WebView2, la lecture
+H.264 dans la fenêtre Windows et les dialogues natifs restent à valider sur le PC
+Windows réel.** Les modèles IA ne sont pas relancés pour ces tests d’interface.
+
+```bash
+python -m unittest discover -s studio/tests -p 'test_*.py' -v
+# Test de fenêtre explicite, avec pywebview et un moteur GUI installés :
+python studio/tests/test_desktop_native.py
+```
+
+## Fonctions et parcours HTML historiques
+
+Les sections suivantes décrivent aussi les exports autonomes et les commandes
+historiques, toujours disponibles. Leur formulaire navigateur/serveur local est un
+parcours de compatibilité ; **Lancer-studio.cmd ouvre désormais l’application**.
 
 ## Installation sur le PC Windows
 
@@ -19,9 +107,8 @@ Le dépôt GitHub fonctionne aussi directement avec ses huit modules à la racin
 3. Créer `token_hf.txt` à côté de `Lancer-studio.cmd`, contenant uniquement
    la clé Hugging Face complète sur une ligne, sans guillemets, en UTF-8.
    Ce fichier privé est ignoré par Git. Ne pas l’inclure dans une archive partagée.
-4. Ouvrir `Lancer-studio.cmd`, répondre **Non** pour préparer une nouvelle scène,
-   puis choisir une vidéo ou coller son URL YouTube. **Oui** rouvre un éditeur existant
-   sans réanalyse, avec l’interface actuelle et l’export MP4.
+4. Ouvrir `Lancer-studio.cmd`, puis **Nouvelle scène** pour choisir une vidéo ou
+   coller son URL YouTube. **Ouvrir un projet** reprend une scène déjà importée.
    Une timeline.json déjà calculée peut être choisie pour réutiliser l’analyse.
    Dans « Corrections manuelles », choisir le JSON corrigé de l’éditeur : ses voix,
    ses bornes, ses plans et ses validations sont prioritaires, sans nouvelle attribution IA.
@@ -173,22 +260,15 @@ supprimer les anciens résultats. Cette fonction utilise les dépendances déjà
 prévues, dont `imageio-ffmpeg==0.7.0` et NumPy ; aucune réinstallation de modèle
 n’est nécessaire si le studio fonctionne déjà.
 
-1. Ouvrir **Lancer-studio.cmd**, répondre **Oui**, puis choisir le fichier
-   **OSS-editeur.html** de la scène. L’interface actuelle s’ouvre sans analyse IA,
-   même pour un ancien HTML. `Actualiser-editeur.cmd` reste un outil exceptionnel.
-2. **Importer le dernier JSON corrigé**, notamment si les corrections étaient
-   seulement dans l’ancien onglet. Le navigateur distingue l’ancien fichier local
-   et l’éditeur ouvert par le lanceur : leurs brouillons ne sont pas transférés
-   automatiquement. Le fichier `corrections-initiales.json` reste l’état initial.
+1. Ouvrir **Lancer-studio.cmd**, puis **Ouvrir un projet** ou **Importer une ancienne scène HTML**.
+2. Importer le dernier JSON corrigé si nécessaire. Les modifications suivantes sont
+   automatiquement enregistrées dans le projet.
 3. Dans **Exporter un MP4 → Choisir les voix et l’ambiance**, cocher une ou deux
    voix à retirer et régler l’ambiance et les paroles non attribuées.
 4. Revenir à **Exporter un MP4**, choisir **Compact** ou **Standard**, puis
-   **Créer le MP4**. Les plages, attributions, noms et plans sont figés à ce clic.
-   Garder la fenêtre du lanceur ouverte. La progression et **Annuler l’export**
-   restent disponibles ; annuler ne modifie pas les corrections.
-5. Cliquer **Télécharger le MP4**, puis vérifier la vidéo et le son. Joindre ce
-   fichier au mail ou l’envoyer soi-même dans WhatsApp. Aucun message n’est envoyé
-   par Doubalge. Le destinataire n’installe ni Python, ni IA, ni projet.
+   **Créer le MP4** et choisir sa destination. Les corrections sont figées à ce clic.
+5. Attendre la fin, vérifier la vidéo et le son, puis partager le fichier soi-même.
+   Aucun envoi de message n’est effectué. Le destinataire n’installe ni Python ni IA.
 
 Le fichier est encodé en **MP4 H.264, yuv420p, audio AAC stéréo 48 kHz**, avec les
 métadonnées de lecture en début de fichier (`faststart`). Le profil Compact vise
@@ -395,9 +475,9 @@ la génération depuis une nouvelle vidéo et les lanceurs PC.
 
 La préparation peut être terminée même si l’éditeur local ne s’est pas ouvert.
 Quand la console affiche `[terminé] Éditeur : …`, conserver ce dossier de résultats.
-Après mise à jour du dossier `studio`, fermer les anciennes consoles Lancer-studio,
-relancer `Lancer-studio.cmd`, répondre **Oui** et choisir le **OSS-editeur.html**
+Après mise à jour de `studio` et de `Lancer-studio.cmd`, fermer les anciennes consoles,
+relancer `Lancer-studio.cmd`, choisir **Importer une ancienne scène HTML** et le **OSS-editeur.html**
 indiqué par ce message. Aucune détection ni séparation n’est relancée. Importer
 le dernier JSON corrigé si des modifications avaient déjà été enregistrées.
-Le lanceur affiche désormais une adresse simple telle que `http://127.0.0.1:8765/` ;
-utiliser celle de la console courante si le navigateur conserve un ancien onglet.
+L’application de bureau n’utilise plus cette adresse locale. Pour le parcours
+historique en ligne de commande, utiliser l’adresse simple affichée par sa console.

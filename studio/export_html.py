@@ -210,6 +210,8 @@ def exporter(document: dict, sortie: Path) -> tuple[Path, Path]:
               'media': document['improMedia'] if 'duoAudio' in document else document['media'],
               'title': document.get('title', 'Scène'), 'analysis_id': document['analysis_id'],
               'source_sha256': document['source_sha256'], 'showTemplate': document['showTemplate']}
+    if document.get('exportedAt'):
+        player['exportedAt'] = document['exportedAt']
     if 'audioMix' in document:
         player['audioMix'] = document['audioMix']
     if 'duoAudio' in document:

@@ -3,6 +3,7 @@
   let running = false, exportName = '', polling = false, exportedState = null;
   const status = text => { $('mp4-status').textContent = text; };
   async function api(path, body) {
+    if (globalThis.DOUBALGE_DESKTOP) return DoubalgeDesktop.mp4(path, body);
     const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST',
       headers: { 'X-Doubalge-Token': globalThis.DOUBALGE_EXPORT_TOKEN, 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
@@ -24,6 +25,7 @@
       $('mp4-start').disabled = running;
       $('mp4-cancel').disabled = !running;
       if (running) status(`Encodage sur ce PC : ${Math.round(state.progress * 100)} %…`);
+      else if (state.status === 'done' && globalThis.DOUBALGE_DESKTOP) { status('MP4 enregistré : '+state.path+'. Vérifie le son et les vignettes avant de le partager.'); $('mp4-download').hidden = true; }
       else if (state.status === 'done') { status('MP4 prêt avec les corrections figées au lancement. Télécharge-le puis vérifie l’image et le son avant de le partager.'); $('mp4-download').hidden = false; }
       else if (state.status === 'cancelled') status('Export annulé. Tes corrections sont conservées.');
       else if (state.status === 'error') status(state.error);
@@ -35,14 +37,14 @@
     $('mp4-choices').textContent = 'Voix à doubler : ' + (audioMix.removedCharacters.map(label).join(', ') || 'aucune sélectionnée')
       + ' · Ambiance : ' + (audioMix.keepAmbience ? 'conservée' : 'retirée');
     estimate();
-    if (!globalThis.DOUBALGE_EXPORT_TOKEN) status('Pour encoder sur ce PC : enregistre tes corrections JSON, ouvre Lancer-studio.cmd, choisis « Oui » puis cet éditeur HTML, et importe tes corrections. Aucun nouveau calcul IA.');
+    if (!(globalThis.DOUBALGE_EXPORT_TOKEN || globalThis.DOUBALGE_DESKTOP)) status('Pour encoder sur ce PC : enregistre tes corrections JSON, ouvre Lancer-studio.cmd, choisis « Importer une ancienne scène HTML », puis importe tes corrections dans l’éditeur. Aucun nouveau calcul IA.');
     else if (!running) {
       if (exportedState && exportedState !== JSON.stringify(documentData())) {
         $('mp4-download').hidden = true;
         status('Les corrections ont changé. Crée un nouveau MP4 pour les reprendre.');
       } else status('Prêt. Les corrections seront figées au clic sur « Créer le MP4 ».');
     }
-    $('mp4-start').disabled = running || !globalThis.DOUBALGE_EXPORT_TOKEN || !DATA.duoAudio;
+    $('mp4-start').disabled = running || !(globalThis.DOUBALGE_EXPORT_TOKEN || globalThis.DOUBALGE_DESKTOP) || !DATA.duoAudio;
     if (!DATA.duoAudio) status('Cette scène ne contient pas les pistes séparées. Prépare-la avec le choix des voix et de l’ambiance, en fournissant ton JSON corrigé.');
     $('mp4-dialog').showModal();
   };

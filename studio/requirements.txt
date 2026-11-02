@@ -9,3 +9,4 @@ soundfile==0.14.0
 yt-dlp[default,deno]==2026.10.26
 deno==2.9.8
 pillow
+-r requirements-app.txt

@@ -6,3 +6,4 @@ __pycache__/
 resultats/
 token_hf.txt
 *.bak-*
+projets/
