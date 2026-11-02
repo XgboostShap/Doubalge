@@ -12,6 +12,7 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>{
    window.calls=[];
    window.pywebview={api:{
+    release_info:async()=>({version:'2026.11.02.2',folder:'D:\\Doubalge'}),
     preparation_settings:async()=>({destination:'D:\\Doubalge\\projets'}),
     choose_destination:async()=>{calls.push('destination');return {destination:'D:\\Mes scènes'};},
     choose_source:async field=>{calls.push(field);return 'D:\\Videos\\scene.mp4';},
@@ -21,6 +22,7 @@ const {chromium}=require('playwright');
   });
   await page.setContent(fs.readFileSync(path.resolve(__dirname,'../app-layout.html'),'utf8'));
   await page.waitForFunction(()=>document.getElementById('destination').value.includes('projets'));
+  assert.match(await page.locator('#release-info').innerText(),/2026\.11\.02\.2/);
   await page.click('#new');
   const url='https://www.youtube.com/watch?v=C4MqQfiJR7c';
   await page.fill('#source',url);

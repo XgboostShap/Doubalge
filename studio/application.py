@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 from datetime import datetime, timezone
 import json
 import os
@@ -19,16 +20,18 @@ from export_html import TEMPLATES, ecrire_json, exporter, serialiser_html
 from export_mp4 import Cancelled, render
 from projet_local import Projet
 from serveur_editeur import load_document
+from version import VERSION
 
 ROOT = Path(__file__).resolve().parent.parent
 STUDIO = Path(__file__).resolve().parent
+_LOADED_CODE = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def stop_process(process):
     if process is None or process.poll() is not None:
         return
     if os.name == 'nt':
-        subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True)
+        subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True,creationflags=subprocess.CREATE_NO_WINDOW)
     else:
         try:
             os.killpg(process.pid,signal.SIGTERM)
@@ -51,7 +54,9 @@ class Application:
         self._page = 'home'
         self._ui = Path(self._temp.name)
         self._home = self._ui/'accueil.html'
-        self._home.write_text((STUDIO/'app-layout.html').read_text(encoding='utf-8'),encoding='utf-8')
+        layout = (STUDIO/'app-layout.html').read_bytes()
+        self._layout_hash = hashlib.sha256(layout).hexdigest()
+        self._home.write_bytes(layout)
         self._destination = ROOT/'projets'
         self._approved = {}  # Les chemins viennent des dialogues natifs, pas du contenu importé.
 
@@ -225,6 +230,16 @@ class Application:
             self._approved[field] = path
         return path
 
+    def release_info(self):
+        return {'version':VERSION,'folder':str(ROOT)}
+
+    def _check_update(self):
+        code = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        layout = hashlib.sha256((STUDIO/'app-layout.html').read_bytes()).hexdigest()
+        if code != _LOADED_CODE or layout != self._layout_hash:
+            raise ValueError('Les fichiers ont été mis à jour pendant que cette fenêtre était ouverte. '
+                             'Fermez cette fenêtre Doubalge et relancez Lancer-studio.cmd depuis '+str(ROOT)+'.')
+
     def preparation_settings(self):
         return {'destination':str(self._destination)}
 
@@ -239,6 +254,7 @@ class Application:
     def prepare(self, options):
         with self._lock:
             self._idle()
+            self._check_update()
             source = str(options.get('source','')).strip()
             if not source:
                 raise ValueError('Choisissez une vidéo ou une URL YouTube.')
@@ -246,7 +262,10 @@ class Application:
                 raise ValueError('Choisissez le fichier avec « Choisir une vidéo locale », ou collez une URL YouTube.')
             folder = self._destination/('scene-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
             output = folder/'preparation'
-            command = [sys.executable,'-X','utf8','-u',str(STUDIO/'lancer_studio.py'),'--sans-ouvrir',
+            python = Path(sys.executable)
+            if os.name == 'nt' and python.name.lower() == 'pythonw.exe':
+                python = python.with_name('python.exe')
+            command = [str(python),'-X','utf8','-u',str(STUDIO/'lancer_studio.py'),'--sans-ouvrir',
                        '--video',source,'--sortie',str(output)]
             for name in ('timeline','corrections'):
                 if options.get(name):
@@ -264,7 +283,7 @@ class Application:
                 command.append('--cpu')
             def task():
                 folder.mkdir(parents=True,exist_ok=False)
-                creation = {'creationflags':subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == 'nt' else {'start_new_session':True}
+                creation = {'creationflags':subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {'start_new_session':True}
                 self._process = subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
                     text=True,encoding='utf-8',errors='replace',cwd=ROOT,**creation)
                 if self._cancel.is_set():
@@ -345,7 +364,7 @@ def main():
     except ImportError as error:
         raise RuntimeError('Installez la fenêtre intégrée : .venv\\Scripts\\python.exe -m pip install -r studio\\requirements-app.txt') from error
     app = Application()
-    app._window = webview.create_window('Doubalge — préparation et édition',url=app._home.as_uri(),js_api=app,
+    app._window = webview.create_window('Doubalge '+VERSION+' — préparation et édition',url=app._home.as_uri(),js_api=app,
                                         width=1400,height=900,min_size=(1100,650))
     app._window.events.closing += app._closing
     def ready():

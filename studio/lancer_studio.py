@@ -274,6 +274,8 @@ def main():
         from serveur_editeur import ouvrir
         ouvrir(args.editeur)
         return
+    if not args.video and args.sans_ouvrir:
+        parser.error('Une vidéo ou une URL est obligatoire en traitement automatique (--video). Aucun sélecteur ne sera ouvert.')
     if not args.video:
         import tkinter as tk
         from tkinter import messagebox, filedialog

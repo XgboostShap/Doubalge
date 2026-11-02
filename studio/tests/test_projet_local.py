@@ -137,6 +137,25 @@ class BridgeTests(unittest.TestCase):
             self.assertEqual(choose.call_args.args[0],'folder')
         self.assertFalse(parent.exists())
 
+    def test_running_window_reports_version_and_installation_path(self):
+        info=self.app.release_info()
+        self.assertEqual(info['version'],'2026.11.02.2')
+        self.assertTrue((Path(info['folder'])/'studio'/'application.py').exists())
+
+    def test_changed_files_require_restart_before_preparation(self):
+        with patch('application._LOADED_CODE','ancienne-version'),patch.object(self.app,'_choose',side_effect=AssertionError('Pas de dialogue')):
+            with self.assertRaisesRegex(ValueError,'Fermez cette fenêtre'):
+                self.app.prepare({'source':'https://www.youtube.com/watch?v=test'})
+        self.assertEqual(self.app.job_status()['status'],'idle')
+        self.assertFalse(self.app._destination.exists())
+
+    def test_automatic_worker_without_source_never_opens_legacy_dialog(self):
+        import subprocess
+        worker=Path(__file__).resolve().parents[1]/'lancer_studio.py'
+        result=subprocess.run([sys.executable,str(worker),'--sans-ouvrir'],capture_output=True,text=True,timeout=10)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('Aucun sélecteur ne sera ouvert',result.stderr)
+
     def test_default_destination_is_project_folder_without_dialog(self):
         with patch('application.ROOT',self.folder):
             other=Application()

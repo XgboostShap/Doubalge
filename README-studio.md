@@ -11,7 +11,11 @@ HTML autonome. Les huit modules Python historiques ne sont pas modifiés.
 2. Extraire le ZIP GitHub puis copier **tout `studio` et `Lancer-studio.cmd`** dans
    le dossier existant. Conserver `.venv`, `.venv-detection`, `.cache`, `resultats`
    et `token_hf.txt`.
-3. Ouvrir **Lancer-studio.cmd**. Au premier lancement, il installe uniquement
+3. Fermer les anciennes fenêtres Doubalge, puis ouvrir **Lancer-studio.cmd** depuis
+   le dossier effectivement mis à jour. La fenêtre affiche **2026.11.02.2** et le
+   **dossier utilisé**, pour vérifier l’installation lancée. Une fenêtre déjà ouverte
+   conserve son ancienne interface même si les fichiers sont remplacés.
+   Au premier lancement, il installe uniquement
    `pywebview` et ses dépendances de fenêtre si nécessaire. Cette étape demande
    Internet ; les modèles existants et les environnements IA sont conservés.
 4. Dans la fenêtre Doubalge, choisir **Importer une ancienne scène HTML**, ouvrir
