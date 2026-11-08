@@ -13,6 +13,7 @@ from commun import FFMPEG
 
 def telecharge(url: str, workdir: str, debut=None, fin=None) -> str:
     print("[source] téléchargement YouTube...")
+    Path(workdir).mkdir(parents=True, exist_ok=True)
     dst = os.path.join(workdir, "source.mp4")
     max_h = 720
     cmd = [sys.executable, "-m", "yt_dlp", "--no-playlist",
@@ -20,6 +21,12 @@ def telecharge(url: str, workdir: str, debut=None, fin=None) -> str:
            "-f", f"bv*[height<={max_h}][ext=mp4]+ba[ext=m4a]/"
                  f"b[height<={max_h}][ext=mp4]/"
                  f"bv*[height<={max_h}]+ba/b[height<={max_h}]/b"]
+    node = Path(__file__).parent / ".runtime" / "node" / "node.exe"
+    if node.exists():
+        cmd += ["--js-runtimes", "node:" + str(node)]
+    else:
+        cmd += ["--js-runtimes", "node"]
+    cmd += ["--remote-components", "ejs:github"]
     if debut is not None:
         fin_s = "" if fin is None else f"-{fin:.3f}"
         cmd += ["--download-sections", f"*{debut:.3f}{fin_s}"]
