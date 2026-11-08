@@ -1,9 +1,10 @@
+.venv*/
+.runtime/
+donnees/
 __pycache__/
 *.pyc
-.venv/
-.venv-detection/
 .cache/
-resultats/
+node_modules/
 token_hf.txt
-*.bak-*
+resultats/
 projets/
