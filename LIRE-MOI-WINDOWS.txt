@@ -1,0 +1,90 @@
+DOUBLAGEBASIC — VERSION DE VALIDATION DU 8 NOVEMBRE 2026
+
+Cette archive contient l'application locale et l'installateur Windows.
+L'interface, la sauvegarde et les exports ont été vérifiés sous Linux/Chromium.
+L'installation Windows et le calcul NVIDIA n'ont PAS été exécutés sur un vrai
+PC Windows. Lire RAPPORT-VERIFICATION.md pour les limites précises.
+
+DEMARRER
+1. Extraire TOUT le ZIP dans un dossier accessible en écriture, par exemple
+   Documents\DoublageBasic. Ne pas lancer les CMD depuis l'intérieur du ZIP.
+2. Double-cliquer Installer-Windows.cmd. Internet et plusieurs Go libres sont
+   nécessaires. Aucun Python ni Node global n'est requis. Sans administrateur.
+3. Après succès, double-cliquer Lancer-DoublageBasic.cmd.
+   L'interface s'ouvre dans le navigateur à http://127.0.0.1:8765 (ou un port
+   disponible). Le service écoute seulement sur ce PC. Garder sa console ouverte.
+4. Fermer la console pour arrêter. Les projets restent dans donnees\projets.
+
+Si un téléchargement de l'installation échoue, relancer Installer-Windows.cmd.
+Pour forcer le CPU : ouvrir un terminal dans ce dossier, puis exécuter :
+  Installer-Windows.cmd -CPU
+PyTorch CUDA 12.8 est tenté avec un pilote NVIDIA >= 570. Une opération réelle
+vérifie CUDA ; le diagnostic peut déclencher le repli CPU. Toutes les cartes
+NVIDIA ne sont pas compatibles. L'analyse et Demucs ont aussi un repli CPU.
+Le rendu vidéo utilise le CPU. Le diagnostic est .runtime\installation.json.
+
+PREPARER UNE SCENE
+- Choisir une vidéo OU coller une URL HTTPS YouTube, puis Préparer la scène.
+- Pour une nouvelle analyse, ouvrir Accès aux modèles et saisir un jeton HF Read.
+  Il faut avoir accepté les conditions Hugging Face de :
+  https://huggingface.co/pyannote/speaker-diarization-3.1
+  https://huggingface.co/pyannote/segmentation-3.0
+  L'accès au modèle d'embedding doit également être disponible pour le compte.
+- Le jeton reste en mémoire de session. Il n'est pas enregistré dans les projets.
+- Une fois les modèles téléchargés après une analyse réussie, les nouvelles
+  vidéos locales peuvent être analysées hors connexion. Le cache reste local.
+- Pour reprendre des corrections sans relancer la diarisation, choisir la VIDEO
+  ORIGINALE exacte et son JSON dans le formulaire. L'empreinte est vérifiée avant
+  le réencodage. Un MP4 réencodé ou extrait d'un ancien HTML peut être différent.
+- Un traitement interrompu propose Reprendre. Il repart du fichier original.
+- Un projet déjà analysé conserve ses corrections : créer un autre projet pour
+  refaire une analyse. Ne pas remplacer sa vidéo dans les dossiers de données.
+
+CORRIGER
+La vidéo garde le son original pour contrôler les propositions audio.
+Les groupes Voix 1, Voix 2... ne sont pas des identités de personnages confirmées.
+Cliquer une parole pour l'écouter ou changer sa voix et ses bornes.
+Glisser son centre pour déplacer le bloc, ses poignées pour ajuster les bornes.
+Maj + glisser crée une parole ; Scinder et Fusionner complètent l'édition.
+Les chevauchements sont autorisés. Les hachures signalent les passages à vérifier.
+Les plans se corrigent dans leur panneau et sur la ligne Plans.
+Les corrections s'enregistrent automatiquement sur le PC. Le bouton Enregistrer
+force la sauvegarde ; Copie JSON télécharge une sauvegarde indépendante.
+Ajouter ou renommer une voix dans le panneau sous l'éditeur.
+Une ancienne fenêtre ne peut pas écraser silencieusement une révision récente.
+En cas de conflit, télécharger une Copie JSON avant de recharger.
+
+EXPORTER
+- Silence complet : le film est muet.
+- Je joue une voix : dialogues de cette voix retirés, autres voix conservées.
+- Le film garde une voix : cette voix est conservée, les autres sont retirées.
+Pour les deux modes partiels, Demucs htdemucs sépare les dialogues et le fond.
+Le fond reste continu. Les plages d'une voix retirée priment aux chevauchements.
+Les voix non attribuées sont retirées en mode partiel. Les chevauchements entre
+voix conservées restent audibles. La séparation est EXPERIMENTALE : elle peut
+laisser des restes de voix dans le fond ou altérer les bruitages et les timbres.
+
+L'export enregistre d'abord les corrections en cours. Qualité Léger : H.264,
+480 pixels de large au maximum, 25 images/s, audio AAC mono en mode partiel.
+La taille dépend de la durée et du contenu ; aucun plafond WhatsApp n'est garanti.
+Qualité Standard : jusqu'à 1280 pixels de large. Les noms de fichiers sont uniques.
+Le lecteur HTML contient le MP4 exporté : il s'ouvre sans serveur ni connexion.
+Les boutons de téléchargement apparaissent sous le formulaire après le rendu.
+Repère voix en bas à droite : clignote 1,5 s avant, fixe pendant la parole.
+Repère plan en bas à gauche : anticipation de 0,5 s.
+
+DONNEES ET DIAGNOSTIC
+Sauvegarder tout le dossier donnees pour conserver projets, originaux, corrections,
+exports et modèles. Les anciens états des corrections sont dans sauvegardes.
+Le bouton Journal affiche le diagnostic du traitement, avec masquage des jetons.
+Annuler arrête le traitement et ses enfants. Une annulation en plein rendu ne
+publie pas le MP4 incomplet. Les fichiers intermédiaires restent dans le projet.
+Le verrou de dossier évite deux serveurs écrivant dans les mêmes projets.
+Les modèles Demucs se téléchargent depuis dl.fbaipublicfiles.com. YouTube et ses
+CDN doivent être accessibles sur votre réseau. Le réseau cloud de développement
+ne permettait pas le téléchargement Demucs ; le réseau de votre PC est différent.
+
+La distribution n'inclut aucun média OSS, modèle, environnement Python ni jeton.
+Les huit modules historiques sont conservés ; le nouveau parcours se lance avec
+Lancer-DoublageBasic.cmd. Le sous-dossier studio fournit les composants d'éditeur
+récupérés ; ses exigences de fenêtre native ne s'appliquent pas à ce lanceur.
