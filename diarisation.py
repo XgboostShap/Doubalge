@@ -48,46 +48,22 @@ def extraire_tours(resultat):
              "pour adaptation du script.")
 
 
-def diarise_pyannote(wav: str, token: str, n_perso: int | None):
-    print("[diarisation] chargement de pyannote (1-2 min la première fois)...")
-    try:
-        from pyannote.audio import Pipeline
-    except ImportError:
-        sys.exit("[erreur] pyannote.audio requis : pip install pyannote.audio")
-    try:
-        pipe = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1", token=token)
-    except TypeError:  # anciennes versions
-        pipe = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1", use_auth_token=token)
-    except Exception as ex:
-        sys.exit(f"[erreur] pyannote indisponible : {str(ex)[:300]}\n"
-                  "Vérifie : token valide + conditions acceptées sur les 3 repos "
-                  "(speaker-diarization-3.1, segmentation-3.0, "
-                  "speaker-diarization-community-1).")
-    print("[diarisation] analyse en cours (1-3 min sur CPU)...")
-    try:
-        if n_perso and n_perso > 0:
-            resultat = pipe(wav, num_speakers=n_perso)
-        else:
-            resultat = pipe(wav)
-    except TypeError:
-        resultat = pipe(wav)
-    tours = extraire_tours(resultat)
-    evenements = []
-    ordre = {}
-    for debut, fin, label in tours:
-        if label not in ordre:
-            ordre[label] = len(ordre)   # couleur stable par ordre d'apparition
-        evenements.append({"start": round(debut, 2), "end": round(fin, 2),
-                           "speaker": ordre[label]})
-    fus = []
-    for ev in evenements:
-        if fus and fus[-1]["speaker"] == ev["speaker"] and \
-                ev["start"] - fus[-1]["end"] < 0.30:
-            fus[-1]["end"] = ev["end"]
-        else:
-            fus.append(ev)
-    return fus
-
-
+def diarise_pyannote(wav: str, token: str | None, n_perso: int | None, device=None):
+    import torch
+    import soundfile as sf
+    from pyannote.audio import Pipeline
+    from pyannote.audio.core.task import Problem, Resolution, Specifications
+    torch.set_num_threads(min(os.cpu_count() or 1, 4))
+    samples, rate = sf.read(wav, dtype='float32', always_2d=True)
+    audio = {'waveform': torch.from_numpy(samples.T.copy()).mean(dim=0, keepdim=True), 'sample_rate': rate}
+    print('[diarisation] chargement du modèle audio 3.1…', flush=True)
+    with torch.serialization.safe_globals([torch.torch_version.TorchVersion, Problem, Resolution, Specifications]):
+        pipe = Pipeline.from_pretrained('pyannote/speaker-diarization-3.1', use_auth_token=token)
+        if pipe is None:
+            raise RuntimeError('Modèle inaccessible : vérifier le jeton et les conditions Hugging Face')
+        pipe.to(torch.device(device or 'cpu'))
+        result = pipe(audio, **({'num_speakers': n_perso} if n_perso else {}))
+    tours = sorted(extraire_tours(result))
+    order = {}
+    return [{'start': float(start), 'end': float(end), 'speaker': order.setdefault(label, len(order)),
+             'label': str(label)} for start, end, label in tours if end > start]
