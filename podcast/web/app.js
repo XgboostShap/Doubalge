@@ -11,7 +11,7 @@ const descriptions=[
  'Le dialogue est rédigé chapitre par chapitre avec les acquis, définitions, exemples, questions ouvertes et dernières répliques en mémoire.',
  'Les chapitres sont revus pour la continuité, les répétitions et la fidélité aux idées sources. Le script final est exporté en texte et en JSON.'
 ];
-let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0;
+let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
 const current=()=>state?.projects.find(p=>p.id===selected);
 const busy=p=>['queued','running'].includes(p?.task?.state);
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message;$('notice').classList.toggle('error',error);}
@@ -21,15 +21,20 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1';
+ document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
+ let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
+ about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
+ if(outdated){runtimeWarning=true;notice('Une ancienne instance ou une mise à jour incomplète est détectée. Fermez la fenêtre de lancement, puis utilisez Mettre-a-jour.cmd et relancez le programme.',true);}else if(runtimeWarning){runtimeWarning=false;notice('');}
  const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
  $('project-name').textContent=p.name;$('source-info').textContent=`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
- $('continue').disabled=busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('continue').disabled=outdated||busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
- $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
+ $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
  $('final-exports').hidden=!p.exports.length;const exports=$('export-links');exports.replaceChildren();for(const file of p.exports){const a=node('a',file.endsWith('.txt')?'Texte du dialogue':file.endsWith('.md')?'Script Markdown':'Données et rapport JSON');a.href=`/files/${p.id}/${file}`;exports.append(a);}

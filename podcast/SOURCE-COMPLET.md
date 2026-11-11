@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.2
+# Sources complètes — Podcast pédagogique 0.1.3
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -12,6 +12,7 @@ donnees/
 __pycache__/
 *.pyc
 dist/
+mises-a-jour/
 ```
 
 ## Installer-Windows.cmd
@@ -81,42 +82,73 @@ if errorlevel 1 (
 if errorlevel 1 pause
 ```
 
+## Mettre-a-jour.cmd
+
+```bat
+@echo off
+setlocal
+cd /d "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0mettre-a-jour.ps1"
+if errorlevel 1 (
+  echo.
+  echo Mise a jour interrompue. Vos projets n'ont pas ete modifies.
+  pause
+  exit /b 1
+)
+```
+
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.2 — CORRECTIF PAGES ET ACCES WINDOWS
+PODCAST PEDAGOGIQUE 0.1.3 — MISE A JOUR AUTOMATIQUE
 
-1. Fermer la fenetre de lancement du programme (Lancer-Podcast.cmd).
-2. Extraire PodcastPedago-Correctif-0.1.2.zip dans un dossier temporaire.
-3. Copier app.py, storage.py et pipeline.py dans le dossier de votre application,
-   celui qui contient Lancer-Podcast.cmd. Accepter le remplacement des fichiers.
-4. Relancer Lancer-Podcast.cmd puis cliquer sur Continuer jusqu'au script final.
+1. Fermer la fenetre de lancement de PodcastPedago.
+2. Extraire tout le ZIP correctif dans un dossier temporaire.
+3. Double-cliquer sur Mettre-a-jour.cmd.
+4. Choisir le dossier contenant Lancer-Podcast.cmd.
+   Le dossier habituel dans Downloads est propose si le programme le trouve.
+5. Le programme rouvre. Verifier Version 0.1.3 en haut de la page,
+   puis cliquer sur Continuer jusqu'au script final.
 
-Pas de reinstallation necessaire. Garder le dossier donnees et .venv :
-vos PDF, projets, resultats et dependances restent a leur place.
+Les fichiers de code sont sauvegardes puis remplaces automatiquement.
+Les PDF et projets dans donnees et les dependances dans .venv sont conserves.
+Pas de reinstallation de Python ou de Mistral.
 
-Ce correctif attribue les pages sources depuis le lecteur PDF au lieu de
-demander au modele de les produire. Chaque extrait analyse appartient a
-une seule page connue. Les trois parties par PDF sont conservees.
+Ce correctif inclut les references de pages automatiques depuis le PDF,
+les reprises sur verrouillages Windows et la detection d'une ancienne instance.
+Si l'ancien message sur les pages reste visible, cliquer sur Continuer pour
+remplacer l'ancien etat d'erreur par un nouveau traitement.
 
-Il coordonne aussi les lectures et ecritures de JSON et reessaie les
-verrouillages temporaires Windows 5, 32 et 33. Si l'enregistrement echoue
-durablement, le fichier precedent est conserve et une erreur est affichee.
-
-Verification : 24 tests automatises, dont numeros de page absents ou faux
-dans les reponses simulees du modele, erreurs Windows simulees,
-lectures/ecritures concurrentes et reprise du worker apres une erreur.
-La validation native sur votre PC Windows reste a confirmer.
+La mise a jour Windows reste a verifier nativement sur le PC cible.
 ```
 
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.2
+# Podcast pédagogique — version 0.1.3
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Mise à jour 0.1.3 — version visible et remplacement automatique
+
+La version chargée est affichée en haut de l'interface. « Version et dossier du
+programme » dans la barre latérale permet d'identifier le dossier réellement
+utilisé. Une interface mise à jour connectée à une ancienne instance demande de
+fermer et relancer le programme ; un mélange avec un ancien `pipeline.py` est
+signalé avant de lancer les traitements.
+Un échec conservé depuis une version précédente est identifié comme ancien,
+sans effacer son détail ; « Continuer » lance une nouvelle tentative.
+
+Pour une installation existante : fermer la fenêtre de lancement, extraire le
+ZIP correctif puis ouvrir **Mettre-a-jour.cmd**. Choisir le dossier contenant
+`Lancer-Podcast.cmd`. L'outil vérifie les empreintes, sauvegarde les anciens
+fichiers de code dans `mises-a-jour`, remplace les fichiers et rouvre le programme.
+Les PDF, projets et `.venv` sont conservés. La version **0.1.3** doit apparaître
+à l'écran ; cliquer ensuite sur « Continuer jusqu'au script final ».
+
+L'outil de mise à jour Windows reste à vérifier nativement sur le PC cible.
 
 ## Correctif 0.1.2 — références de pages
 
@@ -130,11 +162,8 @@ d'appels au modèle sur les longs documents.
 Les extraits sans idée retenue sont signalés dans le résumé pour vérification.
 Une couverture ou une bibliographie n'impose pas d'inventer un point explicatif.
 
-Pour mettre à jour une installation existante, fermer la fenêtre de lancement
-puis remplacer `app.py`, `storage.py` et `pipeline.py` avec le ZIP correctif.
-Conserver `donnees` et `.venv`, relancer `Lancer-Podcast.cmd`, puis cliquer sur
-« Continuer jusqu'au script final ». Le correctif est cumulatif et inclut celui
-des verrouillages Windows. Voir `README-CORRECTIF.txt`.
+Le correctif actuel est cumulatif et inclut celui des verrouillages Windows.
+Voir `README-CORRECTIF.txt` pour la mise à jour automatique.
 
 Les pages indiquent la provenance du texte envoyé au modèle. Elles ne remplacent
 pas une vérification de la fidélité de chaque affirmation aux sources.
@@ -234,7 +263,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 24 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 27 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
@@ -281,10 +310,12 @@ import webbrowser
 import zipfile
 
 from llm import Ollama, Cancelled, endpoint_parts, models
+import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
 from storage import defaults, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
+APP_VERSION = '0.1.3'
 
 
 def settings(value):
@@ -327,6 +358,8 @@ class App:
         self.cancels = {}
         self.task_errors = {}
         self.active = None
+        self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
+                        'app_dir':str(ROOT),'pid':os.getpid()}
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
             task = read(path)
@@ -362,6 +395,9 @@ class App:
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
+        if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
+            task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
+                  'from_previous_version':True}
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
         return {**meta,'completed':completed,'task':task,'exports':exports,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
@@ -369,11 +405,13 @@ class App:
     def state(self):
         with self.lock:
             projects = [self.summary(p) for p in self.projects.iterdir() if p.is_dir() and re.fullmatch('[a-f0-9]{32}',p.name)]
-            return {'token':self.token,'defaults':defaults(),'steps':STEPS,
+            return {'token':self.token,'defaults':defaults(),'steps':STEPS,'runtime':self.runtime,
                     'projects':sorted(projects,key=lambda p:p['created'],reverse=True)}
 
     def enqueue(self, folder, body):
         with self.lock:
+            if self.runtime['page_sources']!='pdf-page-v1':
+                raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
             self.idle(folder)
             meta = read(folder/'projet.json')
             if not meta['pdfs']:
@@ -387,7 +425,7 @@ class App:
             if type(regenerate) is not bool:
                 raise ValueError('Option de régénération invalide.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
-                    'message':'En attente','error':None,'regenerate':regenerate}
+                    'message':'En attente','error':None,'regenerate':regenerate,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
             self.task_errors.pop(folder.name,None)
@@ -650,14 +688,15 @@ import json
 from pathlib import Path
 import re
 import zipfile
+from app import APP_VERSION
 
 ROOT=Path(__file__).resolve().parent
 
 
 def main():
     files=sorted([p for p in ROOT.glob('*.py')]+[p for p in (ROOT/'web').glob('*') if p.is_file()]+
-                 [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','.gitignore')])
-    document=['# Sources complètes — Podcast pédagogique 0.1.2','',
+                 [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','Mettre-a-jour.cmd','mettre-a-jour.ps1','.gitignore')])
+    document=['# Sources complètes — Podcast pédagogique '+APP_VERSION,'',
               'Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.',
               'Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.', '']
     manifest={}
@@ -670,22 +709,26 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
+    payload=['app.py','storage.py','pipeline.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+             'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
+    update_manifest=ROOT/'manifest-correctif.json'
+    update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
     output=ROOT/'dist';output.mkdir(exist_ok=True)
     target=output/'PodcastPedago-Windows.zip'
     with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
-        for path in files+[source,checksum]:archive.write(path,'PodcastPedago/'+path.relative_to(ROOT).as_posix())
+        for path in files+[source,checksum,update_manifest]:archive.write(path,'PodcastPedago/'+path.relative_to(ROOT).as_posix())
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
-    patch=output/'PodcastPedago-Correctif-0.1.2.zip'
+    patch=output/('PodcastPedago-Correctif-'+APP_VERSION+'.zip')
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
-        for name in ('app.py','storage.py','pipeline.py','README-CORRECTIF.txt'):
+        for name in payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json']:
             archive.write(ROOT/name,name)
     with zipfile.ZipFile(patch) as archive:
         assert archive.testzip() is None
-        assert set(archive.namelist())=={'app.py','storage.py','pipeline.py','README-CORRECTIF.txt'}
+        assert set(archive.namelist())==set(payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json'])
     (output/'PodcastPedago-Correctif-Windows.zip').write_bytes(patch.read_bytes())
-    info={'version':'0.1.2','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+    info={'version':APP_VERSION,'file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
           'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))
@@ -896,6 +939,89 @@ class Ollama:
             conn.close()
 ```
 
+## mettre-a-jour.ps1
+
+```powershell
+param([string]$Dossier, [switch]$SansLancement)
+$ErrorActionPreference = 'Stop'
+$sourceDir = $PSScriptRoot
+$manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
+if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
+$manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+$allowed = @('app.py','storage.py','pipeline.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
+$seen = @{}
+foreach ($item in $manifest.files) {
+    if ($item.path -notin $allowed -or $seen.ContainsKey($item.path)) { throw 'Fichier inattendu ou repete dans le correctif.' }
+    $seen[$item.path] = $true
+    $source = Join-Path $sourceDir $item.path
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw ('Fichier manquant : ' + $item.path) }
+    if ($item.sha256 -notmatch '^[a-fA-F0-9]{64}$' -or (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $item.sha256) { throw ('Fichier incomplet : ' + $item.path) }
+}
+if ($Dossier) {
+    $targetDir = [IO.Path]::GetFullPath($Dossier)
+} else {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = 'Choisissez le dossier de PodcastPedago contenant Lancer-Podcast.cmd. Fermez sa fenetre de lancement avant de continuer.'
+    $dialog.ShowNewFolderButton = $false
+    $candidates = @((Join-Path $env:USERPROFILE 'Downloads\PodcastPedago-Windows\PodcastPedago'), (Join-Path $env:USERPROFILE 'Downloads\PodcastPedago'))
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath (Join-Path $candidate 'Lancer-Podcast.cmd')) { $dialog.SelectedPath = $candidate; break }
+    }
+    if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) { exit 0 }
+    $targetDir = $dialog.SelectedPath
+    $dialog.Dispose()
+}
+foreach ($name in @('Lancer-Podcast.cmd','app.py','pipeline.py','storage.py')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $targetDir $name) -PathType Leaf)) { throw 'Choisissez le dossier contenant Lancer-Podcast.cmd et les fichiers Python du programme.' }
+}
+if ([IO.Path]::GetFullPath($targetDir).TrimEnd('\') -eq [IO.Path]::GetFullPath($sourceDir).TrimEnd('\')) { throw 'Choisissez le dossier de votre installation existante, pas le dossier temporaire du correctif.' }
+$targetApp = Join-Path $targetDir 'app.py'
+$running = @()
+if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
+    $running = @(Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='pythonw.exe'" -ErrorAction SilentlyContinue | Where-Object {
+        $_.CommandLine -and $_.CommandLine.IndexOf($targetApp, [StringComparison]::OrdinalIgnoreCase) -ge 0
+    })
+}
+if ($running.Count -gt 0) { throw 'Fermez la fenetre de lancement de PodcastPedago, puis relancez Mettre-a-jour.cmd.' }
+$backupDir = Join-Path $targetDir ('mises-a-jour\sauvegarde-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
+$records = @()
+foreach ($item in $manifest.files) {
+    $destination = Join-Path $targetDir $item.path
+    $backup = Join-Path $backupDir $item.path
+    $existed = Test-Path -LiteralPath $destination -PathType Leaf
+    if ($existed) {
+        New-Item -ItemType Directory -Path (Split-Path $backup -Parent) -Force | Out-Null
+        Copy-Item -LiteralPath $destination -Destination $backup -Force
+    }
+    $records += [pscustomobject]@{ Path=$item.path; Destination=$destination; Backup=$backup; Existed=$existed; Hash=$item.sha256 }
+}
+try {
+    foreach ($record in $records) {
+        New-Item -ItemType Directory -Path (Split-Path $record.Destination -Parent) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $sourceDir $record.Path) -Destination $record.Destination -Force
+        if ((Get-FileHash -LiteralPath $record.Destination -Algorithm SHA256).Hash -ne $record.Hash) { throw ('Verification impossible : ' + $record.Path) }
+    }
+} catch {
+    $failure = $_
+    foreach ($record in $records) {
+        try {
+            if ($record.Existed) { Copy-Item -LiteralPath $record.Backup -Destination $record.Destination -Force }
+            elseif (Test-Path -LiteralPath $record.Destination -PathType Leaf) { Remove-Item -LiteralPath $record.Destination -Force }
+        } catch { Write-Warning ('Restauration manuelle possible dans : ' + $backupDir) }
+    }
+    throw $failure
+}
+if ($SansLancement) {
+    Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
+} else {
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF et projets sont conserves. Le programme va rouvrir : verifiez le numero de version en haut, puis cliquez sur Continuer.'), 'PodcastPedago') | Out-Null
+    Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
+}
+```
+
 ## pdfs.py
 
 ```python
@@ -976,6 +1102,8 @@ import time
 from llm import Cancelled
 from pdfs import extract, fragments
 from storage import read, write
+
+SOURCE_PAGE_MODE = 'pdf-page-v1'
 
 STEPS = [
     'Découper chaque PDF en trois parties', 'Résumer les trois parties',
@@ -1512,13 +1640,20 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('request',lambda r:external.append(r.url) if not r.url.startswith(f'http://127.0.0.1:{server.server_port}') and r.url.startswith(('http:','https:')) else None)
             page.goto(f'http://127.0.0.1:{server.server_port}/');page.wait_for_function('() => state!==null')
+            assert '0.1.3' in page.locator('.badge').inner_text()
             page.locator('#name').fill('Test d’intégration — fournisseur simulé')
             page.locator('#pdfs').set_input_files([str(pdf1),str(pdf2)])
             page.locator('#model-settings summary').click();page.locator('#endpoint').fill(stub.endpoint);page.locator('#model').fill('mistral:test')
             page.locator('#check-model').click();page.wait_for_function('() => document.querySelector("#model-status").textContent.includes("mistral:test")')
             page.locator('#create').click();page.wait_for_function('() => current()?.pdfs.length===2')
             identifier=page.evaluate('selected');folder=app.project(identifier)
+            page.evaluate('() => {state.runtime=null;render()}')
+            assert page.locator('#continue').is_disabled()
+            assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
+            page.evaluate('() => refresh()')
+            page.wait_for_function('() => state.runtime?.version==="0.1.3"')
             page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task.state==="done"')
+            page.wait_for_function('() => document.querySelector("#preview").textContent.includes("pages 1")')
             assert 'pages 1' in page.locator('#preview').inner_text()
             page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
             assert page.locator('#steps button').count()==9
@@ -1845,6 +1980,30 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.request('/api/projects',{'name':'test'},headers={'Origin':'https://evil.test'})[0],403)
         self.assertEqual(self.request('/api/state')[0],200)
 
+    def test_runtime_identifies_the_loaded_page_source_pipeline(self):
+        status,state=self.request('/api/state')
+        self.assertEqual(status,200)
+        self.assertEqual(state['runtime']['version'],'0.1.3')
+        self.assertEqual(state['runtime']['page_sources'],'pdf-page-v1')
+        self.assertTrue(state['runtime']['app_dir'])
+
+    def test_old_pipeline_is_reported_before_generation(self):
+        identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
+        self.app.runtime['page_sources']='legacy'
+        status,result=self.request('/api/projects/'+identifier+'/run',{'first':1,'until':2})
+        self.assertEqual(status,400)
+        self.assertIn('Mise à jour incomplète',result['error'])
+        self.assertFalse((self.app.project(identifier)/'tache.json').exists())
+
+    def test_saved_error_from_an_old_version_is_identified_without_erasing_it(self):
+        identifier=self.create();folder=self.app.project(identifier)
+        original={'id':'old','state':'error','message':'Traitement arrêté','error':'Erreur antérieure'}
+        write(folder/'tache.json',original)
+        task=self.app.summary(folder)['task']
+        self.assertTrue(task['from_previous_version'])
+        self.assertIn('Ancien échec',task['message']);self.assertIn('Continuer',task['message'])
+        self.assertEqual(read(folder/'tache.json'),original)
+
     def test_upload_validation_job_completion_and_settings_invalidation(self):
         identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
         self.assertEqual(self.upload(identifier)[0],400)
@@ -2031,7 +2190,7 @@ const descriptions=[
  'Le dialogue est rédigé chapitre par chapitre avec les acquis, définitions, exemples, questions ouvertes et dernières répliques en mémoire.',
  'Les chapitres sont revus pour la continuité, les répétitions et la fidélité aux idées sources. Le script final est exporté en texte et en JSON.'
 ];
-let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0;
+let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
 const current=()=>state?.projects.find(p=>p.id===selected);
 const busy=p=>['queued','running'].includes(p?.task?.state);
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message;$('notice').classList.toggle('error',error);}
@@ -2041,15 +2200,20 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1';
+ document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
+ let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
+ about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
+ if(outdated){runtimeWarning=true;notice('Une ancienne instance ou une mise à jour incomplète est détectée. Fermez la fenêtre de lancement, puis utilisez Mettre-a-jour.cmd et relancez le programme.',true);}else if(runtimeWarning){runtimeWarning=false;notice('');}
  const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
  $('project-name').textContent=p.name;$('source-info').textContent=`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
- $('continue').disabled=busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('continue').disabled=outdated||busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
- $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
+ $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
  $('final-exports').hidden=!p.exports.length;const exports=$('export-links');exports.replaceChildren();for(const file of p.exports){const a=node('a',file.endsWith('.txt')?'Texte du dialogue':file.endsWith('.md')?'Script Markdown':'Données et rapport JSON');a.href=`/files/${p.id}/${file}`;exports.append(a);}
@@ -2093,4 +2257,6 @@ refresh();setInterval(refresh,1500);
 
 ```css
 :root{color-scheme:light;--ink:#20302d;--muted:#63736e;--line:#d9e1db;--green:#255e48;--bg:#f5f6f1;--card:#fffef9}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,sans-serif}header{height:80px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 32px;background:#fffef9;border-bottom:1px solid var(--line)}header strong{font-size:21px;letter-spacing:-.6px}header div span{color:var(--muted);margin-left:24px}.badge{font-size:12px;color:var(--green);background:#e4eee3;padding:8px 12px;border-radius:20px}.layout{display:grid;grid-template-columns:235px minmax(0,1fr);min-height:calc(100vh - 80px)}aside{border-right:1px solid var(--line);padding:26px 16px}aside h2{font-size:12px;letter-spacing:1px;text-transform:uppercase;margin:28px 10px 12px;color:var(--muted)}main{padding:36px;max-width:1750px;min-width:0;width:100%}h1{font-size:clamp(28px,3vw,42px);line-height:1.2;letter-spacing:-1.1px;margin:8px 0 16px;max-width:850px}h2{font-size:18px;margin:0 0 12px}p{line-height:1.65;margin:8px 0 16px}.intro{max-width:780px;font-size:17px;color:var(--muted);margin-bottom:28px}.eyebrow{font-weight:700;font-size:11px;letter-spacing:2px;color:var(--green);margin:0}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;margin:16px 0}.row{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin:16px 0}.row h2{flex:1;align-self:center;margin:0}label{display:block;flex:1;font-size:13px;font-weight:600;min-width:150px}input,select{width:100%;display:block;margin:8px 0 12px;background:#fff;border:1px solid #b8c6bd;padding:11px 12px;border-radius:7px;font:400 15px system-ui;color:var(--ink);min-width:0}input[type=file]{padding:10px}button{border:1px solid #b1c0b4;border-radius:7px;padding:11px 15px;background:#edf1e9;color:var(--ink);font:600 14px system-ui;cursor:pointer}button:hover{filter:brightness(.96)}button:disabled{opacity:.45;cursor:default}button.primary{color:#fff;background:var(--green);border-color:var(--green)}.wide{width:100%}a{color:#255e48;font-weight:600;font-size:13px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #dbab58;outline-offset:3px}small,.small{font-size:12px;line-height:1.6}small{display:block;color:var(--muted);font-weight:400}.muted{color:var(--muted)}details{margin:20px 0;padding-top:14px;border-top:1px solid var(--line)}summary{cursor:pointer;font-weight:600;font-size:14px}#model-status{font-size:13px}code{font-size:13px;padding:3px 6px;background:#eaf0e8;border-radius:3px}#notice{padding:14px 18px;border:1px solid #adc6ad;background:#e7f0e2;border-radius:8px;margin-bottom:18px;white-space:pre-wrap}#notice.error,#task-error{background:#fff0e9;color:#923e27;border-color:#e7b7a3}#task-error{padding:14px;white-space:pre-wrap;overflow:auto;max-height:260px;font:13px/1.6 system-ui}#projects button{display:block;text-align:left;width:100%;margin:6px 0;overflow:hidden;text-overflow:ellipsis;border-color:transparent;background:transparent}#projects button.active{background:#e2ebde;border-color:#b5c9b3}.project-title{display:flex;justify-content:space-between;gap:24px;align-items:center}.project-title h1{font-size:31px}#setup[hidden]{display:none}.work{display:grid;grid-template-columns:265px minmax(0,1fr);gap:22px;align-items:start}.result{margin-top:0;min-height:470px}.actions{justify-content:start}.actions small{width:100%}#steps{display:grid;gap:8px}#steps button{display:grid;grid-template-columns:30px 1fr;gap:9px;text-align:left;padding:12px;background:#fffef9;align-items:center;border:1px solid var(--line);line-height:1.4}#steps b{font-size:16px;color:var(--muted)}#steps button.selected{border-color:#255e48;box-shadow:inset 3px 0 #255e48}#steps button.done b{color:#255e48}#steps button.running{background:#e9f0e2}#preview{line-height:1.8;overflow-wrap:anywhere}#preview h2{font-size:19px;margin-top:28px}#preview h3{font-size:16px;margin-top:22px}#preview p{margin:12px 0}#preview li{margin:9px 0}#preview pre{white-space:pre-wrap}#preview hr{border:0;border-top:1px solid var(--line);margin:22px 0}#export-links a{background:#e5eddf;padding:12px 18px;border:1px solid #bfd0b8;border-radius:6px}[hidden]{display:none!important}@media(max-width:1100px){header div span{display:none}.layout{grid-template-columns:190px minmax(0,1fr)}main{padding:24px 18px}.work{grid-template-columns:220px minmax(0,1fr);gap:12px}.card{padding:18px}}@media(max-width:760px){.layout{display:block}aside{border-right:0;border-bottom:1px solid var(--line);padding:16px}aside h2{margin:16px 0 5px}#projects{display:flex;gap:6px;overflow:auto}#projects button{min-width:150px;max-width:250px}header{padding:0 16px;height:70px}.badge{font-size:10px}.work{grid-template-columns:1fr}#steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}#steps button{display:block;font-size:11px;padding:8px}#steps b{display:block;font-size:14px;margin-bottom:4px}.project-title{align-items:start}main{padding:24px 12px}.row label{min-width:180px}.card{padding:16px}}
+
+#runtime-info{overflow-wrap:anywhere;font-size:12px}
 ```

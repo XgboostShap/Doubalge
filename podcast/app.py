@@ -18,10 +18,12 @@ import webbrowser
 import zipfile
 
 from llm import Ollama, Cancelled, endpoint_parts, models
+import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
 from storage import defaults, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
+APP_VERSION = '0.1.3'
 
 
 def settings(value):
@@ -64,6 +66,8 @@ class App:
         self.cancels = {}
         self.task_errors = {}
         self.active = None
+        self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
+                        'app_dir':str(ROOT),'pid':os.getpid()}
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
             task = read(path)
@@ -99,6 +103,9 @@ class App:
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
+        if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
+            task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
+                  'from_previous_version':True}
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
         return {**meta,'completed':completed,'task':task,'exports':exports,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
@@ -106,11 +113,13 @@ class App:
     def state(self):
         with self.lock:
             projects = [self.summary(p) for p in self.projects.iterdir() if p.is_dir() and re.fullmatch('[a-f0-9]{32}',p.name)]
-            return {'token':self.token,'defaults':defaults(),'steps':STEPS,
+            return {'token':self.token,'defaults':defaults(),'steps':STEPS,'runtime':self.runtime,
                     'projects':sorted(projects,key=lambda p:p['created'],reverse=True)}
 
     def enqueue(self, folder, body):
         with self.lock:
+            if self.runtime['page_sources']!='pdf-page-v1':
+                raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
             self.idle(folder)
             meta = read(folder/'projet.json')
             if not meta['pdfs']:
@@ -124,7 +133,7 @@ class App:
             if type(regenerate) is not bool:
                 raise ValueError('Option de régénération invalide.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
-                    'message':'En attente','error':None,'regenerate':regenerate}
+                    'message':'En attente','error':None,'regenerate':regenerate,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
             self.task_errors.pop(folder.name,None)

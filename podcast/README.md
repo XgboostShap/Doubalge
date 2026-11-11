@@ -1,8 +1,27 @@
-# Podcast pédagogique — version 0.1.2
+# Podcast pédagogique — version 0.1.3
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Mise à jour 0.1.3 — version visible et remplacement automatique
+
+La version chargée est affichée en haut de l'interface. « Version et dossier du
+programme » dans la barre latérale permet d'identifier le dossier réellement
+utilisé. Une interface mise à jour connectée à une ancienne instance demande de
+fermer et relancer le programme ; un mélange avec un ancien `pipeline.py` est
+signalé avant de lancer les traitements.
+Un échec conservé depuis une version précédente est identifié comme ancien,
+sans effacer son détail ; « Continuer » lance une nouvelle tentative.
+
+Pour une installation existante : fermer la fenêtre de lancement, extraire le
+ZIP correctif puis ouvrir **Mettre-a-jour.cmd**. Choisir le dossier contenant
+`Lancer-Podcast.cmd`. L'outil vérifie les empreintes, sauvegarde les anciens
+fichiers de code dans `mises-a-jour`, remplace les fichiers et rouvre le programme.
+Les PDF, projets et `.venv` sont conservés. La version **0.1.3** doit apparaître
+à l'écran ; cliquer ensuite sur « Continuer jusqu'au script final ».
+
+L'outil de mise à jour Windows reste à vérifier nativement sur le PC cible.
 
 ## Correctif 0.1.2 — références de pages
 
@@ -16,11 +35,8 @@ d'appels au modèle sur les longs documents.
 Les extraits sans idée retenue sont signalés dans le résumé pour vérification.
 Une couverture ou une bibliographie n'impose pas d'inventer un point explicatif.
 
-Pour mettre à jour une installation existante, fermer la fenêtre de lancement
-puis remplacer `app.py`, `storage.py` et `pipeline.py` avec le ZIP correctif.
-Conserver `donnees` et `.venv`, relancer `Lancer-Podcast.cmd`, puis cliquer sur
-« Continuer jusqu'au script final ». Le correctif est cumulatif et inclut celui
-des verrouillages Windows. Voir `README-CORRECTIF.txt`.
+Le correctif actuel est cumulatif et inclut celui des verrouillages Windows.
+Voir `README-CORRECTIF.txt` pour la mise à jour automatique.
 
 Les pages indiquent la provenance du texte envoyé au modèle. Elles ne remplacent
 pas une vérification de la fidélité de chaque affirmation aux sources.
@@ -120,7 +136,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 24 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 27 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,

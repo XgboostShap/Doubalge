@@ -1,0 +1,53 @@
+{
+  "version": "0.1.3",
+  "files": [
+    {
+      "path": "app.py",
+      "sha256": "2e531c2b7a638cb09b36a498c9ba1bd4d6892162ba16c6d7d5a2b0ff1c576b01"
+    },
+    {
+      "path": "storage.py",
+      "sha256": "18ce024b7e86bfe590f957921e1d8c3327b935a0d4e1de904d7979cd512122de"
+    },
+    {
+      "path": "pipeline.py",
+      "sha256": "4d2162e4912d3e939b33062f41a864bc6dfd1269327412f1f21200f4d4728c03"
+    },
+    {
+      "path": "llm.py",
+      "sha256": "050e7a72472e8c0b48f28c7db7480ae12892b575877aac35315ad69add477a89"
+    },
+    {
+      "path": "pdfs.py",
+      "sha256": "0094072d5f57b858e5d279999476b21c4e0d58e3a189512a8fd7b9dbf97ce946"
+    },
+    {
+      "path": "web/index.html",
+      "sha256": "ed2cbd42755a3271c10b42095a424b9413d02f837243748abc60a06dea1b4473"
+    },
+    {
+      "path": "web/app.js",
+      "sha256": "090dfa180906ecb855844a4049977df89a7c4194c60b53e52cf7b8b2684c214d"
+    },
+    {
+      "path": "web/style.css",
+      "sha256": "0ae5fce3bea22ca035b0eb0eca9c79431c10d70fa1beb3a3c634e0a9611280cb"
+    },
+    {
+      "path": "Lancer-Podcast.cmd",
+      "sha256": "ba9ffbac865fcc8cdec916a64cc1f746fbbfab5284f56e7d0d521223a51f2db3"
+    },
+    {
+      "path": "README.md",
+      "sha256": "540b7f63ec501ce02c2514709cdf445c0a256dbd19f6b6a77628903bb18a330f"
+    },
+    {
+      "path": "README-CORRECTIF.txt",
+      "sha256": "e835d72cf00cb4a8d52532d950d4805387213eac70eb546e96a24cba1738adb7"
+    },
+    {
+      "path": "SOURCE-COMPLET.md",
+      "sha256": "ada8864972a32ba6fe50b4743119bd6b25a315553d051008789428864a4952f9"
+    }
+  ]
+}

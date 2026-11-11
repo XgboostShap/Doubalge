@@ -9,6 +9,8 @@ from llm import Cancelled
 from pdfs import extract, fragments
 from storage import read, write
 
+SOURCE_PAGE_MODE = 'pdf-page-v1'
+
 STEPS = [
     'Découper chaque PDF en trois parties', 'Résumer les trois parties',
     'Compiler une synthèse par PDF', 'Construire le texte commun',

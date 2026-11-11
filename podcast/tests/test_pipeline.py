@@ -184,6 +184,30 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.request('/api/projects',{'name':'test'},headers={'Origin':'https://evil.test'})[0],403)
         self.assertEqual(self.request('/api/state')[0],200)
 
+    def test_runtime_identifies_the_loaded_page_source_pipeline(self):
+        status,state=self.request('/api/state')
+        self.assertEqual(status,200)
+        self.assertEqual(state['runtime']['version'],'0.1.3')
+        self.assertEqual(state['runtime']['page_sources'],'pdf-page-v1')
+        self.assertTrue(state['runtime']['app_dir'])
+
+    def test_old_pipeline_is_reported_before_generation(self):
+        identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
+        self.app.runtime['page_sources']='legacy'
+        status,result=self.request('/api/projects/'+identifier+'/run',{'first':1,'until':2})
+        self.assertEqual(status,400)
+        self.assertIn('Mise à jour incomplète',result['error'])
+        self.assertFalse((self.app.project(identifier)/'tache.json').exists())
+
+    def test_saved_error_from_an_old_version_is_identified_without_erasing_it(self):
+        identifier=self.create();folder=self.app.project(identifier)
+        original={'id':'old','state':'error','message':'Traitement arrêté','error':'Erreur antérieure'}
+        write(folder/'tache.json',original)
+        task=self.app.summary(folder)['task']
+        self.assertTrue(task['from_previous_version'])
+        self.assertIn('Ancien échec',task['message']);self.assertIn('Continuer',task['message'])
+        self.assertEqual(read(folder/'tache.json'),original)
+
     def test_upload_validation_job_completion_and_settings_invalidation(self):
         identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
         self.assertEqual(self.upload(identifier)[0],400)
