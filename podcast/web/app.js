@@ -8,7 +8,7 @@ const descriptions=[
  'Une question centrale organise les chapitres. Chaque idée est affectée à un chapitre ou signalée explicitement hors podcast.',
  'Une phrase complète est écrite pour chaque idée importante affectée à une partie du plan.',
  'Les phrases sont reliées en une explication pédagogique, avant la mise en dialogue. Une phrase prépare le raccord entre chapitres.',
- 'Le dialogue est rédigé chapitre par chapitre avec les acquis, définitions, exemples, questions ouvertes et dernières répliques en mémoire.',
+ 'Chaque chapitre est enregistré en Markdown. Le suivant reçoit une nouvelle conversation et une courte fiche de continuité ; les textes complets restent dans les fichiers.',
  'Les chapitres sont revus pour la continuité, les répétitions et la fidélité aux idées sources. Le script final est exporté en texte et en JSON.'
 ];
 let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
@@ -36,6 +36,7 @@ function render(){
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
  $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
+ const parts=(p.parts||[]).filter(name=>Number(name.slice(0,2))===step);$('saved-parts').hidden=!parts.length;const links=$('part-links');links.replaceChildren();for(const file of parts){const a=node('a',file.slice(3));a.href=`/files/${p.id}/partie-${file}`;links.append(a);}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
  $('final-exports').hidden=!p.exports.length;const exports=$('export-links');exports.replaceChildren();for(const file of p.exports){const a=node('a',file.endsWith('.txt')?'Texte du dialogue':file.endsWith('.md')?'Script Markdown':'Données et rapport JSON');a.href=`/files/${p.id}/${file}`;exports.append(a);}
 }

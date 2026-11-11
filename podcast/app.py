@@ -23,7 +23,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.3'
+APP_VERSION = '0.1.4'
 
 
 def settings(value):
@@ -107,7 +107,9 @@ class App:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
                   'from_previous_version':True}
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
-        return {**meta,'completed':completed,'task':task,'exports':exports,
+        parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
+                 if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
+        return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
     def state(self):
@@ -161,13 +163,15 @@ class App:
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
-                invalidate(folder,task['first'])
+                # Une simple reprise conserve les parties finies dans l'étape en cours.
+                # Leurs empreintes contrôlent les paramètres et données d'origine.
+                invalidate(folder,task['first'],partials=task['regenerate'])
                 client = self.client_factory(config,folder/'cache',cancel,progress)
                 self.active = (task['id'],client)
                 Pipeline(folder,client,cancel,progress).run(task['first'],task['until'])
                 task.update(state='done',message='Étapes terminées et enregistrées')
             except Cancelled:
-                task.update(state='cancelled',message='Annulé. Les étapes terminées et les réponses en cache sont conservées.')
+                task.update(state='cancelled',message='Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
             except Exception as error:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
@@ -285,6 +289,9 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts)==4 and parts[1]=='files':
                 folder=self.app.project(parts[2]);name=parts[3]
                 if re.fullmatch(r'0[1-9]\.(md|json)',name):file=folder/'etapes'/name
+                elif re.fullmatch(r'partie-0[1-9]-[A-Za-z0-9-]+\.md',name):
+                    file=folder/'etapes'/'parties'/name.removeprefix('partie-')
+                    if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
                 elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
                 elif name=='dossier.zip':
                     self.app.idle(folder)

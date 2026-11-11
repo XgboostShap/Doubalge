@@ -1,8 +1,49 @@
-# Podcast pédagogique — version 0.1.3
+# Podcast pédagogique — version 0.1.4
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Mise à jour 0.1.4 — parties Markdown et mémoire courte
+
+Chaque partie de PDF terminée à l'étape 2 est enregistrée immédiatement dans
+`etapes/parties/02-PDF1-P1.md` (et son JSON de reprise). Les synthèses par PDF,
+textes par thème, phrases clés, explications, dialogues et révisions sont
+également enregistrés par document, thème ou chapitre, avant de passer au suivant.
+Les liens **Parties déjà enregistrées en Markdown** donnent accès à ces textes
+même si l'étape entière n'est pas encore terminée.
+
+Après un arrêt, **Continuer** reprend les unités manquantes. Les empreintes des
+données et paramètres empêchent de reprendre une partie devenue périmée.
+**Refaire cette étape** archive les parties et force une nouvelle génération.
+Les réponses valides par page restent aussi en cache : une partie de PDF
+inachevée ne doit pas faire relire ses pages déjà traitées à paramètres identiques.
+
+Chaque appel Ollama est une nouvelle conversation : aucun dialogue complet
+n'est accumulé dans l'historique. Le chapitre suivant reçoit uniquement son
+contenu, le sommaire du plan et une fiche de continuité bornée (derniers acquis,
+définitions récentes ou pertinentes, exemples, questions et deux dernières
+répliques abrégées). La mémoire complète reste dans `memoire/C1.json`, etc.
+Les sources et idées du chapitre courant ne sont pas tronquées. La fiche courte
+est un aide-mémoire ; elle ne garantit pas à elle seule l'absence de répétitions.
+Les poids du modèle peuvent rester chargés dans Ollama pour éviter de les
+recharger à chaque chapitre : cela n'ajoute pas un historique de conversation.
+
+L'erreur **prediction aborted, token repeat limit reached** indique une boucle
+de génération, pas un manque de contexte. Le programme fait une seule reprise
+spécifique, sans réinjecter la réponse avortée, en demandant une réponse concise
+avec une pénalité de répétition modérée. Si l'extraction d'une page boucle encore,
+le texte est partagé en deux et relu sans perdre de caractères ni changer sa
+page source (trois niveaux maximum). Les erreurs réseau, 404, annulations ou
+réponses tronquées ne sont pas assimilées à une répétition. Seuls les résultats
+complets et validés sont enregistrés. Un échec persistant garde l'erreur exacte
+et permet d'essayer un autre modèle déjà installé. Aucun réglage ne garantit
+qu'un modèle donné ne bouclera jamais.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd**, choisir le dossier contenant `Lancer-Podcast.cmd`,
+puis vérifier **Version 0.1.4** et cliquer sur **Continuer**. Les PDF, projets,
+modèles et dépendances restent conservés.
 
 ## Mise à jour 0.1.3 — version visible et remplacement automatique
 
@@ -136,13 +177,18 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 27 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
-pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
-Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
+Les tests automatisés utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+pour vérifier les contrats JSON, les neuf étapes, la mémoire courte, les reprises
+après répétition et les sauvegardes partielles sans télécharger Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
 les archives et l’annulation.
 
-Ces tests ne mesurent pas la qualité des réponses d’un vrai modèle Mistral.
+Les erreurs de répétition et de verrouillage sont reproduites par simulation.
+Un essai réel précédent de Mistral a traité les pages 14, 77 et 106 du PDF
+utilisateur (147 pages) : 16 idées avec leur provenance issue du PDF. Ce résultat
+ne valide pas le podcast intégral des 147 pages. Les documents et résultats
+utilisateurs sont privés et exclus des archives distribuées.
+Ces tests ne mesurent pas la qualité pédagogique du podcast complet.
 L’installation native Windows et la vitesse NVIDIA restent à vérifier sur le PC
 cible. L’application fonctionne ici sous Linux ; aucune exécution Windows ne doit
 être déduite de ce résultat.

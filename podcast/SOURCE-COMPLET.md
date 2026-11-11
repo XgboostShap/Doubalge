@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.3
+# Sources complètes — Podcast pédagogique 0.1.4
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -47,7 +47,9 @@ PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
 6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
 
 Le programme cree le SCRIPT du podcast, en texte. Il ne genere pas encore
-les voix audio. Chaque etape est sauvegardee et consultable.
+les voix audio. Chaque partie est sauvegardee en Markdown avant la suivante.
+En cas d'arret, Continuer reprend les parties manquantes.
+Une courte fiche de continuite relie les chapitres sans accumuler le dialogue.
 
 Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
 Ensuite, le traitement peut fonctionner hors connexion sur votre PC.
@@ -100,36 +102,81 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.3 — MISE A JOUR AUTOMATIQUE
+PODCAST PEDAGOGIQUE 0.1.4 — PARTIES MARKDOWN ET MEMOIRE COURTE
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Double-cliquer sur Mettre-a-jour.cmd.
 4. Choisir le dossier contenant Lancer-Podcast.cmd.
-   Le dossier habituel dans Downloads est propose si le programme le trouve.
-5. Le programme rouvre. Verifier Version 0.1.3 en haut de la page,
-   puis cliquer sur Continuer jusqu'au script final.
+5. Verifier Version 0.1.4 en haut de la page, puis cliquer sur Continuer.
+
+Chaque partie terminee est enregistree en .md avant de passer a la suivante.
+Dans l'etape, ouvrir "Parties deja enregistrees en Markdown" pour la telecharger.
+Si le traitement s'arrete, Continuer conserve les parties deja finies.
+Chaque chapitre recoit une nouvelle conversation et une courte fiche de
+continuite. La memoire complete reste enregistree dans le dossier du projet.
+
+"token repeat limit reached" signifie que le modele boucle. Augmenter le
+contexte de 16 a 32 ou 65 k ne corrige pas cette repetition. Une reprise
+specifique est tentee ; les pages bloquantes peuvent etre subdivisees.
+Si la boucle persiste, l'erreur exacte est conservee ; un autre modele deja
+installe peut etre choisi dans les parametres. Ne pas retelcharger Mistral.
 
 Les fichiers de code sont sauvegardes puis remplaces automatiquement.
 Les PDF et projets dans donnees et les dependances dans .venv sont conserves.
-Pas de reinstallation de Python ou de Mistral.
-
-Ce correctif inclut les references de pages automatiques depuis le PDF,
-les reprises sur verrouillages Windows et la detection d'une ancienne instance.
-Si l'ancien message sur les pages reste visible, cliquer sur Continuer pour
-remplacer l'ancien etat d'erreur par un nouveau traitement.
-
-La mise a jour Windows reste a verifier nativement sur le PC cible.
+Les anciens correctifs pages automatiques, verrous Windows et version visible
+sont inclus. La mise a jour Windows reste a verifier nativement sur le PC cible.
 ```
 
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.3
+# Podcast pédagogique — version 0.1.4
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Mise à jour 0.1.4 — parties Markdown et mémoire courte
+
+Chaque partie de PDF terminée à l'étape 2 est enregistrée immédiatement dans
+`etapes/parties/02-PDF1-P1.md` (et son JSON de reprise). Les synthèses par PDF,
+textes par thème, phrases clés, explications, dialogues et révisions sont
+également enregistrés par document, thème ou chapitre, avant de passer au suivant.
+Les liens **Parties déjà enregistrées en Markdown** donnent accès à ces textes
+même si l'étape entière n'est pas encore terminée.
+
+Après un arrêt, **Continuer** reprend les unités manquantes. Les empreintes des
+données et paramètres empêchent de reprendre une partie devenue périmée.
+**Refaire cette étape** archive les parties et force une nouvelle génération.
+Les réponses valides par page restent aussi en cache : une partie de PDF
+inachevée ne doit pas faire relire ses pages déjà traitées à paramètres identiques.
+
+Chaque appel Ollama est une nouvelle conversation : aucun dialogue complet
+n'est accumulé dans l'historique. Le chapitre suivant reçoit uniquement son
+contenu, le sommaire du plan et une fiche de continuité bornée (derniers acquis,
+définitions récentes ou pertinentes, exemples, questions et deux dernières
+répliques abrégées). La mémoire complète reste dans `memoire/C1.json`, etc.
+Les sources et idées du chapitre courant ne sont pas tronquées. La fiche courte
+est un aide-mémoire ; elle ne garantit pas à elle seule l'absence de répétitions.
+Les poids du modèle peuvent rester chargés dans Ollama pour éviter de les
+recharger à chaque chapitre : cela n'ajoute pas un historique de conversation.
+
+L'erreur **prediction aborted, token repeat limit reached** indique une boucle
+de génération, pas un manque de contexte. Le programme fait une seule reprise
+spécifique, sans réinjecter la réponse avortée, en demandant une réponse concise
+avec une pénalité de répétition modérée. Si l'extraction d'une page boucle encore,
+le texte est partagé en deux et relu sans perdre de caractères ni changer sa
+page source (trois niveaux maximum). Les erreurs réseau, 404, annulations ou
+réponses tronquées ne sont pas assimilées à une répétition. Seuls les résultats
+complets et validés sont enregistrés. Un échec persistant garde l'erreur exacte
+et permet d'essayer un autre modèle déjà installé. Aucun réglage ne garantit
+qu'un modèle donné ne bouclera jamais.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd**, choisir le dossier contenant `Lancer-Podcast.cmd`,
+puis vérifier **Version 0.1.4** et cliquer sur **Continuer**. Les PDF, projets,
+modèles et dépendances restent conservés.
 
 ## Mise à jour 0.1.3 — version visible et remplacement automatique
 
@@ -263,13 +310,18 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 27 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
-pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
-Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
+Les tests automatisés utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+pour vérifier les contrats JSON, les neuf étapes, la mémoire courte, les reprises
+après répétition et les sauvegardes partielles sans télécharger Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
 les archives et l’annulation.
 
-Ces tests ne mesurent pas la qualité des réponses d’un vrai modèle Mistral.
+Les erreurs de répétition et de verrouillage sont reproduites par simulation.
+Un essai réel précédent de Mistral a traité les pages 14, 77 et 106 du PDF
+utilisateur (147 pages) : 16 idées avec leur provenance issue du PDF. Ce résultat
+ne valide pas le podcast intégral des 147 pages. Les documents et résultats
+utilisateurs sont privés et exclus des archives distribuées.
+Ces tests ne mesurent pas la qualité pédagogique du podcast complet.
 L’installation native Windows et la vitesse NVIDIA restent à vérifier sur le PC
 cible. L’application fonctionne ici sous Linux ; aucune exécution Windows ne doit
 être déduite de ce résultat.
@@ -315,7 +367,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.3'
+APP_VERSION = '0.1.4'
 
 
 def settings(value):
@@ -399,7 +451,9 @@ class App:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
                   'from_previous_version':True}
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
-        return {**meta,'completed':completed,'task':task,'exports':exports,
+        parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
+                 if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
+        return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
     def state(self):
@@ -453,13 +507,15 @@ class App:
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
-                invalidate(folder,task['first'])
+                # Une simple reprise conserve les parties finies dans l'étape en cours.
+                # Leurs empreintes contrôlent les paramètres et données d'origine.
+                invalidate(folder,task['first'],partials=task['regenerate'])
                 client = self.client_factory(config,folder/'cache',cancel,progress)
                 self.active = (task['id'],client)
                 Pipeline(folder,client,cancel,progress).run(task['first'],task['until'])
                 task.update(state='done',message='Étapes terminées et enregistrées')
             except Cancelled:
-                task.update(state='cancelled',message='Annulé. Les étapes terminées et les réponses en cache sont conservées.')
+                task.update(state='cancelled',message='Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
             except Exception as error:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
@@ -577,6 +633,9 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts)==4 and parts[1]=='files':
                 folder=self.app.project(parts[2]);name=parts[3]
                 if re.fullmatch(r'0[1-9]\.(md|json)',name):file=folder/'etapes'/name
+                elif re.fullmatch(r'partie-0[1-9]-[A-Za-z0-9-]+\.md',name):
+                    file=folder/'etapes'/'parties'/name.removeprefix('partie-')
+                    if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
                 elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
                 elif name=='dossier.zip':
                     self.app.idle(folder)
@@ -811,6 +870,16 @@ class ModelError(RuntimeError):
     pass
 
 
+class RepetitionError(ModelError):
+    """Arrêt de génération répétitive, distinct d'une panne réseau ou d'un 404."""
+
+
+def model_error(detail):
+    if 'token repeat limit' in detail.lower():
+        return RepetitionError(detail)
+    return ModelError(detail)
+
+
 def endpoint_parts(endpoint):
     parsed = urlsplit(endpoint)
     if parsed.scheme not in ('http','https') or parsed.hostname not in ('127.0.0.1','localhost','::1'):
@@ -879,25 +948,44 @@ class Ollama:
         if len(prompt) > max(2000, (self.config['num_ctx']-budget-1200)*3):
             raise ModelError('Cette requête dépasse le budget de contexte. Augmentez le contexte Ollama ou utilisez moins de PDF par projet. Aucun texte n’a été tronqué silencieusement.')
         messages = [{'role':'system','content':SYSTEM},{'role':'user','content':prompt}]
-        for attempt in range(2):
+        repairs, repeat_retries = 0, 0
+        while True:
+            if self.cancelled.is_set():
+                raise Cancelled()
             try:
-                text = self._request(messages,budget)
+                text = self._request(messages,budget,recovery=bool(repeat_retries))
                 value = json.loads(text)
                 validate(value)
                 write(path,value)
                 return value
+            except RepetitionError as error:
+                if repeat_retries:
+                    raise RepetitionError('Ollama répète sa réponse pour « '+task+' » malgré une reprise. '
+                        'Les parties terminées sont conservées. Le contexte 16/32/65 k ne corrige pas '
+                        'cette boucle ; essayez un autre modèle installé si le blocage persiste. '
+                        'Erreur exacte : '+str(error)) from error
+                repeat_retries += 1
+                self.progress('Ollama a répété sa réponse : nouvelle conversation, réponse plus concise…')
+                # Aucun morceau de la génération avortée ni historique n'est réinjecté.
+                messages = messages[:2] + [{'role':'user','content':
+                    'Réponds de façon concise. Une seule occurrence par idée, sans liste répétée. '
+                    'Conserve tous les éléments demandés et termine l’objet JSON. '
+                    'Ne recopie pas les données ni les consignes dans la réponse.'}]
             except (ValueError, KeyError, TypeError) as error:
-                if attempt:
+                if repairs:
                     raise ModelError('La réponse du modèle reste invalide : '+str(error)) from error
+                repairs += 1
                 self.progress('Correction du format de réponse du modèle…')
                 messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
 
-    def _request(self, messages, budget):
+    def _request(self, messages, budget, recovery=False):
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
             body = {'model':self.config['model'], 'messages':messages, 'format':'json', 'stream':True,
-                    'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],'num_predict':budget}}
+                    'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],
+                               'num_predict':budget,'repeat_penalty':1.15 if recovery else 1.1,
+                               'repeat_last_n':256 if recovery else 64}}
             conn.request('POST','/api/chat',json.dumps(body).encode(),{'Content-Type':'application/json'})
             self.active_socket = conn.sock
             if self.cancelled.is_set():
@@ -905,7 +993,7 @@ class Ollama:
             response = conn.getresponse()
             if response.status != 200:
                 detail = response.read(2000).decode(errors='replace')
-                raise ModelError(f'Ollama répond HTTP {response.status} : {detail}')
+                raise model_error(f'Ollama répond HTTP {response.status} : {detail}')
             pieces, total, done = [], 0, False
             for line in response:
                 if self.cancelled.is_set():
@@ -914,7 +1002,7 @@ class Ollama:
                     continue
                 event = json.loads(line)
                 if event.get('error'):
-                    raise ModelError(str(event['error']))
+                    raise model_error(str(event['error']))
                 content = event.get('message',{}).get('content','')
                 pieces.append(content)
                 total += len(content)
@@ -923,7 +1011,9 @@ class Ollama:
                 if event.get('done'):
                     done = True
                     if event.get('done_reason')=='length':
-                        raise ModelError('Le modèle a atteint sa limite de sortie. Augmentez le contexte ou réduisez la taille du projet.')
+                        raise ModelError('Le modèle a atteint sa limite de sortie. La réponse incomplète '
+                                         'n’est pas enregistrée. Réduisez la taille de la partie ou essayez '
+                                         'un autre modèle ; augmenter le contexte seul ne change pas cette limite.')
             if self.cancelled.is_set():
                 raise Cancelled()
             if not done:
@@ -1099,9 +1189,9 @@ from pathlib import Path
 import re
 import time
 
-from llm import Cancelled
+from llm import Cancelled, RepetitionError
 from pdfs import extract, fragments
-from storage import read, write
+from storage import fingerprint, read, write, write_text
 
 SOURCE_PAGE_MODE = 'pdf-page-v1'
 
@@ -1167,6 +1257,29 @@ def dialogue_valid(value, allowed_speakers, wanted):
         raise ValueError('Le dialogue doit traiter toutes les idées affectées à ce chapitre.')
 
 
+def continuity(memory, chapter):
+    """Fiche bornée pour le prochain appel ; la mémoire complète reste sur disque."""
+    def brief(value, limit=180):
+        value = str(value)
+        return value if len(value)<=limit else value[:limit-1]+'…'
+    terms = set(re.findall(r'\w{4,}',json.dumps(chapter,ensure_ascii=False).lower()))
+    definitions = list(memory.get('definitions',{}).items())
+    relevant = [pair for pair in definitions if terms & set(re.findall(r'\w{4,}',pair[0].lower()))]
+    chosen = dict((relevant[-4:]+definitions[-8:]))
+    explained = list(memory.get('explained_ideas',{}).items())[-12:]
+    return {'explained_ideas':{k:brief(v) for k,v in explained},
+            'definitions':{brief(k,80):brief(v) for k,v in chosen.items()},
+            'examples':[brief(v) for v in memory.get('examples',[])[-3:]],
+            'open_questions':[brief(v) for v in memory.get('open_questions',[])[-4:]],
+            'last_turns':[{'speaker':brief(t['speaker'],80),'text':brief(t['text'],240)}
+                          for t in memory.get('last_turns',[])[-2:]],
+            'next_chapter':memory.get('next_chapter'),
+            'note':'Fiche abrégée de continuité, pas un historique de conversation. '
+                   'Les textes et mémoires complets sont conservés dans les fichiers du projet.',
+            'archived_counts':{'ideas':len(memory.get('explained_ideas',{})),
+                               'definitions':len(definitions),'examples':len(memory.get('examples',[]))}}
+
+
 class Pipeline:
     def __init__(self, project, client, cancelled=None, progress=None):
         self.project = Path(project)
@@ -1178,6 +1291,35 @@ class Pipeline:
 
     def saved(self, step):
         return read(self.project/'etapes'/f'{step:02}.json')['data']
+
+    def unit(self, step, key, title, inputs, produce, render):
+        """Le JSON validé est le marqueur de fin, écrit après son Markdown."""
+        if self.cancelled.is_set():
+            raise Cancelled()
+        if not re.fullmatch(r'[A-Za-z0-9-]+',key):
+            raise ValueError('Identifiant de partie invalide.')
+        path = self.project/'etapes'/'parties'/f'{step:02}-{key}.json'
+        signature = fingerprint({'version':1,'inputs':inputs,'settings':self.config,
+                                 'generation':self.meta.get('cache_generation','initial')})
+        if path.exists():
+            saved = read(path)
+            if saved.get('fingerprint')==signature:
+                value = saved['data']
+                if not path.with_suffix('.md').exists():
+                    write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
+                self.progress('Reprise — partie déjà enregistrée : '+title)
+                return value
+        value = produce()
+        if self.cancelled.is_set():
+            raise Cancelled()
+        write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
+        write(path,{'step':step,'title':title,'fingerprint':signature,'data':value})
+        self.progress('Partie enregistrée en Markdown — '+title)
+        return value
+
+    def ask_unit(self, step, key, title, task, payload, instructions, validate, render, budget=4000):
+        return self.unit(step,key,title,{'task':task,'payload':payload,'instructions':instructions,'budget':budget},
+                         lambda:self.client.ask(task,payload,instructions,validate,budget),render)
 
     def run(self, first=1, until=9):
         if not 1<=first<=until<=9:
@@ -1191,14 +1333,14 @@ class Pipeline:
             data, markdown = getattr(self,f'step{number}')()
             if self.cancelled.is_set():
                 raise Cancelled()
+            write_text(self.project/'etapes'/f'{number:02}.md','# '+STEPS[number-1]+'\n\n'+markdown)
             write(self.project/'etapes'/f'{number:02}.json',{'step':number,'title':STEPS[number-1],
                   'created':time.time(),'data':data})
-            (self.project/'etapes'/f'{number:02}.md').write_text('# '+STEPS[number-1]+'\n\n'+markdown,encoding='utf-8')
         if until==9:
             final = self.saved(9)
             folder = self.project/'exports';folder.mkdir(exist_ok=True)
-            (folder/'podcast.md').write_text(final['markdown'],encoding='utf-8')
-            (folder/'podcast.txt').write_text(final['plain_text'],encoding='utf-8')
+            write_text(folder/'podcast.md',final['markdown'])
+            write_text(folder/'podcast.txt',final['plain_text'])
             write(folder/'podcast.json',final)
 
     def step1(self):
@@ -1217,47 +1359,68 @@ class Pipeline:
             notes.append('')
         return {'documents':docs},'\n'.join(notes)
 
+    def summary_excerpt(self, doc, part, page, chunk, depth=0):
+        def validate(value):
+            text(value,'summary')
+            if not isinstance(value.get('ideas'),list):
+                raise ValueError('Extraire les idées importantes dans une liste ideas.')
+            for idea in value['ideas']:
+                text(idea,'statement');text(idea,'explanation')
+        try:
+            return self.client.ask('part_summary',{'document':doc,'part':part,'source_page':page,'blocks':chunk},
+                '''Résume cet extrait en conservant les liens entre les concepts : pourquoi,
+                comment, causes, conséquences, définitions, chiffres et réserves. Ne te limite pas à des mots-clés.
+                Structure : {"summary":"explication suivie", "ideas":[{"statement":"idée en une phrase",
+                "explanation":"explication et liens causaux"}]}.
+                Extrais toutes les idées essentielles du texte fourni dans blocks, sans inventer
+                de compléments. Cet extrait provient d'une seule page, indiquée par source_page.
+                Le logiciel ajoutera lui-même les références : ne génère pas de numéros de page.
+                Si l'extrait ne contient que couverture, sommaire ou bibliographie sans idée
+                explicative, renvoie ideas:[] et explique sa nature dans summary, sans inventer.
+                La compilation suivante reliera les pages et les trois parties du document.''',validate)
+        except RepetitionError:
+            # Réduire réellement l'entrée si la reprise locale n'a pas suffi.
+            # Aucun caractère ni numéro de page n'est perdu dans le découpage.
+            size = sum(len(b['text']) for b in chunk)
+            if depth>=3 or size<512:
+                raise
+            if len(chunk)>1:
+                halves = [chunk[:len(chunk)//2],chunk[len(chunk)//2:]]
+            else:
+                block = chunk[0];middle = len(block['text'])//2
+                halves = [[{**block,'text':block['text'][:middle]}],
+                          [{**block,'text':block['text'][middle:]}]]
+            self.progress(f'Page {page} : lecture en deux extraits plus courts après répétition…')
+            results = [self.summary_excerpt(doc,part,page,half,depth+1) for half in halves]
+            return {'summary':'\n\n'.join(v['summary'] for v in results),
+                    'ideas':[idea for v in results for idea in v['ideas']]}
+
+    def summarize_part(self, doc, part):
+        summaries, ideas, empty_excerpts = [], [], []
+        for index, (page,chunk) in enumerate(page_fragments(part['blocks']),1):
+            self.progress(f'{doc["id"]} — partie {part["number"]}, page {page}, fragment {index}')
+            value = self.summary_excerpt(doc['id'],part['number'],page,chunk)
+            summaries.append(value['summary'])
+            if not value['ideas']:
+                empty_excerpts.append({'page':page,'summary':value['summary']})
+            for idea in value['ideas']:
+                ideas.append({'statement':idea['statement'],'explanation':idea['explanation'],
+                              'pages':[page],'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}',
+                              'document':doc['id']})
+        return {'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas,
+                'excerpts_without_ideas':empty_excerpts}
+
     def step2(self):
         source = self.saved(1)
         documents, notes = [], []
         for doc in source['documents']:
             parts = []
             for part in doc['parts']:
-                summaries, ideas, empty_excerpts = [], [], []
-                for index, (page,chunk) in enumerate(page_fragments(part['blocks']),1):
-                    self.progress(f'{doc["id"]} — partie {part["number"]}, page {page}, fragment {index}')
-                    def validate(value):
-                        text(value,'summary')
-                        if not isinstance(value.get('ideas'),list):
-                            raise ValueError('Extraire les idées importantes dans une liste ideas.')
-                        for idea in value['ideas']:
-                            text(idea,'statement');text(idea,'explanation')
-                    value = self.client.ask('part_summary',{'document':doc['id'],'part':part['number'],'source_page':page,'blocks':chunk},
-                        '''Résume cet extrait en conservant les liens entre les concepts : pourquoi,
-                        comment, causes, conséquences, définitions, chiffres et réserves. Ne te limite pas à des mots-clés.
-                        Structure : {"summary":"explication suivie", "ideas":[{"statement":"idée en une phrase",
-                        "explanation":"explication et liens causaux"}]}.
-                        Extrais toutes les idées essentielles du texte fourni dans blocks, sans inventer
-                        de compléments. Cet extrait provient d'une seule page, indiquée par source_page.
-                        Le logiciel ajoutera lui-même les références : ne génère pas de numéros de page.
-                        Si l'extrait ne contient que couverture, sommaire ou bibliographie sans idée
-                        explicative, renvoie ideas:[] et explique sa nature dans summary, sans inventer.
-                        La compilation suivante reliera les pages et les trois parties du document.''',validate)
-                    summaries.append(value['summary'])
-                    if not value['ideas']:
-                        empty_excerpts.append({'page':page,'summary':value['summary']})
-                    for idea in value['ideas']:
-                        # La provenance vient du lecteur PDF, jamais d'un numéro
-                        # inventé ou formaté librement dans la réponse du modèle.
-                        ideas.append({'statement':idea['statement'],'explanation':idea['explanation'],
-                                      'pages':[page],'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}',
-                                      'document':doc['id']})
-                parts.append({'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas,
-                              'excerpts_without_ideas':empty_excerpts})
-                section=f'## {doc["id"]} — partie {part["number"]}\n\n'+parts[-1]['summary']+'\n\n'+idea_markdown(ideas)
-                if empty_excerpts:
-                    section+='\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(f'- Page {e["page"]} : '+e['summary'] for e in empty_excerpts)
-                notes.append(section)
+                title = f'{doc["id"]} — partie {part["number"]}'
+                value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,part,
+                                  lambda:self.summarize_part(doc,part),part_markdown)
+                parts.append(value)
+                notes.append('## '+title+'\n\n'+part_markdown(value))
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts})
         return {'documents':documents},'\n\n'.join(notes)
 
@@ -1268,11 +1431,11 @@ class Pipeline:
             facts = [i for p in doc['parts'] for i in p['ideas']]
             def validate(v):
                 text(v,'text')
-            value = self.client.ask('pdf_synthesis',{'document':doc['id'],'parts':doc['parts']},
+            value = self.ask_unit(3,doc['id'],doc['name'],'pdf_synthesis',{'document':doc['id'],'parts':doc['parts']},
                 '''Compile les trois résumés de ce PDF en une synthèse pédagogique continue.
                 Rétablis les transitions, réunis les doublons et conserve les différences, limites
                 et relations causales. Structure : {"text":"synthèse"}. Les idées sources restent
-                conservées dans un registre séparé ; n'invente aucune information.''',validate)
+                conservées dans un registre séparé ; n'invente aucune information.''',validate,lambda v:v['text'])
             doc['synthesis'] = value['text']
             notes.append(f'## {doc["id"]} — {doc["name"]}\n\n'+value['text']+'\n\n### Registre complet des idées extraites\n\n'+idea_markdown(facts))
         return data,'\n\n'.join(notes)
@@ -1298,15 +1461,15 @@ class Pipeline:
             Structure : {"groups":[{"title":"thème", "idea_ids":["identifiants"]}]}''',validate_groups)
         registry = {i['id']:i for i in ideas}
         notes = []
-        for group in groups['groups']:
+        for number,group in enumerate(groups['groups'],1):
             self.progress('Texte commun — '+group['title'])
             ids = group['idea_ids']
-            result = self.client.ask('global_text',{'group':group,'ideas':[registry[i] for i in ids], 'audience':self.config['audience']},
+            result = self.ask_unit(4,f'G{number}',group['title'],'global_text',{'group':group,'ideas':[registry[i] for i in ids], 'audience':self.config['audience']},
                 '''Rédige un texte pédagogique suivi regroupant ces idées. Relie les causes et les
                 conséquences, explicite les prérequis, rapproche les doublons sans perdre les nuances.
                 Mentionne les contradictions si elles existent. Chaque idée doit être citée dans le texte
                 par [IDENTIFIANT] ; ces références servent au contrôle et ne seront pas lues dans le dialogue.
-                Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids))
+                Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids),lambda v:v['text'])
             group['text'] = result['text']
             notes.append('## '+group['title']+'\n\n'+group['text'])
         result = {'groups':groups['groups'],'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']]}
@@ -1369,10 +1532,11 @@ class Pipeline:
                 for item in v['items']:
                     text(item,'idea_id');text(item,'sentence')
                 ids_exact([i['idea_id'] for i in v['items']],c['idea_ids'])
-            value = self.client.ask('key_sentences',{'chapter':c,'ideas':[registry[i] for i in c['idea_ids']]},
+            value = self.ask_unit(6,c['id'],c['title'],'key_sentences',{'chapter':c,'ideas':[registry[i] for i in c['idea_ids']]},
                 '''Pour chaque idée de ce chapitre, écris une phrase complète exprimant son apport
                 essentiel, avec son rôle causal si pertinent. Une phrase par idée, sans perdre les conditions.
-                Structure : {"items":[{"idea_id":"...","sentence":"..."}]}''',validate)
+                Structure : {"items":[{"idea_id":"...","sentence":"..."}]}''',validate,
+                lambda v:'\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in v['items']))
             chapters.append({'id':c['id'],'items':value['items']})
             notes.append('## '+c['title']+'\n\n'+'\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in value['items']))
         return {'chapters':chapters},'\n\n'.join(notes)
@@ -1384,14 +1548,15 @@ class Pipeline:
         for index,c in enumerate(plan['chapters']):
             def validate(v):
                 citations(v,c['idea_ids']);text(v,'transition')
-            value = self.client.ask('explanation',{'chapter':c,'key_sentences':keys['chapters'][index]['items'],
+            value = self.ask_unit(7,c['id'],c['title'],'explanation',{'chapter':c,'key_sentences':keys['chapters'][index]['items'],
                 'ideas':[registry[i] for i in c['idea_ids']], 'previous':plan['chapters'][index-1]['new'] if index else None,
                 'audience':self.config['audience']},
                 '''Transforme les phrases essentielles en explication pédagogique continue, sans personnages.
                 Conserve tous les points et leurs liens. Définis les termes avant de les utiliser.
                 Écris une transition d'une phrase rappelant le point précédent et annonçant la question
                 actuelle ; pour le premier chapitre, introduis la question. Cite chaque idée [IDENTIFIANT].
-                Structure : {"transition":"une phrase", "text":"explication sourcée"}.''',validate)
+                Structure : {"transition":"une phrase", "text":"explication sourcée"}.''',validate,
+                lambda v:v['transition']+'\n\n'+v['text'])
             result.append({'id':c['id'],**value})
             notes.append('## '+c['title']+'\n\n'+value['transition']+'\n\n'+value['text'])
         return {'chapters':result},'\n\n'.join(notes)
@@ -1411,9 +1576,12 @@ class Pipeline:
                 if any(not isinstance(k,str) or not isinstance(val,str) for k,val in update['definitions'].items()):
                     raise ValueError('Définitions textuelles requises.')
                 strings(update.get('examples'));strings(update.get('open_questions'))
-            value = self.client.ask('dialogue',{'plan':plan,'chapter':c,'explanation':explanations['chapters'][index],
-                'ideas':[registry[i] for i in c['idea_ids']], 'memory':memory,'speakers':self.config['speakers'],
-                'audience':self.config['audience']},DIALOGUE_PROMPT,validate,budget=6000)
+            outline = {'central_question':plan['central_question'],
+                       'chapters':[{'id':ch['id'],'title':ch['title']} for ch in plan['chapters']]}
+            value = self.ask_unit(8,c['id'],c['title'],'dialogue',{'plan':outline,'chapter':c,'explanation':explanations['chapters'][index],
+                'ideas':[registry[i] for i in c['idea_ids']], 'memory':continuity(memory,c),'speakers':self.config['speakers'],
+                'audience':self.config['audience']},DIALOGUE_PROMPT,validate,
+                lambda v:script_markdown([{'title':c['title'],**v}],self.config['speakers']),budget=6000)
             update = value.pop('memory_update')
             chapters.append({'id':c['id'],'title':c['title'],**value})
             memory['explained_ideas'].update({i:registry[i]['statement'] for i in c['idea_ids']})
@@ -1437,9 +1605,9 @@ class Pipeline:
             def validate(v):
                 dialogue_valid(v,self.config['speakers'],c['idea_ids'])
                 strings(v.get('issues'))
-            value = self.client.ask('review',{'chapter':c,'draft':draft['chapters'][index],
-                'ideas':[registry[i] for i in c['idea_ids']], 'previous_memory':draft['memories'][index-1]['memory'] if index else {},
-                'previous_revised_turns':chapters[-1]['turns'][-4:] if chapters else [],
+            value = self.ask_unit(9,c['id'],c['title'],'review',{'chapter':c,'draft':draft['chapters'][index],
+                'ideas':[registry[i] for i in c['idea_ids']], 'previous_memory':continuity(draft['memories'][index-1]['memory'],c) if index else {},
+                'previous_revised_turns':continuity({'last_turns':chapters[-1]['turns']},c)['last_turns'] if chapters else [],
                 'next':plan['chapters'][index+1] if index+1<len(plan['chapters']) else None,
                 'speakers':self.config['speakers'],'audience':self.config['audience']},
                 '''Révise ce chapitre dans la continuité du podcast. Corrige les répétitions inutiles,
@@ -1449,7 +1617,8 @@ class Pipeline:
                 Ne réintroduis pas tout le podcast. Ne fabrique pas de nouveaux faits. Si un problème reste
                 incertain, indique-le dans issues. Structure : {"opening_transition":"...",
                 "turns":[{"speaker":"nom autorisé","text":"...","idea_ids":["..."]}],
-                "issues":["constat ou modification effectuée"]}.''',validate,budget=6000)
+                "issues":["constat ou modification effectuée"]}.''',validate,
+                lambda v:script_markdown([{'title':c['title'],**v}],self.config['speakers']),budget=6000)
             issues.extend({'chapter':c['id'],'note':note} for note in value.pop('issues'))
             chapters.append({'id':c['id'],'title':c['title'],**value})
         spoken = script_plain(chapters,self.config['speakers'])
@@ -1469,6 +1638,14 @@ class Pipeline:
         if issues:
             notes += '\n\n## Rapport de révision\n\n'+'\n'.join('- '+i['chapter']+' : '+i['note'] for i in issues)
         return result,notes
+
+
+def part_markdown(part):
+    result = part['summary']+'\n\n'+idea_markdown(part['ideas'])
+    if part['excerpts_without_ideas']:
+        result += '\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(
+            f'- Page {e["page"]} : '+e['summary'] for e in part['excerpts_without_ideas'])
+    return result
 
 
 def idea_markdown(ideas):
@@ -1556,6 +1733,14 @@ def read(path):
 
 
 def write(path, value):
+    _atomic_write(path, lambda f: json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False))
+
+
+def write_text(path, value):
+    _atomic_write(path, lambda f: f.write(value))
+
+
+def _atomic_write(path, emit):
     path = Path(path)
     with _LOCKS[_lock_index(path)]:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1564,7 +1749,7 @@ def write(path, value):
             with tempfile.NamedTemporaryFile('w', dir=path.parent, encoding='utf-8',
                                              prefix='.'+path.name+'-', suffix='.tmp', delete=False) as f:
                 temp = Path(f.name)
-                json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False)
+                emit(f)
             # Le fichier temporaire est fermé AVANT la première tentative.
             # Ne jamais supprimer l'ancien fichier pour contourner un verrou.
             _retry(lambda: os.replace(temp, path))
@@ -1588,9 +1773,12 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
-def invalidate(project, first):
+def invalidate(project, first, partials=True):
     """Archive les anciens résultats ; les PDF originaux restent inchangés."""
     old = [p for p in (project / 'etapes').glob('*') if p.name[:2].isdigit() and int(p.name[:2]) >= first]
+    if partials:
+        old += [p for p in (project/'etapes'/'parties').glob('*')
+                if p.name[:2].isdigit() and int(p.name[:2]) >= first]
     if old:
         folder = project / 'versions' / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:8])
         folder.mkdir(parents=True)
@@ -1624,7 +1812,7 @@ import threading
 ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from playwright.sync_api import sync_playwright
-from app import App,Server
+from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
 from storage import read
 
@@ -1640,7 +1828,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('request',lambda r:external.append(r.url) if not r.url.startswith(f'http://127.0.0.1:{server.server_port}') and r.url.startswith(('http:','https:')) else None)
             page.goto(f'http://127.0.0.1:{server.server_port}/');page.wait_for_function('() => state!==null')
-            assert '0.1.3' in page.locator('.badge').inner_text()
+            assert APP_VERSION in page.locator('.badge').inner_text()
             page.locator('#name').fill('Test d’intégration — fournisseur simulé')
             page.locator('#pdfs').set_input_files([str(pdf1),str(pdf2)])
             page.locator('#model-settings summary').click();page.locator('#endpoint').fill(stub.endpoint);page.locator('#model').fill('mistral:test')
@@ -1651,11 +1839,23 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert page.locator('#continue').is_disabled()
             assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
             page.evaluate('() => refresh()')
-            page.wait_for_function('() => state.runtime?.version==="0.1.3"')
+            page.wait_for_function('() => Boolean(state.runtime?.version)')
             page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task.state==="done"')
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("pages 1")')
             assert 'pages 1' in page.locator('#preview').inner_text()
+            stub.fail_on=('dialogue','C2')
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="error"&&current()?.completed.length===7',timeout=60000)
+            page.locator('#steps button').nth(7).click()
+            page.wait_for_function('() => document.querySelectorAll("#part-links a").length===1')
+            assert page.locator('#download-md').is_hidden()
+            page.locator('#saved-parts summary').click()
+            with page.expect_download() as download:page.locator('#part-links a').click()
+            partial=temp/'chapitre-1.md';download.value.save_as(partial)
+            assert 'Sophie' in partial.read_text()
+            before=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
             page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            after=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
+            assert before==after==1
             assert page.locator('#steps button').count()==9
             with page.expect_download() as download:page.locator('#export-links a').filter(has_text='Texte du dialogue').click()
             output=temp/'podcast.txt';download.value.save_as(output)
@@ -1684,7 +1884,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : deux PDF, neuf étapes, mémoire, modèles Ollama, exports TXT/JSON, régénération et archives, annulation HTTP, aucune erreur JS ou requête externe.')
+            print('Navigateur OK : deux PDF, neuf étapes, Markdown partiel téléchargeable après panne, reprise sans refaire C1, mémoire courte, exports, archives, annulation HTTP, aucune erreur JS ou requête externe.')
     finally:
         stub.close();server.shutdown();server.server_close();app.close();thread.join()
 ```
@@ -1769,9 +1969,16 @@ class StubHandler(BaseHTTPRequestHandler):
         task=prompt.splitlines()[0].split(':',1)[1].strip()
         payload=json.loads(prompt.split('DONNÉES :\n',1)[1])
         self.server.calls.append((task,payload))
+        self.server.requests.append(request)
         result=json.dumps(answer(task,payload),ensure_ascii=False)
-        data=(json.dumps({'message':{'content':result},'done':False})+'\n'+json.dumps({'message':{'content':''},'done':True,'done_reason':'stop'})+'\n').encode()
-        self.send_response(200);self.send_header('Content-Type','application/x-ndjson')
+        status=200
+        events=[{'message':{'content':result},'done':False},{'message':{'content':''},'done':True,'done_reason':'stop'}]
+        if self.server.responses:
+            status,events=self.server.responses.pop(0)
+        if self.server.fail_on and task==self.server.fail_on[0] and payload.get('chapter',{}).get('id')==self.server.fail_on[1]:
+            self.server.fail_on=None;status=500;events=[{'error':'Echec de chapitre simulé'}]
+        data=('\n'.join(json.dumps(e) for e in events)+'\n').encode()
+        self.send_response(status);self.send_header('Content-Type','application/x-ndjson')
         self.send_header('Content-Length',str(len(data)+(1000000 if self.server.stall else 0)));self.end_headers()
         if self.server.stall:
             self.wfile.write(b'{"message":{"content":""},"done":false}\n');self.wfile.flush()
@@ -1783,7 +1990,8 @@ class StubHandler(BaseHTTPRequestHandler):
 class StubServer(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self):
-        self.calls=[];self.stall=False;self.started=threading.Event();self.release=threading.Event()
+        self.calls=[];self.requests=[];self.responses=[];self.fail_on=None
+        self.stall=False;self.started=threading.Event();self.release=threading.Event()
         super().__init__(('127.0.0.1',0),StubHandler)
         self.thread=threading.Thread(target=self.serve_forever,daemon=True);self.thread.start()
         self.endpoint=f'http://127.0.0.1:{self.server_port}'
@@ -1804,7 +2012,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from app import App,Server,settings
+from app import APP_VERSION,App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
 from pdfs import extract,split_three
 from pipeline import Pipeline,ids_exact,dialogue_valid,page_fragments
@@ -1877,6 +2085,7 @@ class PipelineTests(unittest.TestCase):
         make_pdf(self.project/'sources/a.pdf',page_count=6)
         meta=read(self.project/'projet.json');meta['pdfs']=meta['pdfs'][:1];write(self.project/'projet.json',meta)
         for supplied in (None,{'pages':['p. 999',0]}, {'pages':'page inventée'}):
+            invalidate(self.project,1)
             class UnreliablePageModel(FakeClient):
                 def ask(inner,task,payload,instructions,validate,budget=4000):
                     if task!='part_summary':return super().ask(task,payload,instructions,validate,budget)
@@ -1983,9 +2192,23 @@ class ServerTests(unittest.TestCase):
     def test_runtime_identifies_the_loaded_page_source_pipeline(self):
         status,state=self.request('/api/state')
         self.assertEqual(status,200)
-        self.assertEqual(state['runtime']['version'],'0.1.3')
+        self.assertEqual(state['runtime']['version'],APP_VERSION)
         self.assertEqual(state['runtime']['page_sources'],'pdf-page-v1')
         self.assertTrue(state['runtime']['app_dir'])
+
+    def test_partial_markdown_is_available_before_the_whole_step_and_is_allowlisted(self):
+        identifier=self.create();folder=self.app.project(identifier)
+        parts=folder/'etapes'/'parties';parts.mkdir(parents=True)
+        (parts/'08-C1.md').write_text('# Chapitre fini\n\nSophie : Bonjour',encoding='utf-8')
+        # Le JSON est le marqueur de sauvegarde complète.
+        self.assertEqual(self.request(f'/files/{identifier}/partie-08-C1.md')[0],404)
+        write(parts/'08-C1.json',{'step':8,'data':{}})
+        self.assertFalse((folder/'etapes/08.json').exists())
+        self.assertEqual(self.app.summary(folder)['parts'],['08-C1.md'])
+        status,content=self.request(f'/files/{identifier}/partie-08-C1.md')
+        self.assertEqual(status,200);self.assertIn(b'Sophie',content)
+        for name in ('partie-08-C1.json','partie-../projet.json','partie-08-C1%2f..%2fprojet.json'):
+            self.assertEqual(self.request(f'/files/{identifier}/{name}')[0],404)
 
     def test_old_pipeline_is_reported_before_generation(self):
         identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
@@ -2051,6 +2274,172 @@ class ServerTests(unittest.TestCase):
             if task['state'] not in ('queued','running'):break
             time.sleep(.01)
         self.assertEqual(task['state'],'done',task);self.assertNotIn(identifier,self.app.task_errors)
+
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_resumption.py
+
+```python
+"""Reprises après boucle Ollama, sauvegardes partielles et contexte de continuité."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+
+from llm import Cancelled, ModelError, Ollama, RepetitionError
+from pipeline import Pipeline, continuity
+from storage import defaults, invalidate, read, write
+from fixtures import FakeClient, StubServer, make_pdf
+
+REPEAT = 'prediction aborted, token repeat limit reached'
+
+
+class RecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.stub = StubServer()
+        self.progress = []
+        self.client = Ollama({**defaults(),'endpoint':self.stub.endpoint},self.root,progress=self.progress.append)
+        self.payload = {'ideas':[{'id':'PDF1-P1-I001','statement':'Un fait'}]}
+    def tearDown(self):
+        self.stub.close();self.temp.cleanup()
+    def ask(self):
+        return self.client.ask('global_text',self.payload,'texte',lambda v: self.assertIn('[PDF1-P1-I001]',v['text']))
+    def test_repeat_stream_restarts_fresh_then_only_valid_result_is_cached(self):
+        self.stub.responses = [(200,[{'message':{'content':'NE PAS REINJECTER'}}, {'error':REPEAT}])]
+        value = self.ask()
+        self.assertEqual(len(self.stub.calls),2)
+        second = self.stub.requests[1]
+        self.assertNotIn('NE PAS REINJECTER',json.dumps(second))
+        self.assertEqual([m['role'] for m in second['messages']],['system','user','user'])
+        self.assertGreater(second['options']['repeat_penalty'],self.stub.requests[0]['options']['repeat_penalty'])
+        self.assertEqual(second['options']['num_ctx'],16384)
+        self.assertTrue(any('répété' in p for p in self.progress))
+        self.assertEqual(len(list(self.root.glob('*.json'))),1)
+        self.assertEqual(self.ask(),value);self.assertEqual(len(self.stub.calls),2)
+    def test_repeat_exhaustion_is_bounded_preserves_exact_error_and_no_cache(self):
+        self.stub.responses = [(200,[{'error':REPEAT}])]*2
+        with self.assertRaisesRegex(RepetitionError,REPEAT):self.ask()
+        self.assertEqual(len(self.stub.calls),2)
+        self.assertFalse(list(self.root.glob('*.json')))
+    def test_http_repeat_is_recoverable_but_unknown_model_is_not_retried(self):
+        self.stub.responses = [(500,[{'error':REPEAT}])]
+        self.ask();self.assertEqual(len(self.stub.calls),2)
+        self.payload['ideas'][0]['statement']='Autre requête'
+        self.stub.responses = [(404,[{'error':'model missing'}])]
+        with self.assertRaisesRegex(ModelError,'HTTP 404'):self.ask()
+        self.assertEqual(len(self.stub.calls),3)
+    def test_cancel_before_repeat_retry_is_not_retried(self):
+        self.stub.responses = [(200,[{'error':REPEAT}])]
+        self.client.progress = lambda _:self.client.cancelled.set()
+        with self.assertRaises(Cancelled):self.ask()
+        self.assertEqual(len(self.stub.calls),1)
+        self.assertFalse(list(self.root.glob('*.json')))
+    def test_truncated_generation_is_not_accepted_or_cached(self):
+        self.stub.responses = [(200,[{'message':{'content':'{"text":"incomplet"}'},'done':True,'done_reason':'length'}])]
+        with self.assertRaisesRegex(ModelError,'limite de sortie'):self.ask()
+        self.assertEqual(len(self.stub.calls),1)
+        self.assertFalse(list(self.root.glob('*.json')))
+    def test_independent_tasks_do_not_accumulate_conversation(self):
+        self.ask();self.payload['ideas'][0]['statement']='Nouveau fait';self.ask()
+        self.assertTrue(all(len(r['messages'])==2 for r in self.stub.requests))
+
+
+class PartTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory();self.project = Path(self.temp.name)
+        (self.project/'sources').mkdir()
+        make_pdf(self.project/'sources/a.pdf')
+        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Optique.pdf'}]})
+        self.parts = self.project/'etapes'/'parties'
+    def tearDown(self):self.temp.cleanup()
+    def test_completed_pdf_part_survives_failure_and_is_not_requested_again(self):
+        class FailPart2(FakeClient):
+            def ask(self,task,payload,*args,**kwargs):
+                if task=='part_summary' and payload['part']==2:raise ModelError('Panne simulée')
+                return super().ask(task,payload,*args,**kwargs)
+        with self.assertRaises(ModelError):Pipeline(self.project,FailPart2()).run(1,2)
+        self.assertTrue((self.parts/'02-PDF1-P1.md').exists())
+        self.assertFalse((self.parts/'02-PDF1-P2.json').exists())
+        self.assertFalse((self.project/'etapes/02.json').exists())
+        invalidate(self.project,2,partials=False)
+        client = FakeClient();Pipeline(self.project,client).run(2,2)
+        self.assertEqual([p['part'] for task,p in client.calls if task=='part_summary'],[2,3])
+        self.assertEqual(len(list(self.parts.glob('02-*.md'))),3)
+        # Une source modifiée ou une régénération ne doit pas réutiliser une ancienne partie.
+        source = read(self.project/'etapes/01.json');source['data']['documents'][0]['parts'][0]['blocks'][0]['text']+=' ajout'
+        write(self.project/'etapes/01.json',source)
+        changed = FakeClient();Pipeline(self.project,changed).run(2,2)
+        self.assertEqual([p['part'] for task,p in changed.calls],[1])
+        meta = read(self.project/'projet.json');meta['cache_generation']='nouvelle';write(self.project/'projet.json',meta)
+        forced = FakeClient();Pipeline(self.project,forced).run(2,2)
+        self.assertEqual(len(forced.calls),3)
+    def test_dialogue_is_saved_before_next_chapter_and_resumes_with_continuity(self):
+        Pipeline(self.project,FakeClient()).run(1,7)
+        class FailChapter2(FakeClient):
+            def ask(self,task,payload,*args,**kwargs):
+                if task=='dialogue' and payload['chapter']['id']=='C2':raise ModelError('Panne simulée')
+                return super().ask(task,payload,*args,**kwargs)
+        with self.assertRaises(ModelError):Pipeline(self.project,FailChapter2()).run(8,8)
+        markdown = (self.parts/'08-C1.md').read_text()
+        self.assertIn('Sophie',markdown)
+        self.assertTrue((self.project/'memoire/C1.json').exists())
+        self.assertFalse((self.project/'etapes/08.json').exists())
+        # Même sans cache LLM, le chapitre 1 n'est pas régénéré.
+        client = FakeClient();Pipeline(self.project,client).run(8,9)
+        dialogue = [p for task,p in client.calls if task=='dialogue']
+        self.assertEqual([p['chapter']['id'] for p in dialogue],['C2'])
+        self.assertTrue(dialogue[0]['memory']['last_turns'])
+        self.assertIn('C1',dialogue[0]['memory']['definitions'])
+        self.assertEqual((self.parts/'08-C1.md').read_text(),markdown)
+        self.assertTrue(read(self.project/'exports/podcast.json')['all_planned_ids_present'])
+        # Modification des paramètres : plus de réemploi du contenu périmé.
+        meta=read(self.project/'projet.json');meta['settings']['speakers']=['Alice','Bob'];write(self.project/'projet.json',meta)
+        changed=FakeClient();Pipeline(self.project,changed).run(8,8)
+        self.assertEqual(len([p for task,p in changed.calls if task=='dialogue']),2)
+    def test_invalidating_settings_archives_partials_even_without_completed_stage(self):
+        self.parts.mkdir(parents=True)
+        write(self.parts/'08-C1.json',{'data':'texte'})
+        (self.parts/'08-C1.md').write_text('Dialogue')
+        invalidate(self.project,8)
+        self.assertFalse(list(self.parts.glob('*')))
+        self.assertTrue(list((self.project/'versions').rglob('08-C1.md')))
+    def test_repeat_fallback_splits_actual_text_without_losing_source_pages(self):
+        class RepeatLarge(FakeClient):
+            def ask(self,task,payload,*args,**kwargs):
+                if sum(len(b['text']) for b in payload['blocks'])>1300:raise RepetitionError(REPEAT)
+                self.received.extend(payload['blocks'])
+                return super().ask(task,payload,*args,**kwargs)
+        client=RepeatLarge();client.received=[]
+        chunk=[{'page':14,'text':'0123456789'*240}]
+        value=Pipeline(self.project,client).summary_excerpt('PDF1',1,14,chunk)
+        self.assertEqual(''.join(b['text'] for b in client.received),chunk[0]['text'])
+        self.assertEqual({b['page'] for b in client.received},{14})
+        self.assertEqual(len(value['ideas']),4)
+    def test_fallback_does_not_loop_indefinitely_on_a_small_unreadable_excerpt(self):
+        class AlwaysRepeat(FakeClient):
+            def ask(self,*args,**kwargs):self.calls.append(1);raise RepetitionError(REPEAT)
+        client=AlwaysRepeat()
+        with self.assertRaises(RepetitionError):
+            Pipeline(self.project,client).summary_excerpt('PDF1',1,14,[{'page':14,'text':'abc '*2000}])
+        self.assertEqual(len(client.calls),4)
+    def test_continuity_is_bounded_while_complete_archive_is_preserved(self):
+        memory={'explained_ideas':{f'I{n}':'Idée '*500 for n in range(200)},
+                'definitions':{f'Terme{n}':'définition '*500 for n in range(200)},
+                'examples':['Exemple '*500]*100,'open_questions':['Question '*500]*100,
+                'last_turns':[{'speaker':'Sophie','text':'Réplique '*1000,'idea_ids':['I1']}]*4}
+        before=copy.deepcopy(memory)
+        note=continuity(memory,{'title':'Terme1'})
+        self.assertLess(len(json.dumps(note,ensure_ascii=False)),8000)
+        self.assertEqual(memory,before)
+        self.assertEqual(note['archived_counts']['ideas'],200)
+        self.assertIn('Terme1',note['definitions'])
+        self.assertIn('I199',note['explained_ideas'])
 
 
 if __name__=='__main__':unittest.main()
@@ -2170,6 +2559,19 @@ class StorageTests(unittest.TestCase):
             storage.replace(self.path,destination)
         self.assertFalse(self.path.exists());self.assertEqual(storage.read(destination),{'state':'running'})
 
+    def test_markdown_atomic_save_retries_windows_lock_and_preserves_previous_text(self):
+        path=self.path.with_suffix('.md');storage.write_text(path,'Texte précédent')
+        original=os.replace;attempts=[]
+        def operation(source,target):
+            attempts.append(1)
+            self.assertEqual(Path(source).read_text(),'Nouveau texte')
+            if len(attempts)==1:
+                self.assertEqual(path.read_text(),'Texte précédent');raise locked(32)
+            return original(source,target)
+        with patch('storage.os.replace',side_effect=operation),patch('storage.time.sleep'):
+            storage.write_text(path,'Nouveau texte')
+        self.assertEqual(path.read_text(),'Nouveau texte');self.assertEqual(len(attempts),2)
+
 
 if __name__=='__main__':unittest.main()
 ```
@@ -2187,7 +2589,7 @@ const descriptions=[
  'Une question centrale organise les chapitres. Chaque idée est affectée à un chapitre ou signalée explicitement hors podcast.',
  'Une phrase complète est écrite pour chaque idée importante affectée à une partie du plan.',
  'Les phrases sont reliées en une explication pédagogique, avant la mise en dialogue. Une phrase prépare le raccord entre chapitres.',
- 'Le dialogue est rédigé chapitre par chapitre avec les acquis, définitions, exemples, questions ouvertes et dernières répliques en mémoire.',
+ 'Chaque chapitre est enregistré en Markdown. Le suivant reçoit une nouvelle conversation et une courte fiche de continuité ; les textes complets restent dans les fichiers.',
  'Les chapitres sont revus pour la continuité, les répétitions et la fidélité aux idées sources. Le script final est exporté en texte et en JSON.'
 ];
 let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
@@ -2215,6 +2617,7 @@ function render(){
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
  $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
+ const parts=(p.parts||[]).filter(name=>Number(name.slice(0,2))===step);$('saved-parts').hidden=!parts.length;const links=$('part-links');links.replaceChildren();for(const file of parts){const a=node('a',file.slice(3));a.href=`/files/${p.id}/partie-${file}`;links.append(a);}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
  $('final-exports').hidden=!p.exports.length;const exports=$('export-links');exports.replaceChildren();for(const file of p.exports){const a=node('a',file.endsWith('.txt')?'Texte du dialogue':file.endsWith('.md')?'Script Markdown':'Données et rapport JSON');a.href=`/files/${p.id}/${file}`;exports.append(a);}
 }
@@ -2248,7 +2651,7 @@ refresh();setInterval(refresh,1500);
 <section id="project" hidden><div class="project-title"><div><p class="eyebrow">MON ATELIER</p><h1 id="project-name"></h1><p id="source-info" class="muted"></p></div><button id="toggle-settings">Paramètres</button></div>
 <div id="task-box" class="card" hidden><div class="row"><strong id="task-message"></strong><button id="cancel">Annuler le traitement</button></div><pre id="task-error" hidden></pre></div>
 <div class="row actions"><button id="continue" class="primary">Continuer jusqu’au script final</button><a id="download-project">Télécharger le dossier complet</a><small>Les anciens résultats sont archivés lorsque vous refaites une étape.</small></div>
-<div class="work"><nav id="steps" aria-label="Étapes du podcast"></nav><section class="card result"><div class="row"><h2 id="step-title">Choisissez une étape</h2><button id="run-step">Exécuter cette étape</button></div><p id="step-description" class="muted"></p><div class="row"><a id="download-md" hidden>Télécharger le texte</a><a id="download-json" hidden>Télécharger les données</a></div><article id="preview"><p class="muted">Les résultats apparaîtront ici.</p></article></section></div>
+<div class="work"><nav id="steps" aria-label="Étapes du podcast"></nav><section class="card result"><div class="row"><h2 id="step-title">Choisissez une étape</h2><button id="run-step">Exécuter cette étape</button></div><p id="step-description" class="muted"></p><div class="row"><a id="download-md" hidden>Télécharger le texte</a><a id="download-json" hidden>Télécharger les données</a></div><details id="saved-parts" hidden><summary>Parties déjà enregistrées en Markdown</summary><p class="small muted">Ces fichiers sont disponibles même si la suite du traitement s’arrête. Continuer reprend les parties manquantes.</p><div id="part-links" class="row"></div></details><article id="preview"><p class="muted">Les résultats apparaîtront ici.</p></article></section></div>
 <section id="final-exports" class="card" hidden><h2>Le script du podcast</h2><p>Le texte est prêt à relire et à utiliser pour l’enregistrement des voix. Cette version génère le script, sans synthèse vocale.</p><div id="export-links" class="row"></div><small>La durée reste une estimation. Les références et contrôles automatiques aident la relecture ; ils ne remplacent pas la vérification scientifique.</small></section></section>
 </main></div><script src="/app.js"></script></body></html>
 ```

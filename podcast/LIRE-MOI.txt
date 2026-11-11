@@ -8,7 +8,9 @@ PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
 6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
 
 Le programme cree le SCRIPT du podcast, en texte. Il ne genere pas encore
-les voix audio. Chaque etape est sauvegardee et consultable.
+les voix audio. Chaque partie est sauvegardee en Markdown avant la suivante.
+En cas d'arret, Continuer reprend les parties manquantes.
+Une courte fiche de continuite relie les chapitres sans accumuler le dialogue.
 
 Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
 Ensuite, le traitement peut fonctionner hors connexion sur votre PC.

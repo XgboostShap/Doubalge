@@ -8,7 +8,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from app import App,Server,settings
+from app import APP_VERSION,App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
 from pdfs import extract,split_three
 from pipeline import Pipeline,ids_exact,dialogue_valid,page_fragments
@@ -81,6 +81,7 @@ class PipelineTests(unittest.TestCase):
         make_pdf(self.project/'sources/a.pdf',page_count=6)
         meta=read(self.project/'projet.json');meta['pdfs']=meta['pdfs'][:1];write(self.project/'projet.json',meta)
         for supplied in (None,{'pages':['p. 999',0]}, {'pages':'page inventée'}):
+            invalidate(self.project,1)
             class UnreliablePageModel(FakeClient):
                 def ask(inner,task,payload,instructions,validate,budget=4000):
                     if task!='part_summary':return super().ask(task,payload,instructions,validate,budget)
@@ -187,9 +188,23 @@ class ServerTests(unittest.TestCase):
     def test_runtime_identifies_the_loaded_page_source_pipeline(self):
         status,state=self.request('/api/state')
         self.assertEqual(status,200)
-        self.assertEqual(state['runtime']['version'],'0.1.3')
+        self.assertEqual(state['runtime']['version'],APP_VERSION)
         self.assertEqual(state['runtime']['page_sources'],'pdf-page-v1')
         self.assertTrue(state['runtime']['app_dir'])
+
+    def test_partial_markdown_is_available_before_the_whole_step_and_is_allowlisted(self):
+        identifier=self.create();folder=self.app.project(identifier)
+        parts=folder/'etapes'/'parties';parts.mkdir(parents=True)
+        (parts/'08-C1.md').write_text('# Chapitre fini\n\nSophie : Bonjour',encoding='utf-8')
+        # Le JSON est le marqueur de sauvegarde complète.
+        self.assertEqual(self.request(f'/files/{identifier}/partie-08-C1.md')[0],404)
+        write(parts/'08-C1.json',{'step':8,'data':{}})
+        self.assertFalse((folder/'etapes/08.json').exists())
+        self.assertEqual(self.app.summary(folder)['parts'],['08-C1.md'])
+        status,content=self.request(f'/files/{identifier}/partie-08-C1.md')
+        self.assertEqual(status,200);self.assertIn(b'Sophie',content)
+        for name in ('partie-08-C1.json','partie-../projet.json','partie-08-C1%2f..%2fprojet.json'):
+            self.assertEqual(self.request(f'/files/{identifier}/{name}')[0],404)
 
     def test_old_pipeline_is_reported_before_generation(self):
         identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)

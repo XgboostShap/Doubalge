@@ -17,6 +17,16 @@ class ModelError(RuntimeError):
     pass
 
 
+class RepetitionError(ModelError):
+    """Arrêt de génération répétitive, distinct d'une panne réseau ou d'un 404."""
+
+
+def model_error(detail):
+    if 'token repeat limit' in detail.lower():
+        return RepetitionError(detail)
+    return ModelError(detail)
+
+
 def endpoint_parts(endpoint):
     parsed = urlsplit(endpoint)
     if parsed.scheme not in ('http','https') or parsed.hostname not in ('127.0.0.1','localhost','::1'):
@@ -85,25 +95,44 @@ class Ollama:
         if len(prompt) > max(2000, (self.config['num_ctx']-budget-1200)*3):
             raise ModelError('Cette requête dépasse le budget de contexte. Augmentez le contexte Ollama ou utilisez moins de PDF par projet. Aucun texte n’a été tronqué silencieusement.')
         messages = [{'role':'system','content':SYSTEM},{'role':'user','content':prompt}]
-        for attempt in range(2):
+        repairs, repeat_retries = 0, 0
+        while True:
+            if self.cancelled.is_set():
+                raise Cancelled()
             try:
-                text = self._request(messages,budget)
+                text = self._request(messages,budget,recovery=bool(repeat_retries))
                 value = json.loads(text)
                 validate(value)
                 write(path,value)
                 return value
+            except RepetitionError as error:
+                if repeat_retries:
+                    raise RepetitionError('Ollama répète sa réponse pour « '+task+' » malgré une reprise. '
+                        'Les parties terminées sont conservées. Le contexte 16/32/65 k ne corrige pas '
+                        'cette boucle ; essayez un autre modèle installé si le blocage persiste. '
+                        'Erreur exacte : '+str(error)) from error
+                repeat_retries += 1
+                self.progress('Ollama a répété sa réponse : nouvelle conversation, réponse plus concise…')
+                # Aucun morceau de la génération avortée ni historique n'est réinjecté.
+                messages = messages[:2] + [{'role':'user','content':
+                    'Réponds de façon concise. Une seule occurrence par idée, sans liste répétée. '
+                    'Conserve tous les éléments demandés et termine l’objet JSON. '
+                    'Ne recopie pas les données ni les consignes dans la réponse.'}]
             except (ValueError, KeyError, TypeError) as error:
-                if attempt:
+                if repairs:
                     raise ModelError('La réponse du modèle reste invalide : '+str(error)) from error
+                repairs += 1
                 self.progress('Correction du format de réponse du modèle…')
                 messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
 
-    def _request(self, messages, budget):
+    def _request(self, messages, budget, recovery=False):
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
             body = {'model':self.config['model'], 'messages':messages, 'format':'json', 'stream':True,
-                    'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],'num_predict':budget}}
+                    'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],
+                               'num_predict':budget,'repeat_penalty':1.15 if recovery else 1.1,
+                               'repeat_last_n':256 if recovery else 64}}
             conn.request('POST','/api/chat',json.dumps(body).encode(),{'Content-Type':'application/json'})
             self.active_socket = conn.sock
             if self.cancelled.is_set():
@@ -111,7 +140,7 @@ class Ollama:
             response = conn.getresponse()
             if response.status != 200:
                 detail = response.read(2000).decode(errors='replace')
-                raise ModelError(f'Ollama répond HTTP {response.status} : {detail}')
+                raise model_error(f'Ollama répond HTTP {response.status} : {detail}')
             pieces, total, done = [], 0, False
             for line in response:
                 if self.cancelled.is_set():
@@ -120,7 +149,7 @@ class Ollama:
                     continue
                 event = json.loads(line)
                 if event.get('error'):
-                    raise ModelError(str(event['error']))
+                    raise model_error(str(event['error']))
                 content = event.get('message',{}).get('content','')
                 pieces.append(content)
                 total += len(content)
@@ -129,7 +158,9 @@ class Ollama:
                 if event.get('done'):
                     done = True
                     if event.get('done_reason')=='length':
-                        raise ModelError('Le modèle a atteint sa limite de sortie. Augmentez le contexte ou réduisez la taille du projet.')
+                        raise ModelError('Le modèle a atteint sa limite de sortie. La réponse incomplète '
+                                         'n’est pas enregistrée. Réduisez la taille de la partie ou essayez '
+                                         'un autre modèle ; augmenter le contexte seul ne change pas cette limite.')
             if self.cancelled.is_set():
                 raise Cancelled()
             if not done:

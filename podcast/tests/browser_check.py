@@ -10,7 +10,7 @@ import threading
 ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from playwright.sync_api import sync_playwright
-from app import App,Server
+from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
 from storage import read
 
@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('request',lambda r:external.append(r.url) if not r.url.startswith(f'http://127.0.0.1:{server.server_port}') and r.url.startswith(('http:','https:')) else None)
             page.goto(f'http://127.0.0.1:{server.server_port}/');page.wait_for_function('() => state!==null')
-            assert '0.1.3' in page.locator('.badge').inner_text()
+            assert APP_VERSION in page.locator('.badge').inner_text()
             page.locator('#name').fill('Test d’intégration — fournisseur simulé')
             page.locator('#pdfs').set_input_files([str(pdf1),str(pdf2)])
             page.locator('#model-settings summary').click();page.locator('#endpoint').fill(stub.endpoint);page.locator('#model').fill('mistral:test')
@@ -37,11 +37,23 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert page.locator('#continue').is_disabled()
             assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
             page.evaluate('() => refresh()')
-            page.wait_for_function('() => state.runtime?.version==="0.1.3"')
+            page.wait_for_function('() => Boolean(state.runtime?.version)')
             page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task.state==="done"')
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("pages 1")')
             assert 'pages 1' in page.locator('#preview').inner_text()
+            stub.fail_on=('dialogue','C2')
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="error"&&current()?.completed.length===7',timeout=60000)
+            page.locator('#steps button').nth(7).click()
+            page.wait_for_function('() => document.querySelectorAll("#part-links a").length===1')
+            assert page.locator('#download-md').is_hidden()
+            page.locator('#saved-parts summary').click()
+            with page.expect_download() as download:page.locator('#part-links a').click()
+            partial=temp/'chapitre-1.md';download.value.save_as(partial)
+            assert 'Sophie' in partial.read_text()
+            before=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
             page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            after=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
+            assert before==after==1
             assert page.locator('#steps button').count()==9
             with page.expect_download() as download:page.locator('#export-links a').filter(has_text='Texte du dialogue').click()
             output=temp/'podcast.txt';download.value.save_as(output)
@@ -70,6 +82,6 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : deux PDF, neuf étapes, mémoire, modèles Ollama, exports TXT/JSON, régénération et archives, annulation HTTP, aucune erreur JS ou requête externe.')
+            print('Navigateur OK : deux PDF, neuf étapes, Markdown partiel téléchargeable après panne, reprise sans refaire C1, mémoire courte, exports, archives, annulation HTTP, aucune erreur JS ou requête externe.')
     finally:
         stub.close();server.shutdown();server.server_close();app.close();thread.join()

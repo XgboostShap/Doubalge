@@ -109,5 +109,18 @@ class StorageTests(unittest.TestCase):
             storage.replace(self.path,destination)
         self.assertFalse(self.path.exists());self.assertEqual(storage.read(destination),{'state':'running'})
 
+    def test_markdown_atomic_save_retries_windows_lock_and_preserves_previous_text(self):
+        path=self.path.with_suffix('.md');storage.write_text(path,'Texte précédent')
+        original=os.replace;attempts=[]
+        def operation(source,target):
+            attempts.append(1)
+            self.assertEqual(Path(source).read_text(),'Nouveau texte')
+            if len(attempts)==1:
+                self.assertEqual(path.read_text(),'Texte précédent');raise locked(32)
+            return original(source,target)
+        with patch('storage.os.replace',side_effect=operation),patch('storage.time.sleep'):
+            storage.write_text(path,'Nouveau texte')
+        self.assertEqual(path.read_text(),'Nouveau texte');self.assertEqual(len(attempts),2)
+
 
 if __name__=='__main__':unittest.main()

@@ -75,9 +75,16 @@ class StubHandler(BaseHTTPRequestHandler):
         task=prompt.splitlines()[0].split(':',1)[1].strip()
         payload=json.loads(prompt.split('DONNÉES :\n',1)[1])
         self.server.calls.append((task,payload))
+        self.server.requests.append(request)
         result=json.dumps(answer(task,payload),ensure_ascii=False)
-        data=(json.dumps({'message':{'content':result},'done':False})+'\n'+json.dumps({'message':{'content':''},'done':True,'done_reason':'stop'})+'\n').encode()
-        self.send_response(200);self.send_header('Content-Type','application/x-ndjson')
+        status=200
+        events=[{'message':{'content':result},'done':False},{'message':{'content':''},'done':True,'done_reason':'stop'}]
+        if self.server.responses:
+            status,events=self.server.responses.pop(0)
+        if self.server.fail_on and task==self.server.fail_on[0] and payload.get('chapter',{}).get('id')==self.server.fail_on[1]:
+            self.server.fail_on=None;status=500;events=[{'error':'Echec de chapitre simulé'}]
+        data=('\n'.join(json.dumps(e) for e in events)+'\n').encode()
+        self.send_response(status);self.send_header('Content-Type','application/x-ndjson')
         self.send_header('Content-Length',str(len(data)+(1000000 if self.server.stall else 0)));self.end_headers()
         if self.server.stall:
             self.wfile.write(b'{"message":{"content":""},"done":false}\n');self.wfile.flush()
@@ -89,7 +96,8 @@ class StubHandler(BaseHTTPRequestHandler):
 class StubServer(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self):
-        self.calls=[];self.stall=False;self.started=threading.Event();self.release=threading.Event()
+        self.calls=[];self.requests=[];self.responses=[];self.fail_on=None
+        self.stall=False;self.started=threading.Event();self.release=threading.Event()
         super().__init__(('127.0.0.1',0),StubHandler)
         self.thread=threading.Thread(target=self.serve_forever,daemon=True);self.thread.start()
         self.endpoint=f'http://127.0.0.1:{self.server_port}'

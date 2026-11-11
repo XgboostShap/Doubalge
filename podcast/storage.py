@@ -43,6 +43,14 @@ def read(path):
 
 
 def write(path, value):
+    _atomic_write(path, lambda f: json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False))
+
+
+def write_text(path, value):
+    _atomic_write(path, lambda f: f.write(value))
+
+
+def _atomic_write(path, emit):
     path = Path(path)
     with _LOCKS[_lock_index(path)]:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,7 +59,7 @@ def write(path, value):
             with tempfile.NamedTemporaryFile('w', dir=path.parent, encoding='utf-8',
                                              prefix='.'+path.name+'-', suffix='.tmp', delete=False) as f:
                 temp = Path(f.name)
-                json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False)
+                emit(f)
             # Le fichier temporaire est fermé AVANT la première tentative.
             # Ne jamais supprimer l'ancien fichier pour contourner un verrou.
             _retry(lambda: os.replace(temp, path))
@@ -75,9 +83,12 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
-def invalidate(project, first):
+def invalidate(project, first, partials=True):
     """Archive les anciens résultats ; les PDF originaux restent inchangés."""
     old = [p for p in (project / 'etapes').glob('*') if p.name[:2].isdigit() and int(p.name[:2]) >= first]
+    if partials:
+        old += [p for p in (project/'etapes'/'parties').glob('*')
+                if p.name[:2].isdigit() and int(p.name[:2]) >= first]
     if old:
         folder = project / 'versions' / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:8])
         folder.mkdir(parents=True)
