@@ -1,0 +1,6 @@
+.venv/
+.runtime/
+donnees/
+__pycache__/
+*.pyc
+dist/

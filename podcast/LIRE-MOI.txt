@@ -1,0 +1,20 @@
+PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
+
+1. Clic droit sur le ZIP > Extraire tout.
+2. Ouvrir Installer-Windows.cmd une fois.
+3. Installer Ollama depuis https://ollama.com/download/windows
+4. Ouvrir un terminal et lancer : ollama pull mistral
+5. Ouvrir Lancer-Podcast.cmd.
+6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
+
+Le programme cree le SCRIPT du podcast, en texte. Il ne genere pas encore
+les voix audio. Chaque etape est sauvegardee et consultable.
+
+Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
+Ensuite, le traitement peut fonctionner hors connexion sur votre PC.
+
+Conservez le dossier donnees pour garder vos projets.
+Consultez README.md pour les details et SOURCE-COMPLET.md pour tous les sources.
+
+Les tests techniques utilisent un modele simule. La qualite avec votre modele
+Mistral et l'installation native Windows restent a verifier sur votre PC.
