@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.0
+# Sources complètes — Podcast pédagogique 0.1.1
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -81,14 +81,54 @@ if errorlevel 1 (
 if errorlevel 1 pause
 ```
 
+## README-CORRECTIF.txt
+
+```text
+PODCAST PEDAGOGIQUE 0.1.1 — CORRECTIF ACCES REFUSE WINDOWS
+
+1. Fermer la fenetre de lancement du programme (Lancer-Podcast.cmd).
+2. Extraire PodcastPedago-Correctif-Windows.zip dans un dossier temporaire.
+3. Copier app.py et storage.py dans le dossier de votre application, celui
+   qui contient Lancer-Podcast.cmd. Accepter le remplacement des deux fichiers.
+4. Relancer Lancer-Podcast.cmd puis cliquer sur Continuer jusqu'au script final.
+
+Pas de reinstallation necessaire. Garder le dossier donnees et .venv :
+vos PDF, projets, resultats et dependances restent a leur place.
+
+Ce correctif coordonne les lectures et ecritures de JSON et reessaie les
+verrouillages temporaires Windows 5, 32 et 33. Si l'enregistrement echoue
+durablement, le fichier precedent est conserve et une erreur est affichee.
+
+Verification : 19 tests automatises, dont erreurs Windows simulees,
+lectures/ecritures concurrentes et reprise du worker apres une erreur.
+La validation native sur votre PC Windows reste a confirmer.
+```
+
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.0
+# Podcast pédagogique — version 0.1.1
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif Windows 0.1.1
+
+Cette version corrige les accès concurrents au fichier `tache.json`. Les lectures
+et écritures partagent un verrou ; les erreurs temporaires Windows 5, 32 et 33
+font l’objet de nouvelles tentatives, pendant quelques secondes. Le fichier
+précédent reste en place tant que le remplacement n’a pas réussi. Une erreur
+persistante d’enregistrement est affichée sans arrêter le worker.
+
+Pour une installation existante, fermer la fenêtre de lancement puis remplacer
+uniquement `app.py` et `storage.py` avec le ZIP correctif. Conserver le dossier
+`donnees` et l’environnement `.venv`. Relancer `Lancer-Podcast.cmd`, puis cliquer
+sur « Continuer jusqu’au script final ». Voir `README-CORRECTIF.txt`.
+
+Les cas de verrouillage ont été testés par simulation des erreurs Windows et
+par lectures/écritures concurrentes. La validation native sur le PC Windows
+reste nécessaire. Un refus de permission permanent n’est pas contourné.
 
 ## Utilisation sous Windows 10/11 x64
 
@@ -173,7 +213,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 19 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
@@ -264,6 +304,7 @@ class App:
         self.pending = queue.Queue()
         self.stop = threading.Event()
         self.cancels = {}
+        self.task_errors = {}
         self.active = None
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
@@ -283,7 +324,8 @@ class App:
 
     def idle(self, folder):
         path = folder/'tache.json'
-        if path.exists() and read(path)['state'] in ('queued','running'):
+        task = self.task_errors.get(folder.name) or (read(path) if path.exists() else {})
+        if task.get('state') in ('queued','running'):
             raise Busy('Un traitement est en cours pour ce projet. Attendez sa fin ou annulez-le.')
 
     def create(self, body):
@@ -298,7 +340,7 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
-        task = read(folder/'tache.json') if (folder/'tache.json').exists() else None
+        task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
         return {**meta,'completed':completed,'task':task,'exports':exports,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
@@ -327,6 +369,7 @@ class App:
                     'message':'En attente','error':None,'regenerate':regenerate}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
+            self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel))
             return task
 
@@ -362,9 +405,18 @@ class App:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
                 self.active = None
-                write(folder/'tache.json',task)
-                self.cancels.pop(task['id'],None)
-                self.pending.task_done()
+                try:
+                    write(folder/'tache.json',task)
+                except OSError as error:
+                    # Une erreur persistante de fichier ne doit pas tuer le worker
+                    # ni laisser l'interface afficher « en cours » indéfiniment.
+                    failed = {**task,'state':'error','message':'Enregistrement de l’avancement impossible',
+                              'error':'Le fichier tache.json reste inaccessible. Fermez les autres fenêtres du programme, puis relancez. Détail : '+str(error)}
+                    with self.lock:
+                        self.task_errors[folder.name]=failed
+                finally:
+                    self.cancels.pop(task['id'],None)
+                    self.pending.task_done()
 
     def cancel(self, folder):
         task = read(folder/'tache.json')
@@ -583,8 +635,8 @@ ROOT=Path(__file__).resolve().parent
 
 def main():
     files=sorted([p for p in ROOT.glob('*.py')]+[p for p in (ROOT/'web').glob('*') if p.is_file()]+
-                 [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','.gitignore')])
-    document=['# Sources complètes — Podcast pédagogique 0.1.0','',
+                 [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','.gitignore')])
+    document=['# Sources complètes — Podcast pédagogique 0.1.1','',
               'Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.',
               'Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.', '']
     manifest={}
@@ -604,7 +656,15 @@ def main():
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
-    info={'file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files)}
+    patch=output/'PodcastPedago-Correctif-Windows.zip'
+    with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+        for name in ('app.py','storage.py','README-CORRECTIF.txt'):
+            archive.write(ROOT/name,name)
+    with zipfile.ZipFile(patch) as archive:
+        assert archive.testzip() is None
+        assert set(archive.namelist())=={'app.py','storage.py','README-CORRECTIF.txt'}
+    info={'version':'0.1.1','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+          'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))
 
@@ -1283,25 +1343,75 @@ pypdf==6.21.4
 ```python
 """Sauvegardes atomiques et versions des résultats intermédiaires."""
 import hashlib
+from contextlib import ExitStack
+import errno
 import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 import time
 import uuid
 
 
+# Windows refuse le remplacement d'un fichier ouvert sans FILE_SHARE_DELETE.
+# Les lecteurs de l'interface et le worker doivent donc partager les verrous.
+# Le nombre de verrous est borné, même avec un cache contenant beaucoup de fichiers.
+_LOCKS = [threading.RLock() for _ in range(64)]
+_RETRY_DELAYS = (0, .025, .05, .1, .2, .4, .8, 1, 1.5, 2)
+
+
+def _lock_index(path):
+    return hash(os.path.normcase(os.path.abspath(os.fspath(path)))) % len(_LOCKS)
+
+
+def _retry(operation):
+    for attempt, delay in enumerate(_RETRY_DELAYS):
+        if delay:
+            time.sleep(delay)
+        try:
+            return operation()
+        except OSError as error:
+            windows_code = getattr(error, 'winerror', None)
+            transient = (windows_code in (5, 32, 33) if windows_code is not None
+                         else error.errno in (errno.EACCES, errno.EPERM, errno.EBUSY))
+            if not transient or attempt == len(_RETRY_DELAYS)-1:
+                raise
+
+
 def read(path):
-    return json.loads(Path(path).read_text(encoding='utf-8'))
+    path = Path(path)
+    with _LOCKS[_lock_index(path)]:
+        return json.loads(_retry(lambda: path.read_text(encoding='utf-8')))
 
 
 def write(path, value):
     path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile('w', dir=path.parent, encoding='utf-8', delete=False) as f:
-        json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False)
-        temp = f.name
-    os.replace(temp, path)
+    with _LOCKS[_lock_index(path)]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp = None
+        try:
+            with tempfile.NamedTemporaryFile('w', dir=path.parent, encoding='utf-8',
+                                             prefix='.'+path.name+'-', suffix='.tmp', delete=False) as f:
+                temp = Path(f.name)
+                json.dump(value, f, ensure_ascii=False, indent=2, allow_nan=False)
+            # Le fichier temporaire est fermé AVANT la première tentative.
+            # Ne jamais supprimer l'ancien fichier pour contourner un verrou.
+            _retry(lambda: os.replace(temp, path))
+        finally:
+            if temp is not None:
+                try:
+                    temp.unlink(missing_ok=True)
+                except OSError:
+                    pass  # Ne pas masquer l'erreur de sauvegarde initiale.
+
+
+def replace(source, destination):
+    """Déplacement atomique, y compris si Windows bloque brièvement un lecteur."""
+    with ExitStack() as stack:
+        for index in sorted({_lock_index(source), _lock_index(destination)}):
+            stack.enter_context(_LOCKS[index])
+        return _retry(lambda: os.replace(source, destination))
 
 
 def fingerprint(value):
@@ -1315,13 +1425,13 @@ def invalidate(project, first):
         folder = project / 'versions' / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:8])
         folder.mkdir(parents=True)
         for path in old:
-            path.replace(folder / path.name)
+            replace(path, folder / path.name)
         for path in (project/'exports').glob('*'):
             if path.is_file():
-                path.replace(folder/('export-'+path.name))
+                replace(path, folder/('export-'+path.name))
         if first<=8:
             for path in (project/'memoire').glob('*.json'):
-                path.replace(folder/('memoire-'+path.name))
+                replace(path, folder/('memoire-'+path.name))
 
 
 def defaults():
@@ -1515,6 +1625,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from app import App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
@@ -1653,6 +1764,147 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(read(self.app.project(identifier)/'projet.json')['pdfs'],[])
         for invalid in [{'minutes':True},{'speakers':['Sophie','Sophie']},{'endpoint':'https://other.test'},{'num_ctx':100}]:
             with self.assertRaises(ValueError):settings({**defaults(),**invalid})
+
+    def test_worker_survives_failure_to_save_status_and_can_retry(self):
+        import app as module
+        identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
+        original_write=module.write
+        def write_status(path,value):
+            if Path(path).name=='tache.json' and value.get('state')!='queued':
+                raise PermissionError('WinError 5 simulé : tache.json verrouillé')
+            return original_write(path,value)
+        with patch('app.write',side_effect=write_status):
+            self.assertEqual(self.request('/api/projects/'+identifier+'/run',{'first':1,'until':1})[0],202)
+            deadline=time.monotonic()+5
+            while time.monotonic()<deadline and identifier not in self.app.task_errors:time.sleep(.01)
+            state=self.app.summary(self.app.project(identifier))
+            self.assertEqual(state['task']['state'],'error')
+            self.assertIn('tache.json',state['task']['error']);self.assertTrue(self.app.worker.is_alive())
+        self.assertEqual(self.request('/api/projects/'+identifier+'/run',{'first':1,'until':1})[0],202)
+        deadline=time.monotonic()+5
+        while time.monotonic()<deadline:
+            task=read(self.app.project(identifier)/'tache.json')
+            if task['state'] not in ('queued','running'):break
+            time.sleep(.01)
+        self.assertEqual(task['state'],'done',task);self.assertNotIn(identifier,self.app.task_errors)
+
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_storage.py
+
+```python
+"""Régression des accès refusés WinError 5/32 et lectures concurrentes."""
+import errno
+import json
+import os
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from unittest.mock import patch
+
+import storage
+
+
+def locked(code=5):
+    error=PermissionError(errno.EACCES,'Accès refusé pendant une lecture')
+    error.winerror=code
+    return error
+
+
+class StorageTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.path=Path(self.temp.name)/'tache.json'
+        storage.write(self.path,{'state':'running'})
+    def tearDown(self):self.temp.cleanup()
+
+    def test_windows_transient_replace_retries_without_deleting_previous_file(self):
+        original_replace=os.replace
+        for code in (5,32,33):
+            attempts=[]
+            before=self.path.read_bytes()
+            def operation(source,target):
+                attempts.append(1)
+                if len(attempts)<=2:
+                    self.assertEqual(self.path.read_bytes(),before)
+                    # Il existe déjà une nouvelle sauvegarde complète et fermée.
+                    self.assertEqual(json.loads(Path(source).read_text()),{'state':'done','code':code})
+                    raise locked(code)
+                return original_replace(source,target)
+            with self.subTest(winerror=code),patch('storage.os.replace',side_effect=operation),patch('storage.time.sleep'):
+                storage.write(self.path,{'state':'done','code':code})
+            self.assertEqual(storage.read(self.path),{'state':'done','code':code})
+            self.assertFalse(list(self.path.parent.glob('*.tmp')))
+
+    def test_permanent_failure_preserves_original_and_cleans_temporary_file(self):
+        before=self.path.read_bytes()
+        with patch('storage.os.replace',side_effect=locked()),patch('storage.time.sleep'):
+            with self.assertRaises(PermissionError):storage.write(self.path,{'state':'done'})
+        self.assertEqual(self.path.read_bytes(),before)
+        self.assertFalse(list(self.path.parent.glob('*.tmp')))
+
+    def test_unrelated_io_failure_is_not_retried(self):
+        with patch('storage.os.replace',side_effect=OSError(errno.ENOSPC,'Disque plein')) as operation,patch('storage.time.sleep') as sleep:
+            with self.assertRaises(OSError):storage.write(self.path,{'state':'done'})
+        self.assertEqual(operation.call_count,1);sleep.assert_not_called()
+        self.assertEqual(storage.read(self.path),{'state':'running'})
+
+    def test_invalid_json_value_leaves_existing_file_intact(self):
+        with self.assertRaises(ValueError):storage.write(self.path,{'number':float('nan')})
+        self.assertEqual(storage.read(self.path),{'state':'running'})
+        self.assertFalse(list(self.path.parent.glob('*.tmp')))
+
+    def test_read_sharing_error_retries(self):
+        original=Path.read_text;attempts=[]
+        def operation(path,*args,**kwargs):
+            if path==self.path:
+                attempts.append(1)
+                if len(attempts)==1:raise locked(32)
+            return original(path,*args,**kwargs)
+        with patch.object(Path,'read_text',operation),patch('storage.time.sleep'):
+            self.assertEqual(storage.read(self.path),{'state':'running'})
+        self.assertEqual(len(attempts),2)
+
+    def test_writer_waits_until_reader_has_closed_the_file(self):
+        original_read=Path.read_text;original_replace=os.replace
+        reading=threading.Event();release=threading.Event();writing=threading.Event();replaced=threading.Event();errors=[]
+        def read_text(path,*args,**kwargs):
+            if path==self.path:
+                reading.set()
+                if not release.wait(3):raise RuntimeError('Lecteur bloqué')
+                result=original_read(path,*args,**kwargs);reading.clear();return result
+            return original_read(path,*args,**kwargs)
+        def replace(source,target):
+            if reading.is_set():raise locked()
+            result=original_replace(source,target);replaced.set();return result
+        def reader():
+            try:storage.read(self.path)
+            except Exception as error:errors.append(error)
+        def writer():
+            writing.set()
+            try:storage.write(self.path,{'state':'done'})
+            except Exception as error:errors.append(error)
+        with patch.object(Path,'read_text',read_text),patch('storage.os.replace',side_effect=replace):
+            a=threading.Thread(target=reader);b=threading.Thread(target=writer)
+            try:
+                a.start();self.assertTrue(reading.wait(2));b.start();self.assertTrue(writing.wait(2))
+                self.assertFalse(replaced.wait(.05))
+            finally:
+                release.set();a.join(3);b.join(3)
+        self.assertFalse(a.is_alive());self.assertFalse(b.is_alive());self.assertFalse(errors,errors)
+        self.assertEqual(storage.read(self.path),{'state':'done'})
+
+    def test_archiving_retries_a_windows_sharing_violation(self):
+        original=os.replace;attempts=[];destination=self.path.parent/'archive.json'
+        def replace(source,target):
+            attempts.append(1)
+            if len(attempts)==1:raise locked(32)
+            return original(source,target)
+        with patch('storage.os.replace',side_effect=replace),patch('storage.time.sleep'):
+            storage.replace(self.path,destination)
+        self.assertFalse(self.path.exists());self.assertEqual(storage.read(destination),{'state':'running'})
 
 
 if __name__=='__main__':unittest.main()

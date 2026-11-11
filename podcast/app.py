@@ -62,6 +62,7 @@ class App:
         self.pending = queue.Queue()
         self.stop = threading.Event()
         self.cancels = {}
+        self.task_errors = {}
         self.active = None
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
@@ -81,7 +82,8 @@ class App:
 
     def idle(self, folder):
         path = folder/'tache.json'
-        if path.exists() and read(path)['state'] in ('queued','running'):
+        task = self.task_errors.get(folder.name) or (read(path) if path.exists() else {})
+        if task.get('state') in ('queued','running'):
             raise Busy('Un traitement est en cours pour ce projet. Attendez sa fin ou annulez-le.')
 
     def create(self, body):
@@ -96,7 +98,7 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
-        task = read(folder/'tache.json') if (folder/'tache.json').exists() else None
+        task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
         return {**meta,'completed':completed,'task':task,'exports':exports,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
@@ -125,6 +127,7 @@ class App:
                     'message':'En attente','error':None,'regenerate':regenerate}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
+            self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel))
             return task
 
@@ -160,9 +163,18 @@ class App:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
                 self.active = None
-                write(folder/'tache.json',task)
-                self.cancels.pop(task['id'],None)
-                self.pending.task_done()
+                try:
+                    write(folder/'tache.json',task)
+                except OSError as error:
+                    # Une erreur persistante de fichier ne doit pas tuer le worker
+                    # ni laisser l'interface afficher « en cours » indéfiniment.
+                    failed = {**task,'state':'error','message':'Enregistrement de l’avancement impossible',
+                              'error':'Le fichier tache.json reste inaccessible. Fermez les autres fenêtres du programme, puis relancez. Détail : '+str(error)}
+                    with self.lock:
+                        self.task_errors[folder.name]=failed
+                finally:
+                    self.cancels.pop(task['id'],None)
+                    self.pending.task_done()
 
     def cancel(self, folder):
         task = read(folder/'tache.json')

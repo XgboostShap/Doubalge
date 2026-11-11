@@ -6,6 +6,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from app import App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
@@ -144,6 +145,29 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(read(self.app.project(identifier)/'projet.json')['pdfs'],[])
         for invalid in [{'minutes':True},{'speakers':['Sophie','Sophie']},{'endpoint':'https://other.test'},{'num_ctx':100}]:
             with self.assertRaises(ValueError):settings({**defaults(),**invalid})
+
+    def test_worker_survives_failure_to_save_status_and_can_retry(self):
+        import app as module
+        identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
+        original_write=module.write
+        def write_status(path,value):
+            if Path(path).name=='tache.json' and value.get('state')!='queued':
+                raise PermissionError('WinError 5 simulé : tache.json verrouillé')
+            return original_write(path,value)
+        with patch('app.write',side_effect=write_status):
+            self.assertEqual(self.request('/api/projects/'+identifier+'/run',{'first':1,'until':1})[0],202)
+            deadline=time.monotonic()+5
+            while time.monotonic()<deadline and identifier not in self.app.task_errors:time.sleep(.01)
+            state=self.app.summary(self.app.project(identifier))
+            self.assertEqual(state['task']['state'],'error')
+            self.assertIn('tache.json',state['task']['error']);self.assertTrue(self.app.worker.is_alive())
+        self.assertEqual(self.request('/api/projects/'+identifier+'/run',{'first':1,'until':1})[0],202)
+        deadline=time.monotonic()+5
+        while time.monotonic()<deadline:
+            task=read(self.app.project(identifier)/'tache.json')
+            if task['state'] not in ('queued','running'):break
+            time.sleep(.01)
+        self.assertEqual(task['state'],'done',task);self.assertNotIn(identifier,self.app.task_errors)
 
 
 if __name__=='__main__':unittest.main()

@@ -1,8 +1,25 @@
-# Podcast pédagogique — version 0.1.0
+# Podcast pédagogique — version 0.1.1
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif Windows 0.1.1
+
+Cette version corrige les accès concurrents au fichier `tache.json`. Les lectures
+et écritures partagent un verrou ; les erreurs temporaires Windows 5, 32 et 33
+font l’objet de nouvelles tentatives, pendant quelques secondes. Le fichier
+précédent reste en place tant que le remplacement n’a pas réussi. Une erreur
+persistante d’enregistrement est affichée sans arrêter le worker.
+
+Pour une installation existante, fermer la fenêtre de lancement puis remplacer
+uniquement `app.py` et `storage.py` avec le ZIP correctif. Conserver le dossier
+`donnees` et l’environnement `.venv`. Relancer `Lancer-Podcast.cmd`, puis cliquer
+sur « Continuer jusqu’au script final ». Voir `README-CORRECTIF.txt`.
+
+Les cas de verrouillage ont été testés par simulation des erreurs Windows et
+par lectures/écritures concurrentes. La validation native sur le PC Windows
+reste nécessaire. Un refus de permission permanent n’est pas contourné.
 
 ## Utilisation sous Windows 10/11 x64
 
@@ -87,7 +104,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 19 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
