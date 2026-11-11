@@ -11,7 +11,7 @@ from unittest.mock import patch
 from app import App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
 from pdfs import extract,split_three
-from pipeline import Pipeline,ids_exact,dialogue_valid
+from pipeline import Pipeline,ids_exact,dialogue_valid,page_fragments
 from storage import defaults,invalidate,read,write
 from fixtures import FakeClient,StubServer,make_pdf
 
@@ -68,6 +68,69 @@ class PipelineTests(unittest.TestCase):
         writer=PdfWriter();writer.add_blank_page(width=612,height=792)
         path=self.root/'scan.pdf';writer.write(path)
         with self.assertRaisesRegex(ValueError,'OCR'):extract(path,'PDF1','scan.pdf')
+
+    def test_page_fragments_never_mix_pages_or_drop_blocks(self):
+        blocks=[{'page':page,'text':'mot '*30} for page in (1,1,2,2,3,3)]
+        chunks=list(page_fragments(blocks))
+        self.assertEqual([page for page,_ in chunks],[1,2,3])
+        self.assertEqual([b for _,chunk in chunks for b in chunk],blocks)
+        self.assertTrue(all({b['page'] for b in chunk}=={page} for page,chunk in chunks))
+        with self.assertRaises(ValueError):list(page_fragments([{'page':'1','text':'texte'}]))
+
+    def test_source_pages_come_from_pdf_when_model_omits_or_invents_them(self):
+        make_pdf(self.project/'sources/a.pdf',page_count=6)
+        meta=read(self.project/'projet.json');meta['pdfs']=meta['pdfs'][:1];write(self.project/'projet.json',meta)
+        for supplied in (None,{'pages':['p. 999',0]}, {'pages':'page inventée'}):
+            class UnreliablePageModel(FakeClient):
+                def ask(inner,task,payload,instructions,validate,budget=4000):
+                    if task!='part_summary':return super().ask(task,payload,instructions,validate,budget)
+                    inner.calls.append((task,copy.deepcopy(payload)))
+                    value={'summary':'Un résumé lié au texte fourni.','ideas':[{'statement':'Une idée extraite.',
+                           'explanation':'Son explication dans la page.' ,**(supplied or {})}]}
+                    validate(value);return value
+            client=UnreliablePageModel();Pipeline(self.project,client).run(1,2)
+            result=read(self.project/'etapes/02.json')['data']['documents'][0]
+            self.assertEqual(len(result['parts']),3)
+            ideas=[i for part in result['parts'] for i in part['ideas']]
+            self.assertEqual([i['pages'] for i in ideas],[[1],[2],[3],[4],[5],[6]])
+            self.assertTrue(all(i['document']=='PDF1' for i in ideas))
+            requests=[p for task,p in client.calls if task=='part_summary']
+            self.assertEqual(len(requests),6)
+            self.assertTrue(all({b['page'] for b in p['blocks']}=={p['source_page']} for p in requests))
+            self.assertTrue(all('boundary_context' not in p for p in requests))
+
+    def test_summary_still_rejects_missing_scientific_content(self):
+        Pipeline(self.project,FakeClient()).run(1,1)
+        class MissingExplanation(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary':validate({'summary':'Résumé','ideas':[{'statement':'Idée'}]})
+                return super().ask(task,payload,instructions,validate,budget)
+        with self.assertRaisesRegex(ValueError,'explanation'):Pipeline(self.project,MissingExplanation()).run(2,2)
+        self.assertFalse((self.project/'etapes/02.json').exists())
+
+    def test_cover_page_can_have_no_ideas_and_is_visible_for_review(self):
+        class CoverPage(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary' and payload['source_page']==1:
+                    value={'summary':'Page de couverture.','ideas':[]};validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        Pipeline(self.project,CoverPage()).run(1,2)
+        doc=read(self.project/'etapes/02.json')['data']['documents'][0]
+        self.assertEqual(doc['parts'][0]['ideas'],[])
+        self.assertEqual(doc['parts'][0]['excerpts_without_ideas'],[{'page':1,'summary':'Page de couverture.'}])
+        self.assertTrue(doc['parts'][1]['ideas'])
+        self.assertIn('Extraits sans idée retenue',(self.project/'etapes/02.md').read_text())
+
+    def test_no_ideas_stops_before_inventing_a_global_text(self):
+        class EmptyDocument(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary':
+                    value={'summary':'Extrait sans idée explicative.','ideas':[]};validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        client=EmptyDocument();pipeline=Pipeline(self.project,client);pipeline.run(1,3)
+        with self.assertRaisesRegex(ValueError,'Aucune idée explicative'):pipeline.run(4,4)
+        self.assertFalse(any(task=='global_groups' for task,_ in client.calls))
+        self.assertFalse((self.project/'etapes/04.json').exists())
 
 
 class ClientTests(unittest.TestCase):

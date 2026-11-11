@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.1
+# Sources complètes — Podcast pédagogique 0.1.2
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -84,22 +84,27 @@ if errorlevel 1 pause
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.1 — CORRECTIF ACCES REFUSE WINDOWS
+PODCAST PEDAGOGIQUE 0.1.2 — CORRECTIF PAGES ET ACCES WINDOWS
 
 1. Fermer la fenetre de lancement du programme (Lancer-Podcast.cmd).
-2. Extraire PodcastPedago-Correctif-Windows.zip dans un dossier temporaire.
-3. Copier app.py et storage.py dans le dossier de votre application, celui
-   qui contient Lancer-Podcast.cmd. Accepter le remplacement des deux fichiers.
+2. Extraire PodcastPedago-Correctif-0.1.2.zip dans un dossier temporaire.
+3. Copier app.py, storage.py et pipeline.py dans le dossier de votre application,
+   celui qui contient Lancer-Podcast.cmd. Accepter le remplacement des fichiers.
 4. Relancer Lancer-Podcast.cmd puis cliquer sur Continuer jusqu'au script final.
 
 Pas de reinstallation necessaire. Garder le dossier donnees et .venv :
 vos PDF, projets, resultats et dependances restent a leur place.
 
-Ce correctif coordonne les lectures et ecritures de JSON et reessaie les
+Ce correctif attribue les pages sources depuis le lecteur PDF au lieu de
+demander au modele de les produire. Chaque extrait analyse appartient a
+une seule page connue. Les trois parties par PDF sont conservees.
+
+Il coordonne aussi les lectures et ecritures de JSON et reessaie les
 verrouillages temporaires Windows 5, 32 et 33. Si l'enregistrement echoue
 durablement, le fichier precedent est conserve et une erreur est affichee.
 
-Verification : 19 tests automatises, dont erreurs Windows simulees,
+Verification : 24 tests automatises, dont numeros de page absents ou faux
+dans les reponses simulees du modele, erreurs Windows simulees,
 lectures/ecritures concurrentes et reprise du worker apres une erreur.
 La validation native sur votre PC Windows reste a confirmer.
 ```
@@ -107,24 +112,40 @@ La validation native sur votre PC Windows reste a confirmer.
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.1
+# Podcast pédagogique — version 0.1.2
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
 
-## Correctif Windows 0.1.1
+## Correctif 0.1.2 — références de pages
+
+Le modèle n'a plus à produire lui-même les numéros de page des idées. Pendant
+l'extraction, chaque requête porte sur le texte d'une seule page connue ; le
+programme rattache ensuite les idées à cette page issue du lecteur PDF. Les trois
+parties de chaque document et les neuf étapes restent conservées. La compilation
+relie ensuite les pages et les parties. Cette lecture peut demander davantage
+d'appels au modèle sur les longs documents.
+
+Les extraits sans idée retenue sont signalés dans le résumé pour vérification.
+Une couverture ou une bibliographie n'impose pas d'inventer un point explicatif.
+
+Pour mettre à jour une installation existante, fermer la fenêtre de lancement
+puis remplacer `app.py`, `storage.py` et `pipeline.py` avec le ZIP correctif.
+Conserver `donnees` et `.venv`, relancer `Lancer-Podcast.cmd`, puis cliquer sur
+« Continuer jusqu'au script final ». Le correctif est cumulatif et inclut celui
+des verrouillages Windows. Voir `README-CORRECTIF.txt`.
+
+Les pages indiquent la provenance du texte envoyé au modèle. Elles ne remplacent
+pas une vérification de la fidélité de chaque affirmation aux sources.
+
+## Correctif Windows inclus depuis 0.1.1
 
 Cette version corrige les accès concurrents au fichier `tache.json`. Les lectures
 et écritures partagent un verrou ; les erreurs temporaires Windows 5, 32 et 33
 font l’objet de nouvelles tentatives, pendant quelques secondes. Le fichier
 précédent reste en place tant que le remplacement n’a pas réussi. Une erreur
 persistante d’enregistrement est affichée sans arrêter le worker.
-
-Pour une installation existante, fermer la fenêtre de lancement puis remplacer
-uniquement `app.py` et `storage.py` avec le ZIP correctif. Conserver le dossier
-`donnees` et l’environnement `.venv`. Relancer `Lancer-Podcast.cmd`, puis cliquer
-sur « Continuer jusqu’au script final ». Voir `README-CORRECTIF.txt`.
 
 Les cas de verrouillage ont été testés par simulation des erreurs Windows et
 par lectures/écritures concurrentes. La validation native sur le PC Windows
@@ -213,7 +234,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 19 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 24 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,
@@ -636,7 +657,7 @@ ROOT=Path(__file__).resolve().parent
 def main():
     files=sorted([p for p in ROOT.glob('*.py')]+[p for p in (ROOT/'web').glob('*') if p.is_file()]+
                  [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','.gitignore')])
-    document=['# Sources complètes — Podcast pédagogique 0.1.1','',
+    document=['# Sources complètes — Podcast pédagogique 0.1.2','',
               'Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.',
               'Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.', '']
     manifest={}
@@ -656,14 +677,15 @@ def main():
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
-    patch=output/'PodcastPedago-Correctif-Windows.zip'
+    patch=output/'PodcastPedago-Correctif-0.1.2.zip'
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
-        for name in ('app.py','storage.py','README-CORRECTIF.txt'):
+        for name in ('app.py','storage.py','pipeline.py','README-CORRECTIF.txt'):
             archive.write(ROOT/name,name)
     with zipfile.ZipFile(patch) as archive:
         assert archive.testzip() is None
-        assert set(archive.namelist())=={'app.py','storage.py','README-CORRECTIF.txt'}
-    info={'version':'0.1.1','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+        assert set(archive.namelist())=={'app.py','storage.py','pipeline.py','README-CORRECTIF.txt'}
+    (output/'PodcastPedago-Correctif-Windows.zip').write_bytes(patch.read_bytes())
+    info={'version':'0.1.2','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
           'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))
@@ -946,6 +968,7 @@ def fragments(blocks, max_chars=10000):
 ```python
 """Les neuf étapes du PDF au script dialogué, avec traçabilité et mémoire."""
 import json
+from itertools import groupby
 from pathlib import Path
 import re
 import time
@@ -988,6 +1011,15 @@ def citations(value, expected):
 
 def all_ideas(data):
     return [idea for doc in data['documents'] for part in doc['parts'] for idea in part['ideas']]
+
+
+def page_fragments(blocks):
+    """Chaque requête d'extraction porte sur une seule page connue du PDF."""
+    for page, group in groupby(blocks,key=lambda b:b['page']):
+        if type(page) is not int or page<1:
+            raise ValueError('Numéro de page invalide dans le texte extrait du PDF.')
+        for chunk in fragments(list(group)):
+            yield page,chunk
 
 
 def dialogue_valid(value, allowed_speakers, wanted):
@@ -1063,33 +1095,41 @@ class Pipeline:
         for doc in source['documents']:
             parts = []
             for part in doc['parts']:
-                summaries, ideas = [], []
-                for index, chunk in enumerate(fragments(part['blocks']),1):
-                    self.progress(f'{doc["id"]} — résumé de la partie {part["number"]}, fragment {index}')
-                    pages = {b['page'] for b in chunk}
+                summaries, ideas, empty_excerpts = [], [], []
+                for index, (page,chunk) in enumerate(page_fragments(part['blocks']),1):
+                    self.progress(f'{doc["id"]} — partie {part["number"]}, page {page}, fragment {index}')
                     def validate(value):
                         text(value,'summary')
-                        if not isinstance(value.get('ideas'),list) or not value['ideas']:
-                            raise ValueError('Extraire les idées importantes dans ideas.')
+                        if not isinstance(value.get('ideas'),list):
+                            raise ValueError('Extraire les idées importantes dans une liste ideas.')
                         for idea in value['ideas']:
                             text(idea,'statement');text(idea,'explanation')
-                            if not isinstance(idea.get('pages'),list) or not idea['pages'] or any(type(p) is not int or p not in pages for p in idea['pages']):
-                                raise ValueError('Chaque idée doit citer des pages présentes dans cet extrait.')
-                    position=part['number']-1
-                    boundary=(doc['parts'][position-1]['blocks'][-1:] if position else [])+(doc['parts'][position+1]['blocks'][:1] if position+1<len(doc['parts']) else [])
-                    value = self.client.ask('part_summary',{'document':doc['id'],'part':part['number'],'blocks':chunk,'boundary_context':boundary},
+                    value = self.client.ask('part_summary',{'document':doc['id'],'part':part['number'],'source_page':page,'blocks':chunk},
                         '''Résume cet extrait en conservant les liens entre les concepts : pourquoi,
                         comment, causes, conséquences, définitions, chiffres et réserves. Ne te limite pas à des mots-clés.
                         Structure : {"summary":"explication suivie", "ideas":[{"statement":"idée en une phrase",
-                        "explanation":"explication et liens causaux", "pages":[numéros réels]}]}.
-                        Extrais toutes les idées essentielles de l'extrait, sans inventer de compléments.
-                        boundary_context sert uniquement à comprendre le raccord avec les parties voisines :
-                        résume et cite uniquement le contenu de blocks.''',validate)
+                        "explanation":"explication et liens causaux"}]}.
+                        Extrais toutes les idées essentielles du texte fourni dans blocks, sans inventer
+                        de compléments. Cet extrait provient d'une seule page, indiquée par source_page.
+                        Le logiciel ajoutera lui-même les références : ne génère pas de numéros de page.
+                        Si l'extrait ne contient que couverture, sommaire ou bibliographie sans idée
+                        explicative, renvoie ideas:[] et explique sa nature dans summary, sans inventer.
+                        La compilation suivante reliera les pages et les trois parties du document.''',validate)
                     summaries.append(value['summary'])
+                    if not value['ideas']:
+                        empty_excerpts.append({'page':page,'summary':value['summary']})
                     for idea in value['ideas']:
-                        ideas.append({**idea,'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}', 'document':doc['id']})
-                parts.append({'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas})
-                notes.append(f'## {doc["id"]} — partie {part["number"]}\n\n'+parts[-1]['summary']+'\n\n'+idea_markdown(ideas))
+                        # La provenance vient du lecteur PDF, jamais d'un numéro
+                        # inventé ou formaté librement dans la réponse du modèle.
+                        ideas.append({'statement':idea['statement'],'explanation':idea['explanation'],
+                                      'pages':[page],'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}',
+                                      'document':doc['id']})
+                parts.append({'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas,
+                              'excerpts_without_ideas':empty_excerpts})
+                section=f'## {doc["id"]} — partie {part["number"]}\n\n'+parts[-1]['summary']+'\n\n'+idea_markdown(ideas)
+                if empty_excerpts:
+                    section+='\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(f'- Page {e["page"]} : '+e['summary'] for e in empty_excerpts)
+                notes.append(section)
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts})
         return {'documents':documents},'\n\n'.join(notes)
 
@@ -1112,6 +1152,8 @@ class Pipeline:
     def step4(self):
         data = self.saved(3)
         ideas = all_ideas(data)
+        if not ideas:
+            raise ValueError('Aucune idée explicative n’a été extraite. Consultez les résumés de l’étape 2 avant de refaire cette étape ou de choisir un autre modèle.')
         wanted = [i['id'] for i in ideas]
         compact = [{'id':i['id'],'statement':i['statement']} for i in ideas]
         def validate_groups(v):
@@ -1521,7 +1563,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import threading
 
 
-def make_pdf(path, label='Optique'):
+def make_pdf(path, label='Optique', page_count=3):
     objects=[]
     def add(value):
         objects.append(value);return len(objects)
@@ -1529,13 +1571,13 @@ def make_pdf(path, label='Optique'):
     add(b'')
     add(b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>')
     pages=[]
-    for n in range(1,4):
+    for n in range(1,page_count+1):
         sentence=f'{label} page {n}. Le signal perd de la puissance dans la fibre. Un amplificateur peut compenser les pertes. Il faut aussi comprendre les limites du dispositif.'
         stream=('BT /F1 12 Tf 50 750 Td ('+sentence+') Tj ET').encode('ascii')
         content=add(b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream')
         page=add(f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents {content} 0 R >>'.encode())
         pages.append(page)
-    objects[1]=('<< /Type /Pages /Count 3 /Kids ['+' '.join(f'{p} 0 R' for p in pages)+'] >>').encode()
+    objects[1]=(f'<< /Type /Pages /Count {page_count} /Kids ['+' '.join(f'{p} 0 R' for p in pages)+'] >>').encode()
     data=bytearray(b'%PDF-1.4\n');offsets=[0]
     for n,obj in enumerate(objects,1):
         offsets.append(len(data));data.extend(f'{n} 0 obj\n'.encode()+obj+b'\nendobj\n')
@@ -1630,7 +1672,7 @@ from unittest.mock import patch
 from app import App,Server,settings
 from llm import Ollama,Cancelled,ModelError,endpoint_parts,models
 from pdfs import extract,split_three
-from pipeline import Pipeline,ids_exact,dialogue_valid
+from pipeline import Pipeline,ids_exact,dialogue_valid,page_fragments
 from storage import defaults,invalidate,read,write
 from fixtures import FakeClient,StubServer,make_pdf
 
@@ -1687,6 +1729,69 @@ class PipelineTests(unittest.TestCase):
         writer=PdfWriter();writer.add_blank_page(width=612,height=792)
         path=self.root/'scan.pdf';writer.write(path)
         with self.assertRaisesRegex(ValueError,'OCR'):extract(path,'PDF1','scan.pdf')
+
+    def test_page_fragments_never_mix_pages_or_drop_blocks(self):
+        blocks=[{'page':page,'text':'mot '*30} for page in (1,1,2,2,3,3)]
+        chunks=list(page_fragments(blocks))
+        self.assertEqual([page for page,_ in chunks],[1,2,3])
+        self.assertEqual([b for _,chunk in chunks for b in chunk],blocks)
+        self.assertTrue(all({b['page'] for b in chunk}=={page} for page,chunk in chunks))
+        with self.assertRaises(ValueError):list(page_fragments([{'page':'1','text':'texte'}]))
+
+    def test_source_pages_come_from_pdf_when_model_omits_or_invents_them(self):
+        make_pdf(self.project/'sources/a.pdf',page_count=6)
+        meta=read(self.project/'projet.json');meta['pdfs']=meta['pdfs'][:1];write(self.project/'projet.json',meta)
+        for supplied in (None,{'pages':['p. 999',0]}, {'pages':'page inventée'}):
+            class UnreliablePageModel(FakeClient):
+                def ask(inner,task,payload,instructions,validate,budget=4000):
+                    if task!='part_summary':return super().ask(task,payload,instructions,validate,budget)
+                    inner.calls.append((task,copy.deepcopy(payload)))
+                    value={'summary':'Un résumé lié au texte fourni.','ideas':[{'statement':'Une idée extraite.',
+                           'explanation':'Son explication dans la page.' ,**(supplied or {})}]}
+                    validate(value);return value
+            client=UnreliablePageModel();Pipeline(self.project,client).run(1,2)
+            result=read(self.project/'etapes/02.json')['data']['documents'][0]
+            self.assertEqual(len(result['parts']),3)
+            ideas=[i for part in result['parts'] for i in part['ideas']]
+            self.assertEqual([i['pages'] for i in ideas],[[1],[2],[3],[4],[5],[6]])
+            self.assertTrue(all(i['document']=='PDF1' for i in ideas))
+            requests=[p for task,p in client.calls if task=='part_summary']
+            self.assertEqual(len(requests),6)
+            self.assertTrue(all({b['page'] for b in p['blocks']}=={p['source_page']} for p in requests))
+            self.assertTrue(all('boundary_context' not in p for p in requests))
+
+    def test_summary_still_rejects_missing_scientific_content(self):
+        Pipeline(self.project,FakeClient()).run(1,1)
+        class MissingExplanation(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary':validate({'summary':'Résumé','ideas':[{'statement':'Idée'}]})
+                return super().ask(task,payload,instructions,validate,budget)
+        with self.assertRaisesRegex(ValueError,'explanation'):Pipeline(self.project,MissingExplanation()).run(2,2)
+        self.assertFalse((self.project/'etapes/02.json').exists())
+
+    def test_cover_page_can_have_no_ideas_and_is_visible_for_review(self):
+        class CoverPage(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary' and payload['source_page']==1:
+                    value={'summary':'Page de couverture.','ideas':[]};validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        Pipeline(self.project,CoverPage()).run(1,2)
+        doc=read(self.project/'etapes/02.json')['data']['documents'][0]
+        self.assertEqual(doc['parts'][0]['ideas'],[])
+        self.assertEqual(doc['parts'][0]['excerpts_without_ideas'],[{'page':1,'summary':'Page de couverture.'}])
+        self.assertTrue(doc['parts'][1]['ideas'])
+        self.assertIn('Extraits sans idée retenue',(self.project/'etapes/02.md').read_text())
+
+    def test_no_ideas_stops_before_inventing_a_global_text(self):
+        class EmptyDocument(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='part_summary':
+                    value={'summary':'Extrait sans idée explicative.','ideas':[]};validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        client=EmptyDocument();pipeline=Pipeline(self.project,client);pipeline.run(1,3)
+        with self.assertRaisesRegex(ValueError,'Aucune idée explicative'):pipeline.run(4,4)
+        self.assertFalse(any(task=='global_groups' for task,_ in client.calls))
+        self.assertFalse((self.project/'etapes/04.json').exists())
 
 
 class ClientTests(unittest.TestCase):

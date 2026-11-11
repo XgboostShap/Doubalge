@@ -1,21 +1,37 @@
-# Podcast pédagogique — version 0.1.1
+# Podcast pédagogique — version 0.1.2
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
 
-## Correctif Windows 0.1.1
+## Correctif 0.1.2 — références de pages
+
+Le modèle n'a plus à produire lui-même les numéros de page des idées. Pendant
+l'extraction, chaque requête porte sur le texte d'une seule page connue ; le
+programme rattache ensuite les idées à cette page issue du lecteur PDF. Les trois
+parties de chaque document et les neuf étapes restent conservées. La compilation
+relie ensuite les pages et les parties. Cette lecture peut demander davantage
+d'appels au modèle sur les longs documents.
+
+Les extraits sans idée retenue sont signalés dans le résumé pour vérification.
+Une couverture ou une bibliographie n'impose pas d'inventer un point explicatif.
+
+Pour mettre à jour une installation existante, fermer la fenêtre de lancement
+puis remplacer `app.py`, `storage.py` et `pipeline.py` avec le ZIP correctif.
+Conserver `donnees` et `.venv`, relancer `Lancer-Podcast.cmd`, puis cliquer sur
+« Continuer jusqu'au script final ». Le correctif est cumulatif et inclut celui
+des verrouillages Windows. Voir `README-CORRECTIF.txt`.
+
+Les pages indiquent la provenance du texte envoyé au modèle. Elles ne remplacent
+pas une vérification de la fidélité de chaque affirmation aux sources.
+
+## Correctif Windows inclus depuis 0.1.1
 
 Cette version corrige les accès concurrents au fichier `tache.json`. Les lectures
 et écritures partagent un verrou ; les erreurs temporaires Windows 5, 32 et 33
 font l’objet de nouvelles tentatives, pendant quelques secondes. Le fichier
 précédent reste en place tant que le remplacement n’a pas réussi. Une erreur
 persistante d’enregistrement est affichée sans arrêter le worker.
-
-Pour une installation existante, fermer la fenêtre de lancement puis remplacer
-uniquement `app.py` et `storage.py` avec le ZIP correctif. Conserver le dossier
-`donnees` et l’environnement `.venv`. Relancer `Lancer-Podcast.cmd`, puis cliquer
-sur « Continuer jusqu’au script final ». Voir `README-CORRECTIF.txt`.
 
 Les cas de verrouillage ont été testés par simulation des erreurs Windows et
 par lectures/écritures concurrentes. La validation native sur le PC Windows
@@ -104,7 +120,7 @@ Options : `--data CHEMIN`, `--port NUMERO`, `--no-browser`.
 python -m unittest discover -s tests -v
 ```
 
-Les 19 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
+Les 24 tests utilisent de vrais PDF générés pour l’essai et un fournisseur simulé
 pour vérifier les contrats JSON, les neuf étapes et la mémoire sans télécharger
 Mistral. Le test navigateur `tests/browser_check.py` nécessite Playwright et un
 Chromium installé. Il teste aussi les appels HTTP à un Ollama simulé, les exports,

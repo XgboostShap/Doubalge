@@ -1,5 +1,6 @@
 """Les neuf étapes du PDF au script dialogué, avec traçabilité et mémoire."""
 import json
+from itertools import groupby
 from pathlib import Path
 import re
 import time
@@ -42,6 +43,15 @@ def citations(value, expected):
 
 def all_ideas(data):
     return [idea for doc in data['documents'] for part in doc['parts'] for idea in part['ideas']]
+
+
+def page_fragments(blocks):
+    """Chaque requête d'extraction porte sur une seule page connue du PDF."""
+    for page, group in groupby(blocks,key=lambda b:b['page']):
+        if type(page) is not int or page<1:
+            raise ValueError('Numéro de page invalide dans le texte extrait du PDF.')
+        for chunk in fragments(list(group)):
+            yield page,chunk
 
 
 def dialogue_valid(value, allowed_speakers, wanted):
@@ -117,33 +127,41 @@ class Pipeline:
         for doc in source['documents']:
             parts = []
             for part in doc['parts']:
-                summaries, ideas = [], []
-                for index, chunk in enumerate(fragments(part['blocks']),1):
-                    self.progress(f'{doc["id"]} — résumé de la partie {part["number"]}, fragment {index}')
-                    pages = {b['page'] for b in chunk}
+                summaries, ideas, empty_excerpts = [], [], []
+                for index, (page,chunk) in enumerate(page_fragments(part['blocks']),1):
+                    self.progress(f'{doc["id"]} — partie {part["number"]}, page {page}, fragment {index}')
                     def validate(value):
                         text(value,'summary')
-                        if not isinstance(value.get('ideas'),list) or not value['ideas']:
-                            raise ValueError('Extraire les idées importantes dans ideas.')
+                        if not isinstance(value.get('ideas'),list):
+                            raise ValueError('Extraire les idées importantes dans une liste ideas.')
                         for idea in value['ideas']:
                             text(idea,'statement');text(idea,'explanation')
-                            if not isinstance(idea.get('pages'),list) or not idea['pages'] or any(type(p) is not int or p not in pages for p in idea['pages']):
-                                raise ValueError('Chaque idée doit citer des pages présentes dans cet extrait.')
-                    position=part['number']-1
-                    boundary=(doc['parts'][position-1]['blocks'][-1:] if position else [])+(doc['parts'][position+1]['blocks'][:1] if position+1<len(doc['parts']) else [])
-                    value = self.client.ask('part_summary',{'document':doc['id'],'part':part['number'],'blocks':chunk,'boundary_context':boundary},
+                    value = self.client.ask('part_summary',{'document':doc['id'],'part':part['number'],'source_page':page,'blocks':chunk},
                         '''Résume cet extrait en conservant les liens entre les concepts : pourquoi,
                         comment, causes, conséquences, définitions, chiffres et réserves. Ne te limite pas à des mots-clés.
                         Structure : {"summary":"explication suivie", "ideas":[{"statement":"idée en une phrase",
-                        "explanation":"explication et liens causaux", "pages":[numéros réels]}]}.
-                        Extrais toutes les idées essentielles de l'extrait, sans inventer de compléments.
-                        boundary_context sert uniquement à comprendre le raccord avec les parties voisines :
-                        résume et cite uniquement le contenu de blocks.''',validate)
+                        "explanation":"explication et liens causaux"}]}.
+                        Extrais toutes les idées essentielles du texte fourni dans blocks, sans inventer
+                        de compléments. Cet extrait provient d'une seule page, indiquée par source_page.
+                        Le logiciel ajoutera lui-même les références : ne génère pas de numéros de page.
+                        Si l'extrait ne contient que couverture, sommaire ou bibliographie sans idée
+                        explicative, renvoie ideas:[] et explique sa nature dans summary, sans inventer.
+                        La compilation suivante reliera les pages et les trois parties du document.''',validate)
                     summaries.append(value['summary'])
+                    if not value['ideas']:
+                        empty_excerpts.append({'page':page,'summary':value['summary']})
                     for idea in value['ideas']:
-                        ideas.append({**idea,'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}', 'document':doc['id']})
-                parts.append({'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas})
-                notes.append(f'## {doc["id"]} — partie {part["number"]}\n\n'+parts[-1]['summary']+'\n\n'+idea_markdown(ideas))
+                        # La provenance vient du lecteur PDF, jamais d'un numéro
+                        # inventé ou formaté librement dans la réponse du modèle.
+                        ideas.append({'statement':idea['statement'],'explanation':idea['explanation'],
+                                      'pages':[page],'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}',
+                                      'document':doc['id']})
+                parts.append({'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas,
+                              'excerpts_without_ideas':empty_excerpts})
+                section=f'## {doc["id"]} — partie {part["number"]}\n\n'+parts[-1]['summary']+'\n\n'+idea_markdown(ideas)
+                if empty_excerpts:
+                    section+='\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(f'- Page {e["page"]} : '+e['summary'] for e in empty_excerpts)
+                notes.append(section)
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts})
         return {'documents':documents},'\n\n'.join(notes)
 
@@ -166,6 +184,8 @@ class Pipeline:
     def step4(self):
         data = self.saved(3)
         ideas = all_ideas(data)
+        if not ideas:
+            raise ValueError('Aucune idée explicative n’a été extraite. Consultez les résumés de l’étape 2 avant de refaire cette étape ou de choisir un autre modèle.')
         wanted = [i['id'] for i in ideas]
         compact = [{'id':i['id'],'statement':i['statement']} for i in ideas]
         def validate_groups(v):

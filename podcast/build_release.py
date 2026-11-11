@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parent
 def main():
     files=sorted([p for p in ROOT.glob('*.py')]+[p for p in (ROOT/'web').glob('*') if p.is_file()]+
                  [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','.gitignore')])
-    document=['# Sources complètes — Podcast pédagogique 0.1.1','',
+    document=['# Sources complètes — Podcast pédagogique 0.1.2','',
               'Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.',
               'Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.', '']
     manifest={}
@@ -31,14 +31,15 @@ def main():
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
-    patch=output/'PodcastPedago-Correctif-Windows.zip'
+    patch=output/'PodcastPedago-Correctif-0.1.2.zip'
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
-        for name in ('app.py','storage.py','README-CORRECTIF.txt'):
+        for name in ('app.py','storage.py','pipeline.py','README-CORRECTIF.txt'):
             archive.write(ROOT/name,name)
     with zipfile.ZipFile(patch) as archive:
         assert archive.testzip() is None
-        assert set(archive.namelist())=={'app.py','storage.py','README-CORRECTIF.txt'}
-    info={'version':'0.1.1','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+        assert set(archive.namelist())=={'app.py','storage.py','pipeline.py','README-CORRECTIF.txt'}
+    (output/'PodcastPedago-Correctif-Windows.zip').write_bytes(patch.read_bytes())
+    info={'version':'0.1.2','file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
           'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))

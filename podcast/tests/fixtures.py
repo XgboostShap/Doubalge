@@ -4,7 +4,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import threading
 
 
-def make_pdf(path, label='Optique'):
+def make_pdf(path, label='Optique', page_count=3):
     objects=[]
     def add(value):
         objects.append(value);return len(objects)
@@ -12,13 +12,13 @@ def make_pdf(path, label='Optique'):
     add(b'')
     add(b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>')
     pages=[]
-    for n in range(1,4):
+    for n in range(1,page_count+1):
         sentence=f'{label} page {n}. Le signal perd de la puissance dans la fibre. Un amplificateur peut compenser les pertes. Il faut aussi comprendre les limites du dispositif.'
         stream=('BT /F1 12 Tf 50 750 Td ('+sentence+') Tj ET').encode('ascii')
         content=add(b'<< /Length '+str(len(stream)).encode()+b' >>\nstream\n'+stream+b'\nendstream')
         page=add(f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents {content} 0 R >>'.encode())
         pages.append(page)
-    objects[1]=('<< /Type /Pages /Count 3 /Kids ['+' '.join(f'{p} 0 R' for p in pages)+'] >>').encode()
+    objects[1]=(f'<< /Type /Pages /Count {page_count} /Kids ['+' '.join(f'{p} 0 R' for p in pages)+'] >>').encode()
     data=bytearray(b'%PDF-1.4\n');offsets=[0]
     for n,obj in enumerate(objects,1):
         offsets.append(len(data));data.extend(f'{n} 0 obj\n'.encode()+obj+b'\nendobj\n')
