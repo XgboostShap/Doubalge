@@ -1,24 +1,27 @@
-PODCAST PEDAGOGIQUE 0.1.4 — PARTIES MARKDOWN ET MEMOIRE COURTE
+PODCAST PEDAGOGIQUE 0.1.5 — SYNTHÈSES ET CONTRÔLES DES SOURCES
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
-3. Double-cliquer sur Mettre-a-jour.cmd.
-4. Choisir le dossier contenant Lancer-Podcast.cmd.
-5. Verifier Version 0.1.4 en haut de la page, puis cliquer sur Continuer.
+3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
+4. Verifier Version 0.1.5 en haut de la page.
+5. Ouvrir le projet, puis cliquer sur Ameliorer les resumes existants.
+6. Apres la nouvelle etape 2, cliquer sur Continuer.
 
-Chaque partie terminee est enregistree en .md avant de passer a la suivante.
-Dans l'etape, ouvrir "Parties deja enregistrees en Markdown" pour la telecharger.
-Si le traitement s'arrete, Continuer conserve les parties deja finies.
-Chaque chapitre recoit une nouvelle conversation et une courte fiche de
-continuite. La memoire complete reste enregistree dans le dossier du projet.
+Les anciens resultats sont archives. Les idees existantes sont reutilisees
+pour les controles ; il reste un travail de verification avec le modele.
+Si cette verification s'arrete, Continuer reprend les sous-parties manquantes.
+Refaire cette etape force une nouvelle extraction au lieu de reutiliser.
+Les PDF, projets, modeles et dependances sont conserves.
 
-"token repeat limit reached" signifie que le modele boucle. Augmenter le
-contexte de 16 a 32 ou 65 k ne corrige pas cette repetition. Une reprise
-specifique est tentee ; les pages bloquantes peuvent etre subdivisees.
-Si la boucle persiste, l'erreur exacte est conservee ; un autre modele deja
-installe peut etre choisi dans les parametres. Ne pas retelcharger Mistral.
+Changements :
+- Tri des couvertures, remerciements, sommaires, glossaires et bibliographies.
+- Definitions d'acronymes reprises dans le glossaire du PDF.
+- Idees controlees avec citations et decisions uniques ; motifs conserves.
+- Sujets ambigus et controles non concluants signales A VERIFIER, hors script provisoire.
+- Trois syntheses structurees : probleme, notions, methodes, resultats, limites.
+- Registre detaille conserve et traitement des longs registres par petits lots.
+- Sauvegardes Markdown, reprises et correctifs precedents inclus.
 
-Les fichiers de code sont sauvegardes puis remplaces automatiquement.
-Les PDF et projets dans donnees et les dependances dans .venv sont conserves.
-Les anciens correctifs pages automatiques, verrous Windows et version visible
-sont inclus. La mise a jour Windows reste a verifier nativement sur le PC cible.
+Les citations aident le controle, elles ne prouvent pas toute l'interpretation.
+Relire les corrections importantes avec le PDF. La mise a jour Windows reste
+a verifier nativement sur le PC cible.

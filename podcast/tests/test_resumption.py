@@ -65,6 +65,30 @@ class RecoveryTests(unittest.TestCase):
         self.ask();self.payload['ideas'][0]['statement']='Nouveau fait';self.ask()
         self.assertTrue(all(len(r['messages'])==2 for r in self.stub.requests))
 
+    def test_grounded_review_uses_an_explicit_json_schema_in_ollama(self):
+        import quality
+        source='The signal loses power as it travels along the optical fibre.'
+        candidates=[{'id':'PDF1-P1-I001','statement':'Le signal perd de la puissance.',
+                     'explanation':'Les pertes augmentent au cours de la propagation.'}]
+        self.client.ask('review_facts',{'source_text':source,'candidates':candidates},'Contrôle',
+                        lambda v:quality.validate_review(v,candidates,source))
+        schema=self.stub.requests[0]['format']
+        self.assertIsInstance(schema,dict)
+        self.assertFalse(schema['additionalProperties'])
+        decisions=schema['properties']['decisions']
+        self.assertEqual(decisions['required'],['PDF1-P1-I001'])
+        kept=decisions['properties']['PDF1-P1-I001']
+        self.assertEqual(kept['properties']['status']['enum'],['kept','corrected','excluded','uncertain'])
+        self.assertIn('reason',kept['required']);self.assertIn('evidence',kept['required'])
+
+    def test_old_invalid_cache_is_rechecked_and_replaced_by_a_valid_response(self):
+        from pipeline import citations
+        self.ask();path=next(self.root.glob('*.json'))
+        path.write_text('{"text":"Une ancienne réponse sans référence."}')
+        value=self.client.ask('global_text',self.payload,'texte',lambda v:citations(v,['PDF1-P1-I001']))
+        self.assertIn('[PDF1-P1-I001]',value['text']);self.assertEqual(len(self.stub.calls),2)
+        self.assertTrue(any('cache incompatible' in p for p in self.progress))
+
 
 class PartTests(unittest.TestCase):
     def setUp(self):
@@ -86,15 +110,15 @@ class PartTests(unittest.TestCase):
         invalidate(self.project,2,partials=False)
         client = FakeClient();Pipeline(self.project,client).run(2,2)
         self.assertEqual([p['part'] for task,p in client.calls if task=='part_summary'],[2,3])
-        self.assertEqual(len(list(self.parts.glob('02-*.md'))),3)
+        self.assertEqual(sum((self.parts/f'02-PDF1-P{n}.md').exists() for n in (1,2,3)),3)
         # Une source modifiée ou une régénération ne doit pas réutiliser une ancienne partie.
         source = read(self.project/'etapes/01.json');source['data']['documents'][0]['parts'][0]['blocks'][0]['text']+=' ajout'
         write(self.project/'etapes/01.json',source)
         changed = FakeClient();Pipeline(self.project,changed).run(2,2)
-        self.assertEqual([p['part'] for task,p in changed.calls],[1])
+        self.assertEqual([p['part'] for task,p in changed.calls if task=='part_summary'],[1])
         meta = read(self.project/'projet.json');meta['cache_generation']='nouvelle';write(self.project/'projet.json',meta)
         forced = FakeClient();Pipeline(self.project,forced).run(2,2)
-        self.assertEqual(len(forced.calls),3)
+        self.assertEqual(len([p for task,p in forced.calls if task=='part_summary']),3)
     def test_dialogue_is_saved_before_next_chapter_and_resumes_with_continuity(self):
         Pipeline(self.project,FakeClient()).run(1,7)
         class FailChapter2(FakeClient):

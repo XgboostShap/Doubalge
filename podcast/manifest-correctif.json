@@ -1,9 +1,9 @@
 {
-  "version": "0.1.4",
+  "version": "0.1.5",
   "files": [
     {
       "path": "app.py",
-      "sha256": "3831bccafeaa1a13c9af65144363d02040eca92519cb85a654eff942d9ffb7f9"
+      "sha256": "1b14bf8471ffbc0b64853e07f5b260dff8dd64f8daf5f0489dc021075cb596c3"
     },
     {
       "path": "storage.py",
@@ -11,11 +11,15 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "f169c8f2dd4402301c4da78a00dbaba08ccdd39693aac80b0f0d8b4be468ca3f"
+      "sha256": "74839c5a9ee858b0126c2e6841d68549d3d3d117914501fdd41eb6800005a025"
+    },
+    {
+      "path": "quality.py",
+      "sha256": "de0aa830f98740bd4f81666f23f20694449760ee6e8175e2f3830e35e0fefb2c"
     },
     {
       "path": "llm.py",
-      "sha256": "77a46931ab9be8adf02d2abf8a55c0f1172e9c180f107a8935c151ba1e5c1549"
+      "sha256": "0ea46fea1248313016610b2e6e7379439a94c6adf763331b91a1332c8761f55d"
     },
     {
       "path": "pdfs.py",
@@ -23,11 +27,11 @@
     },
     {
       "path": "web/index.html",
-      "sha256": "53aba697e133827d72c38dfb19379170ce556b8dbcb9af7eab0d9e05701bd14d"
+      "sha256": "d6d416d4900694c03ce3d08cee3ab1308ac2d370822d0f1e767ba4432023ddc5"
     },
     {
       "path": "web/app.js",
-      "sha256": "e855d85798a957d1e2a6c4d89934856152f2d5a6ec73c767596f6b0066ec8c17"
+      "sha256": "26f56318009f482da53f89fe582ff6db9fc97e495254f1ca8ffbc40b9581d4d6"
     },
     {
       "path": "web/style.css",
@@ -39,15 +43,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "420f97cbb69f9766b25dbbb7c9fd41245bd5c2848bf8e95024efb9abeb8681ec"
+      "sha256": "414b1985ced6c806181520eff3168f44ec4313102dd3214ef41d5f10296c7810"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "906081521a7d243204e6b86dc4588e22168451c0cba7477e9f229b66f30659cb"
+      "sha256": "beb539d472f639b68c05e8b85a11bc167acb7b1f566bdb77be45c94109bdbb95"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "be26e3f39cdaecd5ab0706c5e49220d7965bc619abaa01c3d8668b4851dc07d0"
+      "sha256": "a1705e5e15fdbdc96dc3bfac020ec8f3f0e5c0edf1f55499ed52650601cbf39f"
     }
   ]
 }

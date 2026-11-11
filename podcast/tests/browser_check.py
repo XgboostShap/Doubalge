@@ -12,7 +12,7 @@ sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 from playwright.sync_api import sync_playwright
 from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
-from storage import read
+from storage import invalidate,read,write
 
 with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
     temp=Path(temp);stub=StubServer();app=App(temp/'data');server=Server(('127.0.0.1',0),app)
@@ -63,6 +63,22 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert json.loads(output_json.read_text())['all_planned_ids_present']
             assert len(read(folder/'etapes/01.json')['data']['documents'])==2
             calls=[payload for task,payload in stub.calls if task=='dialogue'];assert calls[1]['memory']['last_turns']
+            # Rechargement d'un projet dont l'étape 2 date d'avant ce correctif.
+            legacy=read(folder/'etapes/02.json');legacy['data'].pop('quality_version',None)
+            for doc in legacy['data']['documents']:
+                for part in doc['parts']:part.pop('quality_version',None)
+            invalidate(folder,2)
+            write(folder/'etapes/02.json',legacy);(folder/'etapes/02.md').write_text('Ancien résumé par pages')
+            meta=read(folder/'projet.json');meta.pop('summary_quality',None);write(folder/'projet.json',meta)
+            page.evaluate('() => refresh()');page.wait_for_function('() => current()?.completed.length===2')
+            assert page.locator('#quality-upgrade').is_visible()
+            before_extract=len([p for task,p in stub.calls if task=='part_summary'])
+            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v1"',timeout=60000)
+            assert len([p for task,p in stub.calls if task=='part_summary'])==before_extract
+            assert page.locator('#quality-upgrade').is_hidden()
+            page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Problème posé")')
+            assert (folder/'reprises/02.json').exists()
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
             page.locator('#steps button').nth(3).click();page.wait_for_function('() => document.querySelector("#preview").textContent.includes("PDF2")')
             page.locator('#steps button').nth(5).click();page.locator('#run-step').click()
             page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===6',timeout=60000)
@@ -82,6 +98,6 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : deux PDF, neuf étapes, Markdown partiel téléchargeable après panne, reprise sans refaire C1, mémoire courte, exports, archives, annulation HTTP, aucune erreur JS ou requête externe.')
+            print('Navigateur OK : neuf étapes, ancien projet amélioré sans refaire les extractions, synthèses structurées, Markdown partiel, reprise, exports, archives et annulation ; aucune erreur JS ou requête externe.')
     finally:
         stub.close();server.shutdown();server.server_close();app.close();thread.join()

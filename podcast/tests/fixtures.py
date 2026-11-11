@@ -36,14 +36,30 @@ def answer(task,p):
                 'ideas':[{'statement':'Le signal s’atténue dans la fibre.','explanation':'Les pertes réduisent la puissance disponible.','pages':pages},
                          {'statement':'Une amplification compense les pertes.','explanation':'Le dispositif possède des limites à étudier.','pages':pages}]}
     if task=='pdf_synthesis':return {'text':'Les trois parties relient les pertes, leur compensation et les limites.'}
+    if task=='review_facts':
+        return {'decisions':{i['id']:{'statement':i['statement'],'explanation':i['explanation'],
+                        'evidence':[p['source_text'][:100]],'status':'kept','reason':'Appui simulé pour le test.'}
+                       for i in p['candidates']}}
+    if task=='part_structure':
+        items=p['elements']
+        return {'problem':'Comprendre les pertes de signal.',
+                'concepts':' '.join(i.get('statement',i.get('concepts','')) for i in items),
+                'methods':'Étudier les moyens de compensation.',
+                'results':'Les sources précisent les effets observés.','limits':'Les dispositifs ont des limites à examiner.'}
     if task=='global_groups':
         ids=[i['id'] for i in p['ideas']];cut=max(1,len(ids)//2)
         return {'groups':[{'title':'Comprendre les pertes','idea_ids':ids[:cut]},{'title':'Compenser les pertes','idea_ids':ids[cut:]}]}
     if task=='global_text':return {'text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
-    if task=='plan':
+    if task in ('plan','plan_groups'):
+        import math
+        groups=p['groups']
+        if task=='plan_groups':
+            size=max(1,math.ceil(len(groups)/20))
+            groups=[{'title':groups[n]['title'],'group_ids':[g['id'] for g in groups[n:n+size]]} for n in range(0,len(groups),size)]
         return {'central_question':'Comment transmettre un signal plus loin ?', 'chapters':[{'id':f'C{n}','title':g['title'],'question':'Pourquoi ces phénomènes ?',
                 'known':'Les points précédents.','new':'Les relations de cause à effet.','why_next':'Étudier la suite du raisonnement.',
-                'idea_ids':g['idea_ids'],'target_words':400} for n,g in enumerate(p['groups'],1)],'exclusions':[]}
+                **({'group_ids':g['group_ids']} if task=='plan_groups' else {'idea_ids':g['idea_ids']}),
+                'target_words':400} for n,g in enumerate(groups,1)],'exclusions':[]}
     if task=='key_sentences':return {'items':[{'idea_id':i['id'],'sentence':i['statement']} for i in p['ideas']]}
     if task=='explanation':return {'transition':'Nous avons posé le problème ; voyons comment le résoudre.','text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task=='dialogue':

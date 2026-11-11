@@ -20,10 +20,10 @@ import zipfile
 from llm import Ollama, Cancelled, endpoint_parts, models
 import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
-from storage import defaults, invalidate, read, write
+from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.4'
+APP_VERSION = '0.1.5'
 
 
 def settings(value):
@@ -67,6 +67,7 @@ class App:
         self.task_errors = {}
         self.active = None
         self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
+                        'summary_quality':getattr(pipeline_module,'SUMMARY_QUALITY_MODE','legacy'),
                         'app_dir':str(ROOT),'pid':os.getpid()}
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
@@ -122,6 +123,8 @@ class App:
         with self.lock:
             if self.runtime['page_sources']!='pdf-page-v1':
                 raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
+            if self.runtime['summary_quality']!='source-review-v1':
+                raise ValueError('Mise à jour incomplète : les contrôles de synthèse sont absents. Fermez le programme et utilisez le nouveau correctif.')
             self.idle(folder)
             meta = read(folder/'projet.json')
             if not meta['pdfs']:
@@ -131,11 +134,16 @@ class App:
                 raise ValueError('Étapes invalides.')
             if first>1 and not (folder/'etapes'/f'{first-1:02}.json').exists():
                 raise ValueError('L’étape précédente doit être terminée.')
-            regenerate = body.get('regenerate',False)
-            if type(regenerate) is not bool:
+            regenerate,refine = body.get('regenerate',False),body.get('refine',False)
+            if type(regenerate) is not bool or type(refine) is not bool:
                 raise ValueError('Option de régénération invalide.')
+            if refine:
+                if first!=2 or until!=2 or regenerate or not (folder/'etapes'/'02.json').exists():
+                    raise ValueError('L’amélioration réutilise une étape 2 terminée, sans régénération forcée.')
+                # Copie privée de l'extraction AVANT l'archivage des résultats.
+                self.preserve_summaries(folder,meta)
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
-                    'message':'En attente','error':None,'regenerate':regenerate,'app_version':APP_VERSION}
+                    'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
             self.task_errors.pop(folder.name,None)
@@ -165,7 +173,7 @@ class App:
                 task['state']='running';progress('Préparation du traitement')
                 # Une simple reprise conserve les parties finies dans l'étape en cours.
                 # Leurs empreintes contrôlent les paramètres et données d'origine.
-                invalidate(folder,task['first'],partials=task['regenerate'])
+                invalidate(folder,task['first'],partials=task['regenerate'] or task.get('refine',False))
                 client = self.client_factory(config,folder/'cache',cancel,progress)
                 self.active = (task['id'],client)
                 Pipeline(folder,client,cancel,progress).run(task['first'],task['until'])
@@ -208,10 +216,16 @@ class App:
             for key in changed:
                 first = min(first,8 if key=='speakers' else 5 if key=='minutes' else 4 if key=='audience' else 2)
             if first<=9:
+                if first==2:self.preserve_summaries(folder,meta)
                 invalidate(folder,first)
                 meta['settings']=new
                 write(folder/'projet.json',meta)
             return {'invalidated_from':first if first<=9 else None}
+
+    def preserve_summaries(self, folder, meta):
+        if (folder/'etapes/01.json').exists() and (folder/'etapes/02.json').exists():
+            write(folder/'reprises/02.json',{'source':fingerprint(read(folder/'etapes/01.json')['data']),
+                  'generation':meta.get('cache_generation','initial'),'data':read(folder/'etapes/02.json')['data']})
 
     def close(self):
         self.stop.set()
@@ -298,7 +312,7 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'dossier.zip'
                     with zipfile.ZipFile(file,'w',zipfile.ZIP_DEFLATED) as archive:
                         archive.write(folder/'projet.json','projet.json')
-                        for sub in ('sources','etapes','memoire','exports'):
+                        for sub in ('sources','etapes','memoire','exports','reprises'):
                             for f in (folder/sub).rglob('*'):
                                 if f.is_file():archive.write(f,f.relative_to(folder))
                 else:raise FileNotFoundError('Fichier inconnu.')

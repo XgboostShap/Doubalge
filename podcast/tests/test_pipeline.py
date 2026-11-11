@@ -58,7 +58,7 @@ class PipelineTests(unittest.TestCase):
         client=FakeClient();pipeline=Pipeline(self.project,client);pipeline.run(1,4)
         class BadPlan(FakeClient):
             def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan':validate({'central_question':'question','chapters':[],'exclusions':[]})
+                if task=='plan_groups':validate({'central_question':'question','chapters':[],'exclusions':[]})
                 return super().ask(task,payload,instructions,validate,budget)
         with self.assertRaises(ValueError):Pipeline(self.project,BadPlan()).run(5,9)
         self.assertTrue((self.project/'etapes/04.json').exists());self.assertFalse((self.project/'etapes/05.json').exists())
@@ -93,7 +93,7 @@ class PipelineTests(unittest.TestCase):
             result=read(self.project/'etapes/02.json')['data']['documents'][0]
             self.assertEqual(len(result['parts']),3)
             ideas=[i for part in result['parts'] for i in part['ideas']]
-            self.assertEqual([i['pages'] for i in ideas],[[1],[2],[3],[4],[5],[6]])
+            self.assertEqual(sorted({p for i in ideas for p in i['pages']}),[1,2,3,4,5,6])
             self.assertTrue(all(i['document']=='PDF1' for i in ideas))
             requests=[p for task,p in client.calls if task=='part_summary']
             self.assertEqual(len(requests),6)
@@ -213,6 +213,25 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status,400)
         self.assertIn('Mise à jour incomplète',result['error'])
         self.assertFalse((self.app.project(identifier)/'tache.json').exists())
+
+    def test_improving_existing_summaries_reuses_extraction_and_archives_later_steps(self):
+        identifier=self.create();self.assertEqual(self.upload(identifier)[0],200)
+        folder=self.app.project(identifier)
+        client=FakeClient();Pipeline(folder,client).run(1,9)
+        before=read(folder/'etapes/02.json')
+        status,_=self.request(f'/api/projects/{identifier}/run',{'first':2,'until':2,'refine':True})
+        self.assertEqual(status,202)
+        deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            task=read(folder/'tache.json')
+            if task['state'] not in ('queued','running'):break
+            time.sleep(.05)
+        self.assertEqual(task['state'],'done',task)
+        self.assertEqual(self.app.summary(folder)['completed'],[1,2])
+        self.assertEqual(read(folder/'reprises/02.json')['data'],before['data'])
+        self.assertTrue(list((folder/'versions').rglob('02.json')))
+        self.assertTrue(list((folder/'versions').rglob('export-podcast.txt')))
+        self.assertEqual(self.request(f'/api/projects/{identifier}/run',{'first':2,'until':2,'refine':True,'regenerate':True})[0],400)
 
     def test_saved_error_from_an_old_version_is_identified_without_erasing_it(self):
         identifier=self.create();folder=self.app.project(identifier)

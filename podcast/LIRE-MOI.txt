@@ -16,6 +16,8 @@ Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
 Ensuite, le traitement peut fonctionner hors connexion sur votre PC.
 
 Conservez le dossier donnees pour garder vos projets.
+Dans une installation existante, utiliser le ZIP correctif puis Mettre-a-jour.cmd.
+Pour reprendre un ancien resume, cliquer sur Ameliorer les resumes existants.
 Consultez README.md pour les details et SOURCE-COMPLET.md pour tous les sources.
 
 Les tests techniques utilisent un modele simule. La qualite avec votre modele

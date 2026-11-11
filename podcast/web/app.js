@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id);
 const descriptions=[
  'Extraction du texte et découpage équilibré en trois parties. Les numéros de page sont conservés. Cette étape fonctionne sans modèle.',
- 'Chaque partie est résumée en conservant les idées, leurs explications et les pages sources. Les longs blocs sont lus en fragments.',
+ 'Les pages secondaires sont classées à part. Les idées sont confrontées au PDF avec citations exactes, puis chaque partie reçoit une synthèse : problème, notions, méthodes, résultats et limites. Le registre et les motifs d’exclusion restent consultables.',
  'Les trois résumés sont réunis en une synthèse par PDF, accompagnée du registre complet des idées extraites.',
  'Toutes les idées extraites sont regroupées par thème puis reliées dans un texte commun, avec leurs références.',
  'Une question centrale organise les chapitres. Chaque idée est affectée à un chapitre ou signalée explicitement hors podcast.',
@@ -21,7 +21,7 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
- const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1';
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v1';
  document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
@@ -32,6 +32,9 @@ function render(){
  $('project-name').textContent=p.name;$('source-info').textContent=`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
  $('continue').disabled=outdated||busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);
+ $('quality-upgrade').hidden=!p.completed.includes(2)||p.summary_quality==='source-review-v1';
+ $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Ces idées restent consultables dans le rapport et sont écartées du script provisoire.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
  $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
@@ -49,6 +52,7 @@ function upload(id,file,index,total){return new Promise((resolve,reject)=>{const
 $('create-form').onsubmit=async e=>{e.preventDefault();if(creating||selected)return;creating=true;$('create').disabled=true;notice('');try{const files=[...$('pdfs').files];if(!files.length)throw Error('Sélectionnez au moins un PDF.');const name=$('name').value.trim()||files[0].name;const created=await api('/api/projects',{name,settings:formSettings()});for(let i=0;i<files.length;i++)await upload(created.id,files[i],i+1,files.length);selected=created.id;step=1;showSetup=false;await refresh();notice('Projet créé. Exécutez le découpage seul, ou continuez jusqu’au script final avec Ollama.');}catch(error){notice(error.message,true);}finally{creating=false;$('create').disabled=false;$('upload-status').textContent='';}};
 async function run(first,until,regenerate=false){try{notice('');await api(`/api/projects/${selected}/run`,{first,until,regenerate});await refresh();}catch(e){notice(e.message,true);}}
 $('run-step').onclick=()=>run(step,step,current().completed.includes(step));$('continue').onclick=()=>run(current().next_step,9);
+$('refine').onclick=async()=>{try{step=2;previewKey='';notice('');await api(`/api/projects/${selected}/run`,{first:2,until:2,refine:true});await refresh();}catch(e){notice(e.message,true);}};
 $('cancel').onclick=async()=>{try{await api(`/api/projects/${selected}/cancel`,{});notice('Annulation demandée. Les étapes terminées sont conservées.');}catch(e){notice(e.message,true);}};
 $('save-settings').onclick=async()=>{try{const value=await api(`/api/projects/${selected}/settings`,formSettings());showSetup=false;await refresh();notice(value.invalidated_from?`Paramètres enregistrés. Les anciens résultats à partir de l’étape ${value.invalidated_from} ont été archivés.`:'Paramètres inchangés.');}catch(e){notice(e.message,true);}};
 refresh();setInterval(refresh,1500);

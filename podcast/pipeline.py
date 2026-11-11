@@ -5,11 +5,13 @@ from pathlib import Path
 import re
 import time
 
-from llm import Cancelled, RepetitionError
+from llm import Cancelled, InvalidResponseError, RepetitionError
 from pdfs import extract, fragments
+import quality
 from storage import fingerprint, read, write, write_text
 
 SOURCE_PAGE_MODE = 'pdf-page-v1'
+SUMMARY_QUALITY_MODE = quality.VERSION
 
 STEPS = [
     'Découper chaque PDF en trois parties', 'Résumer les trois parties',
@@ -45,6 +47,10 @@ def citations(value, expected):
 
 def all_ideas(data):
     return [idea for doc in data['documents'] for part in doc['parts'] for idea in part['ideas']]
+
+
+def model_idea(idea):
+    return {k:idea[k] for k in ('id','statement','explanation','document','pages') if k in idea}
 
 
 def page_fragments(blocks):
@@ -152,6 +158,10 @@ class Pipeline:
             write_text(self.project/'etapes'/f'{number:02}.md','# '+STEPS[number-1]+'\n\n'+markdown)
             write(self.project/'etapes'/f'{number:02}.json',{'step':number,'title':STEPS[number-1],
                   'created':time.time(),'data':data})
+            if number==2:
+                self.meta['summary_quality']=quality.VERSION
+                self.meta['summary_warnings']=sum(len(p.get('uncertain_ideas',[])) for d in data['documents'] for p in d['parts'])
+                write(self.project/'projet.json',self.meta)
         if until==9:
             final = self.saved(9)
             folder = self.project/'exports';folder.mkdir(exist_ok=True)
@@ -211,43 +221,162 @@ class Pipeline:
             return {'summary':'\n\n'.join(v['summary'] for v in results),
                     'ideas':[idea for v in results for idea in v['ideas']]}
 
-    def summarize_part(self, doc, part):
-        summaries, ideas, empty_excerpts = [], [], []
-        for index, (page,chunk) in enumerate(page_fragments(part['blocks']),1):
+    def previous_part(self, doc, part, source_signature):
+        path=self.project/'reprises'/'02.json'
+        if path.exists():
+            snapshot=read(path)
+            if (snapshot.get('source')==source_signature and
+                    snapshot.get('generation')==self.meta.get('cache_generation','initial')):
+                for previous_doc in snapshot['data']['documents']:
+                    if previous_doc['id']==doc['id']:
+                        return next((p for p in previous_doc['parts'] if p['number']==part['number']),None)
+        # Compatibilité avec une partie achevée en 0.1.4, avant l'amélioration.
+        path=self.project/'etapes'/'parties'/f'02-{doc["id"]}-P{part["number"]}.json'
+        legacy_signature=fingerprint({'version':1,'inputs':part,'settings':self.config,
+                                      'generation':self.meta.get('cache_generation','initial')})
+        if path.exists():
+            saved=read(path)
+            if saved.get('fingerprint')==legacy_signature:return saved['data']
+        return None
+
+    def structured_summary(self, key, title, items, terms):
+        level=0
+        while True:
+            results=[]
+            for index,batch in enumerate(quality.batches(items,max_chars=10000,max_items=10),1):
+                result=self.ask_unit(2,f'{key}-S{level}B{index}',title+' — synthèse',
+                    'part_structure',{'elements':batch,'glossary':quality.relevant_terms(terms,batch)},
+                    quality.SYNTHESIS_PROMPT,
+                    lambda v:(quality.validate_sections(v),quality.validate_acronyms(' '.join(v.values()),terms)),
+                    quality.section_markdown,budget=3000)
+                results.append(result)
+            if len(results)==1:return quality.section_markdown(results[0])
+            if len(results)>=len(items):
+                raise ValueError('Synthèse encore trop volumineuse après regroupement. Les sous-parties sont enregistrées ; utilisez un modèle plus concis.')
+            items=results;level+=1
+
+    def review_candidates(self, payload, batch, raw):
+        ambiguous=[i for i in batch if quality.ambiguous_subject(i['statement'])]
+        uncertain=[{'id':i['id'],'reason':'À vérifier : le sujet de l’énoncé initial est indéterminé. '
+                    'Une correction automatique pourrait attribuer l’effet au mauvais mécanisme.'} for i in ambiguous]
+        candidates=[i for i in batch if i not in ambiguous]
+        if not candidates:return {'kept':[],'excluded':uncertain}
+        payload={**payload,'candidates':[i for i in payload['candidates'] if i['id'] in {c['id'] for c in candidates}]}
+        try:
+            result=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,
+                lambda v:quality.validate_review(v,candidates,raw,payload.get('glossary')),budget=3000)
+            result=quality.review_result(result)
+            return {'kept':result['kept'],'excluded':result['excluded']+uncertain}
+        except (InvalidResponseError,RepetitionError) as error:
+            # Aucune réponse invalide n'est promue en fait accepté. Une difficulté
+            # locale du modèle devient une incertitude visible, pas une preuve.
+            self.progress('Contrôle non concluant : '+str(len(batch))+' idée(s) signalée(s) à vérifier.')
+            return {'kept':[],'excluded':uncertain+[{'id':i['id'],'reason':'À vérifier : contrôle automatique non concluant. '+str(error)[:500]} for i in candidates]}
+
+    def summarize_part(self, doc, part, pages, terms, previous=None):
+        ideas, empty_excerpts, excluded, page_notes = [], [], [], []
+        old={}
+        if previous:
+            by_id={i['id']:i for i in previous.get('excluded_ideas',[])+previous.get('ideas',[])}
+            for idea in by_id.values():
+                if idea.get('pages'):
+                    owner=min(idea['pages'])
+                    old.setdefault(owner,[]).append({**idea,'pages':[owner]})
+        next_id=max([int(i['id'].rsplit('I',1)[1]) for values in old.values() for i in values]+[0])
+        # Les pages peuvent avoir plusieurs fragments. Les candidats existants ne
+        # sont révisés qu'une fois sur la page complète, sans mélange de provenance.
+        source_chunks = ([(page,[b for b in part['blocks'] if b['page']==page])
+                          for page in dict.fromkeys(b['page'] for b in part['blocks'])]
+                         if previous else list(page_fragments(part['blocks'])))
+        for index, (page,chunk) in enumerate(source_chunks,1):
             self.progress(f'{doc["id"]} — partie {part["number"]}, page {page}, fragment {index}')
-            value = self.summary_excerpt(doc['id'],part['number'],page,chunk)
-            summaries.append(value['summary'])
-            if not value['ideas']:
-                empty_excerpts.append({'page':page,'summary':value['summary']})
-            for idea in value['ideas']:
-                ideas.append({'statement':idea['statement'],'explanation':idea['explanation'],
-                              'pages':[page],'id':f'{doc["id"]}-P{part["number"]}-I{len(ideas)+1:03}',
-                              'document':doc['id']})
-        return {'number':part['number'],'summary':'\n\n'.join(summaries),'ideas':ideas,
-                'excerpts_without_ideas':empty_excerpts}
+            kind=pages[page]
+            if kind['kind']!='content':
+                page_notes.append({'page':page,'kind':kind['kind'],'reason':kind['reason']})
+                excluded.extend({**i,'reason':kind['reason']} for i in old.get(page,[]))
+                continue
+            candidates=old.get(page)
+            if candidates is None:
+                value=self.summary_excerpt(doc['id'],part['number'],page,chunk)
+                if not value['ideas']:empty_excerpts.append({'page':page,'summary':value['summary']})
+                candidates=[]
+                for idea in value['ideas']:
+                    next_id+=1
+                    candidates.append({'id':f'{doc["id"]}-P{part["number"]}-I{next_id:03}',
+                                       'statement':idea['statement'],'explanation':idea['explanation'],'pages':[page]})
+            # Chaque contrôle reçoit un texte source court. Un candidat ancien
+            # reste consultable dans les archives même s'il est écarté ici.
+            for number,batch in enumerate(quality.batches(candidates,max_chars=6000,max_items=6),1):
+                raw=' '.join(b['text'] for b in chunk)
+                payload={'source_page':page,'source_text':raw,
+                         'candidates':[{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in batch],
+                         'glossary':quality.relevant_terms(terms,raw)}
+                reviewed=self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
+                    f'{doc["id"]} — contrôle page {page}',{'payload':payload,'prompt':quality.REVIEW_PROMPT},
+                    lambda:self.review_candidates(payload,batch,raw),review_markdown)
+                originals={i['id']:i for i in batch}
+                for fact in reviewed['kept']:
+                    ideas.append({'id':fact['id'],'statement':fact['statement'],'explanation':fact['explanation'],
+                                  'pages':[page],'document':doc['id'],'status':fact['status'],'review_reason':fact['reason'],
+                                  'evidence':[{'page':page,'quote':quality.source_quote(q)} for q in fact['evidence']]})
+                excluded.extend({**originals[i['id']],'reason':i['reason']} for i in reviewed['excluded'])
+        # Fusion seulement des formulations strictement identiques : pas de
+        # rapprochement approximatif qui pourrait effacer une nuance scientifique.
+        unique={}
+        for idea in ideas:
+            duplicate=(quality.normalized(idea['statement']),quality.normalized(idea['explanation']))
+            if duplicate in unique:
+                kept=unique[duplicate]
+                kept['pages']=sorted(set(kept['pages']+idea['pages']))
+                kept['evidence']+=idea['evidence']
+                excluded.append({**idea,'reason':'Doublon exact regroupé avec '+kept['id'],'duplicate_of':kept['id']})
+            else:unique[duplicate]=idea
+        ideas=list(unique.values())
+        key=f'{doc["id"]}-P{part["number"]}'
+        summary=(self.structured_summary(key,f'{doc["id"]} — partie {part["number"]}',
+                   [{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in ideas],terms)
+                 if ideas else 'Aucune idée explicative retenue. Consultez le rapport des éléments écartés et les pages sources.')
+        uncertain=[i for i in excluded if re.search(r'à vérifier|incertain|insuffisant|non concluant',i['reason'],re.I)]
+        return {'number':part['number'],'summary':summary,'ideas':ideas,'quality_version':quality.VERSION,
+                'excerpts_without_ideas':empty_excerpts,'excluded_ideas':excluded,'page_notes':page_notes,
+                'uncertain_ideas':uncertain,
+                'quality_note':'Citations contrôlées dans le texte source ; la fidélité scientifique nécessite encore une relecture.'}
 
     def step2(self):
         source = self.saved(1)
+        source_signature=fingerprint(source)
         documents, notes = [], []
         for doc in source['documents']:
+            pages=quality.catalog(doc);terms=quality.glossary(pages)
             parts = []
             for part in doc['parts']:
                 title = f'{doc["id"]} — partie {part["number"]}'
-                value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,part,
-                                  lambda:self.summarize_part(doc,part),part_markdown)
+                previous=self.previous_part(doc,part,source_signature)
+                value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,
+                                  {'source':part,'quality_version':quality.VERSION,'glossary':terms},
+                                  lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown)
                 parts.append(value)
                 notes.append('## '+title+'\n\n'+part_markdown(value))
-            documents.append({'id':doc['id'],'name':doc['name'],'parts':parts})
-        return {'documents':documents},'\n\n'.join(notes)
+            if terms:
+                notes.append('## '+doc['id']+' — lexique repris du PDF\n\n'+'\n'.join(
+                    '- **'+term+'** : '+' / '.join(e['definition']+' (page '+str(e['page'])+')' for e in entries)
+                    for term,entries in sorted(terms.items())))
+            documents.append({'id':doc['id'],'name':doc['name'],'parts':parts,'glossary':terms})
+        return {'documents':documents,'quality_version':quality.VERSION},'\n\n'.join(notes)
 
     def step3(self):
         data = self.saved(2)
         notes = []
         for doc in data['documents']:
             facts = [i for p in doc['parts'] for i in p['ideas']]
+            if not facts:
+                doc['synthesis']='Aucune idée explicative retenue : consultez les pages et les motifs de l’étape 2.'
+                notes.append('## '+doc['name']+'\n\n'+doc['synthesis'])
+                continue
             def validate(v):
                 text(v,'text')
-            value = self.ask_unit(3,doc['id'],doc['name'],'pdf_synthesis',{'document':doc['id'],'parts':doc['parts']},
+            value = self.ask_unit(3,doc['id'],doc['name'],'pdf_synthesis',{'document':doc['id'],
+                'parts':[{'number':p['number'],'summary':p['summary']} for p in doc['parts']]},
                 '''Compile les trois résumés de ce PDF en une synthèse pédagogique continue.
                 Rétablis les transitions, réunis les doublons et conserve les différences, limites
                 et relations causales. Structure : {"text":"synthèse"}. Les idées sources restent
@@ -261,26 +390,33 @@ class Pipeline:
         ideas = all_ideas(data)
         if not ideas:
             raise ValueError('Aucune idée explicative n’a été extraite. Consultez les résumés de l’étape 2 avant de refaire cette étape ou de choisir un autre modèle.')
-        wanted = [i['id'] for i in ideas]
         compact = [{'id':i['id'],'statement':i['statement']} for i in ideas]
-        def validate_groups(v):
-            if not isinstance(v.get('groups'),list) or not v['groups']:
-                raise ValueError('Définir des groupes thématiques.')
-            seen = []
-            for g in v['groups']:
-                text(g,'title');strings(g.get('idea_ids'));seen.extend(g['idea_ids'])
-            ids_exact(seen,wanted)
-        groups = self.client.ask('global_groups',{'ideas':compact},
-            '''Ordonne toutes les idées de tous les PDF en groupes thématiques, selon une progression
-            de causes, problèmes et solutions. Des idées redondantes peuvent partager un groupe,
-            mais chaque identifiant doit apparaître exactement une fois. N'efface pas les contradictions.
-            Structure : {"groups":[{"title":"thème", "idea_ids":["identifiants"]}]}''',validate_groups)
+        grouped=[]
+        for number,batch in enumerate(quality.batches(compact,max_chars=6000,max_items=12),1):
+            wanted=[i['id'] for i in batch]
+            def validate_groups(v):
+                if not isinstance(v.get('groups'),list) or not v['groups']:
+                    raise ValueError('Définir des groupes thématiques.')
+                seen=[]
+                for g in v['groups']:
+                    text(g,'title');strings(g.get('idea_ids'));seen.extend(g['idea_ids'])
+                    if not g['idea_ids']:raise ValueError('Groupe vide.')
+                ids_exact(seen,wanted)
+            value=self.ask_unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
+                'global_groups',{'ideas':batch},
+                '''Ordonne ces idées en groupes thématiques, selon une progression de causes,
+                problèmes et solutions. Chaque identifiant apparaît exactement une fois. Conserve
+                les contradictions. Les lots seront rapprochés lors de la création du plan.
+                Structure : {"groups":[{"title":"thème", "idea_ids":["identifiants"]}]}''',
+                validate_groups,lambda v:'\n\n'.join('## '+g['title']+'\n\n'+', '.join(g['idea_ids']) for g in v['groups']))
+            grouped.extend(value['groups'])
         registry = {i['id']:i for i in ideas}
         notes = []
-        for number,group in enumerate(groups['groups'],1):
+        for number,group in enumerate(grouped,1):
+            group['id']=f'G{number}'
             self.progress('Texte commun — '+group['title'])
             ids = group['idea_ids']
-            result = self.ask_unit(4,f'G{number}',group['title'],'global_text',{'group':group,'ideas':[registry[i] for i in ids], 'audience':self.config['audience']},
+            result = self.ask_unit(4,f'G{number}',group['title'],'global_text',{'group':group,'ideas':[model_idea(registry[i]) for i in ids], 'audience':self.config['audience']},
                 '''Rédige un texte pédagogique suivi regroupant ces idées. Relie les causes et les
                 conséquences, explicite les prérequis, rapproche les doublons sans perdre les nuances.
                 Mentionne les contradictions si elles existent. Chaque idée doit être citée dans le texte
@@ -288,7 +424,9 @@ class Pipeline:
                 Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids),lambda v:v['text'])
             group['text'] = result['text']
             notes.append('## '+group['title']+'\n\n'+group['text'])
-        result = {'groups':groups['groups'],'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']]}
+        result = {'groups':grouped,'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']],
+                  'source_uncertainties':[{'document':d['id'],'id':i['id'],'pages':i.get('pages',[]),'reason':i['reason']}
+                       for d in data['documents'] for p in d['parts'] for i in p.get('uncertain_ideas',[])]}
         return result,'\n\n'.join(notes)+'\n\n## Sources et idées\n\n'+idea_markdown(ideas)
 
     def step5(self):
@@ -318,18 +456,45 @@ class Pipeline:
             for e in v['exclusions']:
                 text(e,'idea_id');text(e,'reason');seen.append(e['idea_id'])
             ids_exact(seen,ids)
-        value = self.client.ask('plan',{'groups':[{'title':g['title'],'idea_ids':g['idea_ids']} for g in data['groups']],
-            'ideas':[{'id':i['id'],'statement':i['statement']} for i in data['ideas']], 'audience':self.config['audience'],
-            'target_minutes':self.config['minutes'],'approximate_total_words':self.config['minutes']*145},
-            '''Construis le plan d'un podcast autour d'une question centrale et de questions qui
-            s'enchaînent. Chaque chapitre résout un problème préparant le suivant. Pour chacun,
-            indique ce que l'auditeur sait déjà, ce qu'il apprend et le lien suivant.
-            Affecte chaque idée exactement une fois à un chapitre. Si la durée impose de laisser
-            une idée hors podcast, déclare son identifiant dans exclusions avec un motif explicite.
-            Répartis le budget de mots de manière réaliste ; ne remplis pas la durée par des répétitions.
+        groups={g.get('id',f'G{n}'):g for n,g in enumerate(data['groups'],1)}
+        def expand(v):
+            if not isinstance(v,dict) or not isinstance(v.get('chapters'),list) or not isinstance(v.get('exclusions'),list):
+                raise ValueError('Plan structuré requis.')
+            used=[];chapters=[];exclusions=[]
+            for chapter in v['chapters']:
+                group_ids=chapter.get('group_ids');strings(group_ids)
+                used.extend(group_ids)
+                if not group_ids or any(g not in groups for g in group_ids):raise ValueError('Groupe inconnu ou chapitre vide.')
+                idea_ids=[i for g in group_ids for i in groups[g]['idea_ids']]
+                if len(idea_ids)>24:raise ValueError('Maximum 24 idées par chapitre : répartir les groupes ou déclarer une exclusion motivée.')
+                chapters.append({k:val for k,val in chapter.items() if k!='group_ids'}|{'idea_ids':idea_ids})
+            for excluded in v['exclusions']:
+                text(excluded,'group_id');text(excluded,'reason')
+                g=excluded['group_id'];used.append(g)
+                if g not in groups:raise ValueError('Groupe exclu inconnu.')
+                exclusions.extend({'idea_id':i,'reason':excluded['reason']} for i in groups[g]['idea_ids'])
+            ids_exact(used,list(groups))
+            result={'central_question':v.get('central_question'),'chapters':chapters,'exclusions':exclusions}
+            validate(result)
+            return result
+        grouped_plan=self.client.ask('plan_groups',{'groups':[
+            {'id':key,'title':g['title'],'overview':g['text'][:220],
+             'overview_is_excerpt':len(g['text'])>220,'idea_count':len(g['idea_ids'])} for key,g in groups.items()],
+            'audience':self.config['audience'],'target_minutes':self.config['minutes'],
+            'approximate_total_words':self.config['minutes']*145},
+            '''Construis un plan pédagogique autour d'une question centrale. Rapproche les thèmes
+            redondants issus de lots différents. Chaque chapitre résout une question préparant la suivante.
+            overview est un aperçu abrégé ; les textes complets et les idées restent dans le registre.
+            Indique les acquis, la nouveauté et le raccord. Affecte chaque groupe exactement une fois à
+            un chapitre ou à exclusions avec un motif lié au sujet ou à la durée, jamais silencieusement.
+            Le logiciel rattache ensuite toutes les idées du groupe : n'invente pas d'identifiants d'idées.
+            Maximum 20 chapitres et 24 idées par chapitre (somme des idea_count des groupes affectés).
+            Répartis le budget de mots indiqué ; ne remplis pas la durée par des répétitions.
             Structure : {"central_question":"...", "chapters":[{"id":"C1","title":"...",
-            "question":"...","known":"...","new":"...","why_next":"...","idea_ids":["..."],
-            "target_words":400}],"exclusions":[{"idea_id":"...","reason":"..."}]}''',validate)
+            "question":"...","known":"...","new":"...","why_next":"...","group_ids":["G1"],
+            "target_words":400}],"exclusions":[{"group_id":"G2","reason":"..."}]}''',
+            lambda v:expand(v))
+        value=expand(grouped_plan)
         lines = ['Question centrale : '+value['central_question']]
         for c in value['chapters']:
             lines.append(f'## {c["id"]} — {c["title"]}\n\nQuestion : {c["question"]}\n\nDéjà acquis : {c["known"]}\n\nÀ apprendre : {c["new"]}\n\nSuite : {c["why_next"]}\n\nBudget : {c["target_words"]} mots\n\nIdées : '+', '.join(c['idea_ids']))
@@ -348,7 +513,7 @@ class Pipeline:
                 for item in v['items']:
                     text(item,'idea_id');text(item,'sentence')
                 ids_exact([i['idea_id'] for i in v['items']],c['idea_ids'])
-            value = self.ask_unit(6,c['id'],c['title'],'key_sentences',{'chapter':c,'ideas':[registry[i] for i in c['idea_ids']]},
+            value = self.ask_unit(6,c['id'],c['title'],'key_sentences',{'chapter':c,'ideas':[model_idea(registry[i]) for i in c['idea_ids']]},
                 '''Pour chaque idée de ce chapitre, écris une phrase complète exprimant son apport
                 essentiel, avec son rôle causal si pertinent. Une phrase par idée, sans perdre les conditions.
                 Structure : {"items":[{"idea_id":"...","sentence":"..."}]}''',validate,
@@ -365,7 +530,7 @@ class Pipeline:
             def validate(v):
                 citations(v,c['idea_ids']);text(v,'transition')
             value = self.ask_unit(7,c['id'],c['title'],'explanation',{'chapter':c,'key_sentences':keys['chapters'][index]['items'],
-                'ideas':[registry[i] for i in c['idea_ids']], 'previous':plan['chapters'][index-1]['new'] if index else None,
+                'ideas':[model_idea(registry[i]) for i in c['idea_ids']], 'previous':plan['chapters'][index-1]['new'] if index else None,
                 'audience':self.config['audience']},
                 '''Transforme les phrases essentielles en explication pédagogique continue, sans personnages.
                 Conserve tous les points et leurs liens. Définis les termes avant de les utiliser.
@@ -395,7 +560,7 @@ class Pipeline:
             outline = {'central_question':plan['central_question'],
                        'chapters':[{'id':ch['id'],'title':ch['title']} for ch in plan['chapters']]}
             value = self.ask_unit(8,c['id'],c['title'],'dialogue',{'plan':outline,'chapter':c,'explanation':explanations['chapters'][index],
-                'ideas':[registry[i] for i in c['idea_ids']], 'memory':continuity(memory,c),'speakers':self.config['speakers'],
+                'ideas':[model_idea(registry[i]) for i in c['idea_ids']], 'memory':continuity(memory,c),'speakers':self.config['speakers'],
                 'audience':self.config['audience']},DIALOGUE_PROMPT,validate,
                 lambda v:script_markdown([{'title':c['title'],**v}],self.config['speakers']),budget=6000)
             update = value.pop('memory_update')
@@ -422,7 +587,7 @@ class Pipeline:
                 dialogue_valid(v,self.config['speakers'],c['idea_ids'])
                 strings(v.get('issues'))
             value = self.ask_unit(9,c['id'],c['title'],'review',{'chapter':c,'draft':draft['chapters'][index],
-                'ideas':[registry[i] for i in c['idea_ids']], 'previous_memory':continuity(draft['memories'][index-1]['memory'],c) if index else {},
+                'ideas':[model_idea(registry[i]) for i in c['idea_ids']], 'previous_memory':continuity(draft['memories'][index-1]['memory'],c) if index else {},
                 'previous_revised_turns':continuity({'last_turns':chapters[-1]['turns']},c)['last_turns'] if chapters else [],
                 'next':plan['chapters'][index+1] if index+1<len(plan['chapters']) else None,
                 'speakers':self.config['speakers'],'audience':self.config['audience']},
@@ -442,6 +607,7 @@ class Pipeline:
         expected = {i for c in plan['chapters'] for i in c['idea_ids']}
         covered = {i for c in chapters for turn in c['turns'] for i in turn['idea_ids']}
         result = {'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(covered),
+                  'source_uncertainties':facts.get('source_uncertainties',[]),
                   'expected_idea_ids':sorted(expected),'all_planned_ids_present':covered==expected,
                   'excluded_ideas':plan['exclusions'],'word_count':words,'estimated_minutes':round(words/145,1),
                   'target_minutes':self.config['minutes'],'markdown':script_markdown(chapters,self.config['speakers']),
@@ -453,19 +619,46 @@ class Pipeline:
             notes += '\n\n**Durée à ajuster :** le script est sensiblement plus court ou plus long que la durée visée. Revoyez les budgets du plan ou régénérez le dialogue.'
         if issues:
             notes += '\n\n## Rapport de révision\n\n'+'\n'.join('- '+i['chapter']+' : '+i['note'] for i in issues)
+        if result['source_uncertainties']:
+            notes+='\n\n## Idées sources à vérifier, écartées du script provisoire\n\n'+'\n'.join(
+                '- '+i['id']+' — '+i['reason'] for i in result['source_uncertainties'])
         return result,notes
 
 
 def part_markdown(part):
-    result = part['summary']+'\n\n'+idea_markdown(part['ideas'])
+    counts=f'{len(part["ideas"])} idées retenues'
+    if part.get('quality_version'):
+        counts+=f' · {sum(i.get("status")=="corrected" for i in part["ideas"])} corrections proposées · {len(part.get("uncertain_ideas",[]))} idées à vérifier'
+    result = counts+'\n\n'+part['summary']+'\n\n### Registre détaillé des idées retenues\n\n'+idea_markdown(part['ideas'])
+    if part.get('page_notes'):
+        result+='\n\n### Pages classées hors contenu explicatif\n\n'+'\n'.join(
+            f'- Page {p["page"]} : '+p['reason'] for p in part['page_notes'])
+    if part.get('excluded_ideas'):
+        result+='\n\n### Idées écartées ou regroupées — motifs\n\n'+'\n'.join(
+            '- ['+i['id']+'] '+i['statement']+' — '+i['reason'] for i in part['excluded_ideas'])
     if part['excerpts_without_ideas']:
         result += '\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(
             f'- Page {e["page"]} : '+e['summary'] for e in part['excerpts_without_ideas'])
+    if part.get('quality_note'):result+='\n\n'+part['quality_note']
     return result
 
 
+def review_markdown(value):
+    return '\n\n'.join('- ['+i['id']+'] '+i['statement']+'\n  '+i['explanation']+'\n  Appui source : '+
+                      ' / '.join(i['evidence'])+'\n  '+i['status']+' : '+i['reason'] for i in value['kept'])+(
+                      '\n\n### Écartés\n\n'+'\n'.join('- '+i['id']+' : '+i['reason'] for i in value['excluded'])
+                      if value['excluded'] else '')
+
+
 def idea_markdown(ideas):
-    return '\n\n'.join(f'- **[{i["id"]}]** {i["statement"]}\n  {i["explanation"]}\n  Source : {i["document"]}, pages '+', '.join(map(str,i['pages'])) for i in ideas)
+    lines=[]
+    for i in ideas:
+        line=f'- **[{i["id"]}]** {i["statement"]}\n  {i["explanation"]}\n  Source : {i["document"]}, pages '+', '.join(map(str,i['pages']))
+        if i.get('evidence'):
+            line+='\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i['evidence'])
+        if i.get('status')=='corrected':line+='\n  Correction proposée : '+i['review_reason']
+        lines.append(line)
+    return '\n\n'.join(lines)
 
 
 def script_markdown(chapters,speakers):

@@ -7,6 +7,7 @@ import threading
 from urllib.parse import urlsplit
 
 from storage import fingerprint, read, write
+from quality import response_schema
 
 
 class Cancelled(Exception):
@@ -15,6 +16,10 @@ class Cancelled(Exception):
 
 class ModelError(RuntimeError):
     pass
+
+
+class InvalidResponseError(ModelError):
+    """Le modèle a épuisé sa correction de structure ou d'appui aux sources."""
 
 
 class RepetitionError(ModelError):
@@ -85,12 +90,18 @@ class Ollama:
     def ask(self, task, payload, instructions, validate, budget=4000):
         if self.cancelled.is_set():
             raise Cancelled()
-        key = fingerprint({'version':1,'config':self.config,'task':task,'payload':payload,'instructions':instructions,'budget':budget})
+        schema=response_schema(task,payload)
+        cache_inputs={'version':1,'config':self.config,'task':task,'payload':payload,'instructions':instructions,'budget':budget}
+        if schema:cache_inputs['schema']=schema
+        key = fingerprint(cache_inputs)
         path = self.cache / (key+'.json')
         if path.exists():
-            cached = read(path)
-            validate(cached)
-            return cached
+            try:
+                cached = read(path)
+                validate(cached)
+                return cached
+            except (ValueError,KeyError,TypeError):
+                self.progress('Ancienne réponse en cache incompatible avec les contrôles : nouvelle tentative…')
         prompt = 'TÂCHE : '+task+'\n'+instructions + '\n\nDONNÉES :\n' + json.dumps(payload,ensure_ascii=False)
         if len(prompt) > max(2000, (self.config['num_ctx']-budget-1200)*3):
             raise ModelError('Cette requête dépasse le budget de contexte. Augmentez le contexte Ollama ou utilisez moins de PDF par projet. Aucun texte n’a été tronqué silencieusement.')
@@ -100,7 +111,7 @@ class Ollama:
             if self.cancelled.is_set():
                 raise Cancelled()
             try:
-                text = self._request(messages,budget,recovery=bool(repeat_retries))
+                text = self._request(messages,budget,recovery=bool(repeat_retries),schema=schema)
                 value = json.loads(text)
                 validate(value)
                 write(path,value)
@@ -120,16 +131,16 @@ class Ollama:
                     'Ne recopie pas les données ni les consignes dans la réponse.'}]
             except (ValueError, KeyError, TypeError) as error:
                 if repairs:
-                    raise ModelError('La réponse du modèle reste invalide : '+str(error)) from error
+                    raise InvalidResponseError('La réponse du modèle reste invalide : '+str(error)) from error
                 repairs += 1
-                self.progress('Correction du format de réponse du modèle…')
+                self.progress('Correction du format de réponse du modèle : '+str(error)[:250])
                 messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
 
-    def _request(self, messages, budget, recovery=False):
+    def _request(self, messages, budget, recovery=False, schema=None):
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
-            body = {'model':self.config['model'], 'messages':messages, 'format':'json', 'stream':True,
+            body = {'model':self.config['model'], 'messages':messages, 'format':schema or 'json', 'stream':True,
                     'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],
                                'num_predict':budget,'repeat_penalty':1.15 if recovery else 1.1,
                                'repeat_last_n':256 if recovery else 64}}

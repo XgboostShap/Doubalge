@@ -1,8 +1,86 @@
-# Podcast pédagogique — version 0.1.4
+# Podcast pédagogique — version 0.1.5
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Mise à jour 0.1.5 — synthèses structurées et appui aux sources
+
+Pour améliorer un projet existant : fermer le programme, extraire le ZIP
+correctif et lancer **Mettre-a-jour.cmd**. Choisir le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.5**, puis cliquer sur
+**Améliorer les résumés existants**. L'ancien résultat et les étapes suivantes
+sont archivés ; les candidats de l'étape 2 sont copiés dans `reprises/02.json`.
+Ils sont confrontés au PDF pour préparer de nouveaux résumés, sans recommencer
+leur extraction lorsqu'ils sont réutilisables. Cette vérification demande quand
+même des appels au modèle. Une fois l'étape 2 terminée, **Continuer** reprend à
+l'étape 3. Si l'amélioration s'arrête, **Continuer** conserve les sous-parties
+valides et reprend l'étape 2. Aucun modèle ni paquet supplémentaire n'est requis.
+
+Le tri repère les sections explicites : couverture et pages liminaires,
+remerciements, sommaire, listes de figures/tableaux, glossaire et bibliographie.
+Elles restent dans le PDF et sont signalées dans les rapports. Le résumé/abstract
+scientifique et le corps du texte sont analysés. Une section non reconnue est
+conservée pour analyse ; le classement est indicatif, à vérifier sur un document
+dont la présentation est inhabituelle. Les acronymes sont lus dans le glossaire
+du PDF et transmis aux contrôles concernés ; aucune définition propre au PDF
+de test n'est inscrite dans le code. Une expansion entre parenthèses ou une
+définition explicite qui ne reprend pas un libellé connu est refusée. Par
+prudence, une traduction française légitime mais absente du lexique peut donc
+être signalée : employer l'acronyme seul ou son libellé source exact. Le lexique
+original et ses pages sont affichés à la fin de l'étape 2 pour faciliter la
+relecture. Ce garde-fou ne reconnaît pas toutes les erreurs terminologiques.
+
+Chaque idée candidate est relue avec son passage source. Le modèle doit la
+conserver, proposer une correction ou l'écarter avec un motif. Pour une idée
+retenue, il doit fournir une explication et une citation exacte présente dans
+le texte envoyé. Le programme contrôle cette présence et la couverture des
+identifiants. Les explications réduites à une référence ou à quelques mots sont
+refusées. Le format JSON est aussi imposé à la génération pour les tâches de
+contrôle et de synthèse. Les corrections et exclusions sont consultables dans
+les Markdown et JSON. Seuls les doublons strictement identiques sont fusionnés
+dans le registre ; leurs pages et citations sont regroupées.
+
+Les énoncés dont le sujet est indéterminé (« ces techniques », « cette approche »…)
+sont signalés à vérifier, car une correction peut conserver une attribution
+causale erronée. Un contrôle de structure ou de citation qui échoue après sa
+reprise devient aussi une incertitude explicite, sans transformer sa réponse
+invalide en fait accepté. Les erreurs réseau, 404, annulations et écritures disque
+restent des erreurs de traitement. Les idées incertaines sont écartées du script
+provisoire, conservées avec leur motif dans l'étape 2, comptées dans l'interface
+et reprises dans le rapport JSON final. Un modèle plus adapté peut être choisi
+pour les réexaminer ; le changement de paramètres conserve les candidats déjà
+extraits avant l'archivage. Aucun contrôle ne garantit que toutes les ambiguïtés
+ou erreurs sémantiques sont repérées.
+
+**Ce contrôle n'est pas une preuve automatique de vérité scientifique.** Une
+citation correcte peut accompagner une interprétation erronée : vérifier les
+relations causales, les chiffres et les corrections proposées avec le PDF.
+Le schéma impose une décision unique par identifiant. La casse des citations
+et des doublons est conservée, notamment pour distinguer mW et MW.
+
+Les résumés de pages ne sont plus simplement collés. Une synthèse est construite
+pour chaque partie sous cinq rubriques : problème posé, notions essentielles,
+méthodes, résultats, limites. Elle est en français, sans longueur minimale et
+avec un plafond de 950 mots (consigne : 900). Une rubrique non documentée reste
+vide. Les longs registres sont traités par petits lots puis regroupés, avec
+sauvegarde des sous-synthèses en Markdown. Toutes les idées retenues restent dans
+le registre détaillé, même si la synthèse est plus courte. L'étape 3 reçoit les
+trois synthèses, sans recevoir à nouveau le registre complet.
+
+Le classement thématique est également réalisé par lots d'au plus 12 idées.
+Le plan utilise des groupes et leurs aperçus abrégés, puis le logiciel rétablit
+les identifiants d'idées. Chaque groupe est affecté ou explicitement exclu, avec
+un motif conservé pour chacune de ses idées. Un chapitre est limité à 24 idées ;
+les longs documents/podcasts peuvent demander plusieurs projets. Les sources
+complètes restent dans le dossier ; les aperçus du plan ne remplacent pas le
+registre. Les explications et dialogues reçoivent les idées de leur chapitre,
+sans charger à nouveau toutes les citations archivées.
+
+La génération intégrale de la thèse de 147 pages n'est pas validée. Les tests
+automatisés contrôlent le tri, les citations, la couverture d'un registre de
+250 idées, la reprise, l'amélioration d'un ancien projet et le parcours navigateur.
+La vitesse et la validation native Windows restent à vérifier sur le PC cible.
 
 ## Mise à jour 0.1.4 — parties Markdown et mémoire courte
 
@@ -196,7 +274,8 @@ cible. L’application fonctionne ici sous Linux ; aucune exécution Windows ne 
 ## Sources
 
 `pdfs.py` extrait et découpe ; `llm.py` appelle Ollama et gère le cache ;
-`pipeline.py` contient les neuf traitements et leurs consignes ; `storage.py`
+`pipeline.py` contient les neuf traitements et leurs consignes ; `quality.py`
+gère le tri, le lexique et les contrôles de synthèse ; `storage.py`
 gère les sauvegardes ; `app.py` fournit le serveur et la file de traitements ;
 `web/` contient l’interface. Le fichier **SOURCE-COMPLET.md** regroupe les sources
 pour faciliter une reprise dans une autre discussion.
