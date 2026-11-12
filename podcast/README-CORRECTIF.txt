@@ -1,27 +1,23 @@
-PODCAST PEDAGOGIQUE 0.1.5 — SYNTHÈSES ET CONTRÔLES DES SOURCES
+PODCAST PEDAGOGIQUE 0.1.6 — ACRONYMES EN FRANCAIS
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.5 en haut de la page.
-5. Ouvrir le projet, puis cliquer sur Ameliorer les resumes existants.
-6. Apres la nouvelle etape 2, cliquer sur Continuer.
+4. Verifier Version 0.1.6 en haut de la page.
+5. Cliquer sur Continuer pour reprendre le traitement bloque.
 
-Les anciens resultats sont archives. Les idees existantes sont reutilisees
-pour les controles ; il reste un travail de verification avec le modele.
-Si cette verification s'arrete, Continuer reprend les sous-parties manquantes.
-Refaire cette etape force une nouvelle extraction au lieu de reutiliser.
-Les PDF, projets, modeles et dependances sont conserves.
+Le faux rejet de "intelligence artificielle (AI)" est corrige lorsque le
+PDF definit AI par Artificial intelligence. Les traductions usuelles sont
+activees par le libelle source, sans supposer le sens d'un acronyme seul.
+Les mauvaises definitions de WSS et SOA restent refusees.
+Les citations, les pages et les unites physiques gardent leurs controles.
 
-Changements :
-- Tri des couvertures, remerciements, sommaires, glossaires et bibliographies.
-- Definitions d'acronymes reprises dans le glossaire du PDF.
-- Idees controlees avec citations et decisions uniques ; motifs conserves.
-- Sujets ambigus et controles non concluants signales A VERIFIER, hors script provisoire.
-- Trois syntheses structurees : probleme, notions, methodes, resultats, limites.
-- Registre detaille conserve et traitement des longs registres par petits lots.
-- Sauvegardes Markdown, reprises et correctifs precedents inclus.
+Les parties terminees, PDF, projets, modeles et dependances sont conserves.
+Pas de reinstallation ni de changement du contexte 16/32/65 k necessaire.
+L'ancien message d'erreur peut rester visible jusqu'a la nouvelle tentative.
+Pour reexaminer d'anciennes exclusions d'une etape 2 terminee, utiliser
+Ameliorer les resumes existants au lieu de forcer une nouvelle extraction.
 
-Les citations aident le controle, elles ne prouvent pas toute l'interpretation.
-Relire les corrections importantes avec le PDF. La mise a jour Windows reste
-a verifier nativement sur le PC cible.
+Les correctifs precedents sont inclus. Les traductions non reconnues peuvent
+encore etre signalees a verifier. La validation native Windows et celle du
+PDF complet restent a faire.

@@ -1,8 +1,32 @@
-# Podcast pédagogique — version 0.1.5
+# Podcast pédagogique — version 0.1.6
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.6 — acronymes et traductions françaises
+
+Le contrôle n'impose plus le libellé anglais exact pour les traductions usuelles
+reconnues. Par exemple, si le PDF définit AI par « Artificial intelligence »,
+« intelligence artificielle (AI) » est autorisé. La traduction est activée par
+la définition présente dans le glossaire, jamais par les lettres de l'acronyme
+seules : un autre sens de AI ne reçoit pas automatiquement cette traduction.
+Les accents, tirets, articles et certaines variantes usuelles sont pris en
+compte pour comparer les libellés. Les citations exactes et les unités physiques
+restent contrôlées avec leur casse : mW et MW ne sont pas confondus.
+
+Le correctif inclut des traductions courantes en IA et réseaux optiques, sans
+prétendre traduire automatiquement tous les acronymes d'un PDF. Un libellé non
+reconnu reste à vérifier. « White Space Spectrum » pour WSS et « sélecteur
+optique à fibres dopées » pour SOA restent refusés avec le glossaire du test.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.6**, puis cliquer sur **Continuer**
+pour reprendre la synthèse bloquée. Les parties déjà terminées sont conservées.
+Il n'est pas nécessaire de forcer une nouvelle extraction. Pour réexaminer aussi
+d'anciennes exclusions d'une étape 2 déjà terminée, utiliser **Améliorer les
+résumés existants**. Le résultat reste une aide à la relecture scientifique.
 
 ## Mise à jour 0.1.5 — synthèses structurées et appui aux sources
 

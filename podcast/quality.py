@@ -93,17 +93,66 @@ def relevant_terms(terms, value):
     return {key:entries for key,entries in terms.items() if re.search(r'\b'+re.escape(key)+r'\b',raw)}
 
 
+def definition_key(value):
+    """Comparaison de libellés, distincte des citations et des unités physiques."""
+    value=''.join(c for c in unicodedata.normalize('NFKD',value.casefold()) if not unicodedata.combining(c))
+    return ' '.join(re.findall(r'\w+',value))
+
+
+# Traductions usuelles activées par le LIBELLÉ source, jamais par l'acronyme
+# seul : un document où AI désigne autre chose n'hérite pas de ces traductions.
+_FRENCH_DEFINITIONS = {
+    'artificial intelligence':('intelligence artificielle','IA'),
+    'machine learning':('apprentissage automatique','apprentissage machine'),
+    'deep learning':('apprentissage profond',),
+    'digital twin':('jumeau numérique','jumeaux numériques'),
+    'large language model':('large language models','grand modèle de langage','grands modèles de langage',
+                            'modèle de langage de grande taille','modèles de langage de grande taille'),
+    'retrieval augmented generation':('génération augmentée par recherche','génération augmentée par récupération'),
+    'artificial neural network':('réseau de neurones artificiels','réseaux de neurones artificiels',
+                                  'réseau neuronal artificiel','réseaux neuronaux artificiels'),
+    'erbium doped fiber amplifier':('amplificateur à fibre dopée à l’erbium','amplificateurs à fibre dopée à l’erbium',
+                                    'amplificateur optique à fibre dopée à l’erbium'),
+    'semiconductor optical amplifier':('amplificateur optique à semi-conducteur','amplificateur optique à semi-conducteurs',
+                                       'amplificateurs optiques à semi-conducteurs'),
+    'wavelength selective switch':('commutateur sélectif en longueur d’onde','commutateur sélectif en longueurs d’onde',
+                                    'commutateurs sélectifs en longueur d’onde','commutateurs sélectifs en longueurs d’onde'),
+    'signal to noise ratio':('rapport signal-bruit','rapport signal sur bruit'),
+    'generalized signal to noise ratio':('rapport signal-bruit généralisé','rapport signal sur bruit généralisé'),
+    'optical signal to noise ratio':('rapport signal-bruit optique','rapport signal sur bruit optique'),
+    'quality of transmission':('qualité de transmission','qualité de la transmission'),
+    'software defined networking':('réseau défini par logiciel','réseaux définis par logiciel'),
+    'forward error correction':('correction d’erreurs directe','correction d’erreurs anticipée','correction d’erreurs sans voie de retour'),
+    'noise figure':('facteur de bruit',),
+}
+
+
+def definition_aliases(entries):
+    aliases=set()
+    for entry in entries:
+        key=definition_key(entry['definition']);aliases.add(key)
+        for english,french in _FRENCH_DEFINITIONS.items():
+            names={definition_key(english),*(definition_key(v) for v in french)}
+            if key in names:aliases.update(names)
+    return aliases
+
+
 def validate_acronyms(value, terms):
-    """Une expansion explicite doit reprendre un libellé du lexique, pas le deviner."""
+    """Libellé source ou traduction reconnue ; une mention seule reste autorisée."""
     for term,entries in (terms or {}).items():
-        definitions=[entry['definition'] for entry in entries]
+        definitions=definition_aliases(entries)
         for match in re.finditer(r'\('+re.escape(term)+r'\)',value):
-            before=value[:match.start()].rstrip()
-            if not any(re.search(re.escape(d)+r'\s*$',before,re.I) for d in definitions):
-                raise ValueError('Développement non confirmé de '+term+' : employer l’acronyme seul ou recopier son libellé exact dans glossary, sans proposer une traduction incertaine.')
+            before=definition_key(value[:match.start()])
+            if not before or before.split()[-1:]==[definition_key(term)]:continue
+            if not any(before==d or before.endswith(' '+d) for d in definitions):
+                raise ValueError('Développement non confirmé de '+term+' : utiliser le libellé du glossaire source, une traduction française reconnue ou l’acronyme seul.')
         pattern=r'\b'+re.escape(term)+r'\s+(?:signifie|désigne|correspond à)\s+([^.;\n]+)'
         for match in re.finditer(pattern,value,re.I):
-            if not any(re.search(re.escape(d),match[1],re.I) for d in definitions):
+            words=definition_key(match[1]).split()
+            while words and words[0] in ('l','le','la','les','un','une','des','the','a','an'):
+                words.pop(0)
+            expanded=' '.join(words)
+            if not any(expanded==d or expanded.startswith(d+' ') for d in definitions):
                 raise ValueError('Définition de '+term+' incompatible avec le libellé du glossaire source.')
 
 

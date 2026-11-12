@@ -42,6 +42,31 @@ class ContractsTests(unittest.TestCase):
             with self.subTest(value=value),self.assertRaises(ValueError):quality.validate_acronyms(value,terms)
         quality.validate_acronyms('Le SOA amplifie le signal par émission stimulée.',terms)
         quality.validate_acronyms('Semiconductor optical amplifier (SOA)',terms)
+
+    def test_recognized_french_definitions_are_allowed_for_english_source_terms(self):
+        terms={'AI':[{'definition':'Artificial intelligence','page':1}],
+               'DT':[{'definition':'Digital twin','page':1}],
+               'LLM':[{'definition':'Large language model','page':1}],
+               'SOA':[{'definition':'Semiconductor optical amplifier','page':1}]}
+        for value in ('L’intelligence artificielle (AI) utilise les données.',
+                      'AI désigne l’intelligence artificielle.',
+                      'AI signifie intelligence artificielle.',
+                      'Les jumeaux numériques (DT) représentent le réseau.',
+                      'Les grands modèles de langage (LLM) traitent les textes.',
+                      'Un amplificateur optique à semi-conducteurs (SOA) amplifie le signal.',
+                      '(AI) est employé dans cette partie.',
+                      'Le terme AI (AI) est repris dans le texte.'):
+            with self.subTest(value=value):quality.validate_acronyms(value,terms)
+
+    def test_french_alias_is_not_inferred_from_the_acronym_alone(self):
+        terms={'AI':[{'definition':'Acoustic impedance','page':1}]}
+        with self.assertRaises(ValueError):quality.validate_acronyms('Intelligence artificielle (AI)',terms)
+        with self.assertRaises(ValueError):quality.validate_acronyms('AI signifie intelligence artificielle.',terms)
+
+    def test_definition_comparison_does_not_relax_source_quotes_or_units(self):
+        self.assertEqual(quality.definition_key('génération-augmentée'),quality.definition_key('GENERATION AUGMENTEE'))
+        self.assertNotEqual(quality.normalized('1 mW'),quality.normalized('1 MW'))
+        self.assertEqual(quality.definition_aliases([{'definition':'Noise figure','page':1}]),{'noise figure','facteur de bruit'})
     def test_source_quote_coverage_and_explanation_are_checked(self):
         source='The model uncertainty requires larger operational margins. These margins reduce spectral efficiency.'
         candidate={'id':'PDF1-P1-I001','statement':'Le ML réduit les performances.','explanation':'Cette relation doit être vérifiée dans la source.'}
@@ -132,6 +157,21 @@ class QualityPipelineTests(unittest.TestCase):
             self.assertTrue(all(i['evidence'] for i in part['ideas']))
         payload=next(p for task,p in client.calls if task=='pdf_synthesis')
         self.assertTrue(all(set(p)=={'number','summary'} for p in payload['parts']))
+
+    def test_french_ai_definition_does_not_abort_the_structured_summary(self):
+        class FrenchAI(FakeClient):
+            def ask(inner,task,payload,instructions,validate,budget=4000):
+                if task!='part_structure':return super().ask(task,payload,instructions,validate,budget)
+                inner.calls.append((task,copy.deepcopy(payload)))
+                value={key:'' for key in quality.TITLES}
+                value['problem']='L’intelligence artificielle (AI) aide à analyser les données du réseau.'
+                validate(value);return value
+        client=FrenchAI();terms={'AI':[{'definition':'Artificial intelligence','page':1}]}
+        result=Pipeline(self.project,client).structured_summary('AI','Synthèse AI',
+            [{'id':'PDF1-P1-I001','statement':'L’AI analyse les données.'}],terms)
+        self.assertIn('intelligence artificielle (AI)',result)
+        self.assertEqual(len(client.calls),1)
+        self.assertTrue((self.project/'etapes/parties/02-AI-S0B1.md').exists())
     def test_long_registry_is_grouped_in_small_batches_with_no_missing_ids(self):
         ideas=[{'id':f'PDF1-P1-I{n:03}','statement':f'Le phénomène {n} possède une condition différente.',
                 'explanation':'La condition change la réponse physique du système.','pages':[n],'document':'PDF1'} for n in range(1,251)]

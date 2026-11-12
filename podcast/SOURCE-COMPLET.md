@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.5
+# Sources complètes — Podcast pédagogique 0.1.6
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -104,43 +104,63 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.5 — SYNTHÈSES ET CONTRÔLES DES SOURCES
+PODCAST PEDAGOGIQUE 0.1.6 — ACRONYMES EN FRANCAIS
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.5 en haut de la page.
-5. Ouvrir le projet, puis cliquer sur Ameliorer les resumes existants.
-6. Apres la nouvelle etape 2, cliquer sur Continuer.
+4. Verifier Version 0.1.6 en haut de la page.
+5. Cliquer sur Continuer pour reprendre le traitement bloque.
 
-Les anciens resultats sont archives. Les idees existantes sont reutilisees
-pour les controles ; il reste un travail de verification avec le modele.
-Si cette verification s'arrete, Continuer reprend les sous-parties manquantes.
-Refaire cette etape force une nouvelle extraction au lieu de reutiliser.
-Les PDF, projets, modeles et dependances sont conserves.
+Le faux rejet de "intelligence artificielle (AI)" est corrige lorsque le
+PDF definit AI par Artificial intelligence. Les traductions usuelles sont
+activees par le libelle source, sans supposer le sens d'un acronyme seul.
+Les mauvaises definitions de WSS et SOA restent refusees.
+Les citations, les pages et les unites physiques gardent leurs controles.
 
-Changements :
-- Tri des couvertures, remerciements, sommaires, glossaires et bibliographies.
-- Definitions d'acronymes reprises dans le glossaire du PDF.
-- Idees controlees avec citations et decisions uniques ; motifs conserves.
-- Sujets ambigus et controles non concluants signales A VERIFIER, hors script provisoire.
-- Trois syntheses structurees : probleme, notions, methodes, resultats, limites.
-- Registre detaille conserve et traitement des longs registres par petits lots.
-- Sauvegardes Markdown, reprises et correctifs precedents inclus.
+Les parties terminees, PDF, projets, modeles et dependances sont conserves.
+Pas de reinstallation ni de changement du contexte 16/32/65 k necessaire.
+L'ancien message d'erreur peut rester visible jusqu'a la nouvelle tentative.
+Pour reexaminer d'anciennes exclusions d'une etape 2 terminee, utiliser
+Ameliorer les resumes existants au lieu de forcer une nouvelle extraction.
 
-Les citations aident le controle, elles ne prouvent pas toute l'interpretation.
-Relire les corrections importantes avec le PDF. La mise a jour Windows reste
-a verifier nativement sur le PC cible.
+Les correctifs precedents sont inclus. Les traductions non reconnues peuvent
+encore etre signalees a verifier. La validation native Windows et celle du
+PDF complet restent a faire.
 ```
 
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.5
+# Podcast pédagogique — version 0.1.6
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.6 — acronymes et traductions françaises
+
+Le contrôle n'impose plus le libellé anglais exact pour les traductions usuelles
+reconnues. Par exemple, si le PDF définit AI par « Artificial intelligence »,
+« intelligence artificielle (AI) » est autorisé. La traduction est activée par
+la définition présente dans le glossaire, jamais par les lettres de l'acronyme
+seules : un autre sens de AI ne reçoit pas automatiquement cette traduction.
+Les accents, tirets, articles et certaines variantes usuelles sont pris en
+compte pour comparer les libellés. Les citations exactes et les unités physiques
+restent contrôlées avec leur casse : mW et MW ne sont pas confondus.
+
+Le correctif inclut des traductions courantes en IA et réseaux optiques, sans
+prétendre traduire automatiquement tous les acronymes d'un PDF. Un libellé non
+reconnu reste à vérifier. « White Space Spectrum » pour WSS et « sélecteur
+optique à fibres dopées » pour SOA restent refusés avec le glossaire du test.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.6**, puis cliquer sur **Continuer**
+pour reprendre la synthèse bloquée. Les parties déjà terminées sont conservées.
+Il n'est pas nécessaire de forcer une nouvelle extraction. Pour réexaminer aussi
+d'anciennes exclusions d'une étape 2 déjà terminée, utiliser **Améliorer les
+résumés existants**. Le résultat reste une aide à la relecture scientifique.
 
 ## Mise à jour 0.1.5 — synthèses structurées et appui aux sources
 
@@ -451,7 +471,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.5'
+APP_VERSION = '0.1.6'
 
 
 def settings(value):
@@ -2079,17 +2099,66 @@ def relevant_terms(terms, value):
     return {key:entries for key,entries in terms.items() if re.search(r'\b'+re.escape(key)+r'\b',raw)}
 
 
+def definition_key(value):
+    """Comparaison de libellés, distincte des citations et des unités physiques."""
+    value=''.join(c for c in unicodedata.normalize('NFKD',value.casefold()) if not unicodedata.combining(c))
+    return ' '.join(re.findall(r'\w+',value))
+
+
+# Traductions usuelles activées par le LIBELLÉ source, jamais par l'acronyme
+# seul : un document où AI désigne autre chose n'hérite pas de ces traductions.
+_FRENCH_DEFINITIONS = {
+    'artificial intelligence':('intelligence artificielle','IA'),
+    'machine learning':('apprentissage automatique','apprentissage machine'),
+    'deep learning':('apprentissage profond',),
+    'digital twin':('jumeau numérique','jumeaux numériques'),
+    'large language model':('large language models','grand modèle de langage','grands modèles de langage',
+                            'modèle de langage de grande taille','modèles de langage de grande taille'),
+    'retrieval augmented generation':('génération augmentée par recherche','génération augmentée par récupération'),
+    'artificial neural network':('réseau de neurones artificiels','réseaux de neurones artificiels',
+                                  'réseau neuronal artificiel','réseaux neuronaux artificiels'),
+    'erbium doped fiber amplifier':('amplificateur à fibre dopée à l’erbium','amplificateurs à fibre dopée à l’erbium',
+                                    'amplificateur optique à fibre dopée à l’erbium'),
+    'semiconductor optical amplifier':('amplificateur optique à semi-conducteur','amplificateur optique à semi-conducteurs',
+                                       'amplificateurs optiques à semi-conducteurs'),
+    'wavelength selective switch':('commutateur sélectif en longueur d’onde','commutateur sélectif en longueurs d’onde',
+                                    'commutateurs sélectifs en longueur d’onde','commutateurs sélectifs en longueurs d’onde'),
+    'signal to noise ratio':('rapport signal-bruit','rapport signal sur bruit'),
+    'generalized signal to noise ratio':('rapport signal-bruit généralisé','rapport signal sur bruit généralisé'),
+    'optical signal to noise ratio':('rapport signal-bruit optique','rapport signal sur bruit optique'),
+    'quality of transmission':('qualité de transmission','qualité de la transmission'),
+    'software defined networking':('réseau défini par logiciel','réseaux définis par logiciel'),
+    'forward error correction':('correction d’erreurs directe','correction d’erreurs anticipée','correction d’erreurs sans voie de retour'),
+    'noise figure':('facteur de bruit',),
+}
+
+
+def definition_aliases(entries):
+    aliases=set()
+    for entry in entries:
+        key=definition_key(entry['definition']);aliases.add(key)
+        for english,french in _FRENCH_DEFINITIONS.items():
+            names={definition_key(english),*(definition_key(v) for v in french)}
+            if key in names:aliases.update(names)
+    return aliases
+
+
 def validate_acronyms(value, terms):
-    """Une expansion explicite doit reprendre un libellé du lexique, pas le deviner."""
+    """Libellé source ou traduction reconnue ; une mention seule reste autorisée."""
     for term,entries in (terms or {}).items():
-        definitions=[entry['definition'] for entry in entries]
+        definitions=definition_aliases(entries)
         for match in re.finditer(r'\('+re.escape(term)+r'\)',value):
-            before=value[:match.start()].rstrip()
-            if not any(re.search(re.escape(d)+r'\s*$',before,re.I) for d in definitions):
-                raise ValueError('Développement non confirmé de '+term+' : employer l’acronyme seul ou recopier son libellé exact dans glossary, sans proposer une traduction incertaine.')
+            before=definition_key(value[:match.start()])
+            if not before or before.split()[-1:]==[definition_key(term)]:continue
+            if not any(before==d or before.endswith(' '+d) for d in definitions):
+                raise ValueError('Développement non confirmé de '+term+' : utiliser le libellé du glossaire source, une traduction française reconnue ou l’acronyme seul.')
         pattern=r'\b'+re.escape(term)+r'\s+(?:signifie|désigne|correspond à)\s+([^.;\n]+)'
         for match in re.finditer(pattern,value,re.I):
-            if not any(re.search(re.escape(d),match[1],re.I) for d in definitions):
+            words=definition_key(match[1]).split()
+            while words and words[0] in ('l','le','la','les','un','une','des','the','a','an'):
+                words.pop(0)
+            expanded=' '.join(words)
+            if not any(expanded==d or expanded.startswith(d+' ') for d in definitions):
                 raise ValueError('Définition de '+term+' incompatible avec le libellé du glossaire source.')
 
 
@@ -2922,6 +2991,31 @@ class ContractsTests(unittest.TestCase):
             with self.subTest(value=value),self.assertRaises(ValueError):quality.validate_acronyms(value,terms)
         quality.validate_acronyms('Le SOA amplifie le signal par émission stimulée.',terms)
         quality.validate_acronyms('Semiconductor optical amplifier (SOA)',terms)
+
+    def test_recognized_french_definitions_are_allowed_for_english_source_terms(self):
+        terms={'AI':[{'definition':'Artificial intelligence','page':1}],
+               'DT':[{'definition':'Digital twin','page':1}],
+               'LLM':[{'definition':'Large language model','page':1}],
+               'SOA':[{'definition':'Semiconductor optical amplifier','page':1}]}
+        for value in ('L’intelligence artificielle (AI) utilise les données.',
+                      'AI désigne l’intelligence artificielle.',
+                      'AI signifie intelligence artificielle.',
+                      'Les jumeaux numériques (DT) représentent le réseau.',
+                      'Les grands modèles de langage (LLM) traitent les textes.',
+                      'Un amplificateur optique à semi-conducteurs (SOA) amplifie le signal.',
+                      '(AI) est employé dans cette partie.',
+                      'Le terme AI (AI) est repris dans le texte.'):
+            with self.subTest(value=value):quality.validate_acronyms(value,terms)
+
+    def test_french_alias_is_not_inferred_from_the_acronym_alone(self):
+        terms={'AI':[{'definition':'Acoustic impedance','page':1}]}
+        with self.assertRaises(ValueError):quality.validate_acronyms('Intelligence artificielle (AI)',terms)
+        with self.assertRaises(ValueError):quality.validate_acronyms('AI signifie intelligence artificielle.',terms)
+
+    def test_definition_comparison_does_not_relax_source_quotes_or_units(self):
+        self.assertEqual(quality.definition_key('génération-augmentée'),quality.definition_key('GENERATION AUGMENTEE'))
+        self.assertNotEqual(quality.normalized('1 mW'),quality.normalized('1 MW'))
+        self.assertEqual(quality.definition_aliases([{'definition':'Noise figure','page':1}]),{'noise figure','facteur de bruit'})
     def test_source_quote_coverage_and_explanation_are_checked(self):
         source='The model uncertainty requires larger operational margins. These margins reduce spectral efficiency.'
         candidate={'id':'PDF1-P1-I001','statement':'Le ML réduit les performances.','explanation':'Cette relation doit être vérifiée dans la source.'}
@@ -3012,6 +3106,21 @@ class QualityPipelineTests(unittest.TestCase):
             self.assertTrue(all(i['evidence'] for i in part['ideas']))
         payload=next(p for task,p in client.calls if task=='pdf_synthesis')
         self.assertTrue(all(set(p)=={'number','summary'} for p in payload['parts']))
+
+    def test_french_ai_definition_does_not_abort_the_structured_summary(self):
+        class FrenchAI(FakeClient):
+            def ask(inner,task,payload,instructions,validate,budget=4000):
+                if task!='part_structure':return super().ask(task,payload,instructions,validate,budget)
+                inner.calls.append((task,copy.deepcopy(payload)))
+                value={key:'' for key in quality.TITLES}
+                value['problem']='L’intelligence artificielle (AI) aide à analyser les données du réseau.'
+                validate(value);return value
+        client=FrenchAI();terms={'AI':[{'definition':'Artificial intelligence','page':1}]}
+        result=Pipeline(self.project,client).structured_summary('AI','Synthèse AI',
+            [{'id':'PDF1-P1-I001','statement':'L’AI analyse les données.'}],terms)
+        self.assertIn('intelligence artificielle (AI)',result)
+        self.assertEqual(len(client.calls),1)
+        self.assertTrue((self.project/'etapes/parties/02-AI-S0B1.md').exists())
     def test_long_registry_is_grouped_in_small_batches_with_no_missing_ids(self):
         ideas=[{'id':f'PDF1-P1-I{n:03}','statement':f'Le phénomène {n} possède une condition différente.',
                 'explanation':'La condition change la réponse physique du système.','pages':[n],'document':'PDF1'} for n in range(1,251)]
