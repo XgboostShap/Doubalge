@@ -1,9 +1,9 @@
 {
-  "version": "0.1.6",
+  "version": "0.1.7",
   "files": [
     {
       "path": "app.py",
-      "sha256": "417f50c505714c75790a49773a7de0a4e5f978c87755724cfac60b238b6f565b"
+      "sha256": "2c4c4dcb944821d966a9c2a7261654c72d789633acf665cedb34165843227a3f"
     },
     {
       "path": "storage.py",
@@ -11,11 +11,11 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "74839c5a9ee858b0126c2e6841d68549d3d3d117914501fdd41eb6800005a025"
+      "sha256": "afda2b8f3260891ff142de5786191bab8dea1cb76da7dfbe2e1379161a8191c4"
     },
     {
       "path": "quality.py",
-      "sha256": "f8548c2ca24bee811faaf6b7627b225ef61cf7556f653851c0f64ccd96e7d579"
+      "sha256": "63798a8ee724023756bf537e7a2dd90de6b9f68ec77aaa1d48e63253cd3f243c"
     },
     {
       "path": "llm.py",
@@ -43,15 +43,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "490863165465d5009f2f599eb804b82c5090ed22604d551fa2b95c86f5f059c1"
+      "sha256": "d4f81caa77863c146f175cd5ec03f2b9ac44736fc2710d21ca041c6d93486d8b"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "2c5e80d194dd4254a3ef45b9949a2060f0e2bbc3a6e033352cf218a863fea8cb"
+      "sha256": "d9ec95f22491a66d6b0953b1d69d2c5073040edd6136bce1cbe75157920de34b"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "1d2422dc2a74ebce18a06d2168d8c2fac9c90f503a8a093ed28191712eea8144"
+      "sha256": "1bc2aad3e20a9d81b018937cd735022f59ecdc2296266838d33041103614d43d"
     }
   ]
 }

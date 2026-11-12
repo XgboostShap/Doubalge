@@ -12,12 +12,20 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
+    if task in ('global_groups','key_sentences'):
+        field='assignments' if task=='global_groups' else 'sentences'
+        return obj({field:obj({i['ref']:string for i in payload['ideas']})})
     if task=='part_structure':return obj({key:string for key in TITLES})
     if task=='review_facts':
         decision=obj({'statement':string,'explanation':string,'evidence':{'type':'array','items':string},
                       'status':{'type':'string','enum':['kept','corrected','excluded','uncertain']},'reason':string})
         return obj({'decisions':obj({i['id']:decision for i in payload['candidates']})})
     return None
+
+
+def validate_reference_map(value, field):
+    if not isinstance(value,dict) or not isinstance(value.get(field),dict):
+        raise ValueError('Un objet '+field+' indexé par les références courtes est requis.')
 
 
 def normalized(value):

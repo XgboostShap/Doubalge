@@ -1,8 +1,44 @@
-# Podcast pédagogique — version 0.1.6
+# Podcast pédagogique — version 0.1.7
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.7 — références des idées conservées par le programme
+
+Le regroupement thématique (étape 4) et les phrases essentielles (étape 6)
+n'exigent plus que le modèle recopie les identifiants complets du PDF. Chaque
+requête utilise des repères courts I1, I2… avec un schéma JSON à une clé par
+idée. Le programme rétablit ensuite les identifiants originaux et contrôle que
+chaque idée source est présente exactement une fois. Les anciennes réponses
+en listes, où un identifiant pouvait être oublié ou dupliqué, ne sont pas
+réutilisées pour ces nouvelles requêtes.
+
+Si une affectation manque ou est inexploitable, les idées correspondantes sont
+conservées dans un **groupe provisoire** marqué « classement à revoir ». Une
+référence étrangère n'ajoute aucune idée et ne remplace pas une référence source.
+Si une phrase manque, son **énoncé source** est conservé avec un avertissement.
+Après une erreur persistante de format ou de répétition dans ces tâches, le
+programme applique ces mêmes reprises explicites. Les erreurs réseau, 404,
+annulations et sauvegardes disque restent signalées normalement.
+
+Les classements et formulations provisoires sont listés dans les Markdown des
+étapes 4 et 6 et dans le rapport de l'étape 9 ; le JSON final contient
+`generation_warnings`. Ce mécanisme garantit la conservation des références,
+pas la justesse scientifique des idées ni celle de leur reformulation.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd** et sélectionner le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.7**, puis cliquer sur **Continuer**.
+Le traitement reprend l'étape interrompue, sans refaire les étapes précédentes.
+Les projets, PDF et modèles sont conservés. Pour demander une nouvelle proposition
+à la place d'un classement provisoire déjà terminé, utiliser **Refaire cette étape**.
+
+Les tests reproduisent la liste de douze identifiants signalée, les références
+omises et étrangères, les formats invalides, les reprises et un parcours complet
+avec des réponses incomplètes. Le parcours navigateur avec fournisseur simulé
+reste également vérifié. Le PDF complet et l'interface native Windows restent
+à valider.
 
 ## Correctif 0.1.6 — acronymes et traductions françaises
 

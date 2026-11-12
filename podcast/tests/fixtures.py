@@ -47,8 +47,8 @@ def answer(task,p):
                 'methods':'Étudier les moyens de compensation.',
                 'results':'Les sources précisent les effets observés.','limits':'Les dispositifs ont des limites à examiner.'}
     if task=='global_groups':
-        ids=[i['id'] for i in p['ideas']];cut=max(1,len(ids)//2)
-        return {'groups':[{'title':'Comprendre les pertes','idea_ids':ids[:cut]},{'title':'Compenser les pertes','idea_ids':ids[cut:]}]}
+        cut=max(1,len(p['ideas'])//2)
+        return {'assignments':{i['ref']:'Comprendre les pertes' if n<cut else 'Compenser les pertes' for n,i in enumerate(p['ideas'])}}
     if task=='global_text':return {'text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task in ('plan','plan_groups'):
         import math
@@ -60,7 +60,7 @@ def answer(task,p):
                 'known':'Les points précédents.','new':'Les relations de cause à effet.','why_next':'Étudier la suite du raisonnement.',
                 **({'group_ids':g['group_ids']} if task=='plan_groups' else {'idea_ids':g['idea_ids']}),
                 'target_words':400} for n,g in enumerate(groups,1)],'exclusions':[]}
-    if task=='key_sentences':return {'items':[{'idea_id':i['id'],'sentence':i['statement']} for i in p['ideas']]}
+    if task=='key_sentences':return {'sentences':{i['ref']:i['statement'] for i in p['ideas']}}
     if task=='explanation':return {'transition':'Nous avons posé le problème ; voyons comment le résoudre.','text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task=='dialogue':
         return {'opening_transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',

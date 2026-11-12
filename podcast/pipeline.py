@@ -391,25 +391,12 @@ class Pipeline:
         if not ideas:
             raise ValueError('Aucune idée explicative n’a été extraite. Consultez les résumés de l’étape 2 avant de refaire cette étape ou de choisir un autre modèle.')
         compact = [{'id':i['id'],'statement':i['statement']} for i in ideas]
-        grouped=[]
+        grouped=[];classification_warnings=[]
         for number,batch in enumerate(quality.batches(compact,max_chars=6000,max_items=12),1):
-            wanted=[i['id'] for i in batch]
-            def validate_groups(v):
-                if not isinstance(v.get('groups'),list) or not v['groups']:
-                    raise ValueError('Définir des groupes thématiques.')
-                seen=[]
-                for g in v['groups']:
-                    text(g,'title');strings(g.get('idea_ids'));seen.extend(g['idea_ids'])
-                    if not g['idea_ids']:raise ValueError('Groupe vide.')
-                ids_exact(seen,wanted)
-            value=self.ask_unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
-                'global_groups',{'ideas':batch},
-                '''Ordonne ces idées en groupes thématiques, selon une progression de causes,
-                problèmes et solutions. Chaque identifiant apparaît exactement une fois. Conserve
-                les contradictions. Les lots seront rapprochés lors de la création du plan.
-                Structure : {"groups":[{"title":"thème", "idea_ids":["identifiants"]}]}''',
-                validate_groups,lambda v:'\n\n'.join('## '+g['title']+'\n\n'+', '.join(g['idea_ids']) for g in v['groups']))
+            value=self.classify_batch(batch,number)
             grouped.extend(value['groups'])
+            classification_warnings.extend(value['warnings'])
+        ids_exact([identity for g in grouped for identity in g['idea_ids']],[i['id'] for i in ideas])
         registry = {i['id']:i for i in ideas}
         notes = []
         for number,group in enumerate(grouped,1):
@@ -424,10 +411,48 @@ class Pipeline:
                 Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids),lambda v:v['text'])
             group['text'] = result['text']
             notes.append('## '+group['title']+'\n\n'+group['text'])
+        if classification_warnings:
+            notes.append('## Classements provisoires à vérifier\n\n'+'\n'.join('- '+w for w in classification_warnings))
         result = {'groups':grouped,'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']],
+                  'classification_warnings':classification_warnings,
                   'source_uncertainties':[{'document':d['id'],'id':i['id'],'pages':i.get('pages',[]),'reason':i['reason']}
                        for d in data['documents'] for p in d['parts'] for i in p.get('uncertain_ideas',[])]}
         return result,'\n\n'.join(notes)+'\n\n## Sources et idées\n\n'+idea_markdown(ideas)
+
+    def classify_batch(self, batch, number):
+        def produce():
+            local={f'I{n}':idea for n,idea in enumerate(batch,1)}
+            payload={'ideas':[{'ref':ref,'statement':i['statement']} for ref,i in local.items()]}
+            warnings=[]
+            try:
+                value=self.client.ask('global_groups',payload,
+                    '''Classe chaque idée dans un thème court et précis, en français. Réutilise
+                    exactement le même titre pour les idées d'un même thème. Les thèmes seront
+                    ordonnés dans le plan. Le logiciel conserve les identifiants du PDF : ne les
+                    recopie pas. Réponds avec une affectation par référence courte fournie.
+                    Structure : {"assignments":{"I1":"titre du thème","I2":"titre du thème"}}.''',
+                    lambda v:quality.validate_reference_map(v,'assignments'))
+                assignments=value['assignments']
+            except (InvalidResponseError,RepetitionError) as error:
+                assignments={}
+                warnings.append(f'Lot {number} : classement automatique non concluant ; les idées sont conservées dans un groupe provisoire. '+str(error)[:300])
+            foreign=set(assignments)-set(local)
+            if foreign:warnings.append(f'Lot {number} : références étrangères ignorées ; aucune idée source ajoutée ou supprimée.')
+            groups={};unassigned=[]
+            for ref,idea in local.items():
+                title=assignments.get(ref)
+                if not isinstance(title,str) or not title.strip() or len(title.strip())>160:
+                    unassigned.append(idea['id']);continue
+                title=title.strip()
+                groups.setdefault(title,{'title':title,'idea_ids':[]})['idea_ids'].append(idea['id'])
+            result=list(groups.values())
+            if unassigned:
+                result.append({'title':f'Idées du lot {number} — classement à revoir','idea_ids':unassigned})
+                warnings.append('Références conservées dans un groupe provisoire : '+', '.join(unassigned))
+            ids_exact([identity for g in result for identity in g['idea_ids']],[i['id'] for i in batch])
+            return {'groups':result,'warnings':warnings}
+        return self.unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
+            {'protocol':'local-references-v1','ideas':batch},produce,group_markdown)
 
     def step5(self):
         data = self.saved(4)
@@ -505,22 +530,40 @@ class Pipeline:
     def step6(self):
         plan, data = self.saved(5), self.saved(4)
         registry = {i['id']:i for i in data['ideas']}
-        chapters, notes = [], []
+        chapters, notes, warnings = [], [], []
         for c in plan['chapters']:
-            def validate(v):
-                if not isinstance(v.get('items'),list):
-                    raise ValueError('Liste items requise.')
-                for item in v['items']:
-                    text(item,'idea_id');text(item,'sentence')
-                ids_exact([i['idea_id'] for i in v['items']],c['idea_ids'])
-            value = self.ask_unit(6,c['id'],c['title'],'key_sentences',{'chapter':c,'ideas':[model_idea(registry[i]) for i in c['idea_ids']]},
-                '''Pour chaque idée de ce chapitre, écris une phrase complète exprimant son apport
-                essentiel, avec son rôle causal si pertinent. Une phrase par idée, sans perdre les conditions.
-                Structure : {"items":[{"idea_id":"...","sentence":"..."}]}''',validate,
-                lambda v:'\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in v['items']))
+            value=self.chapter_sentences(c,[registry[i] for i in c['idea_ids']])
             chapters.append({'id':c['id'],'items':value['items']})
-            notes.append('## '+c['title']+'\n\n'+'\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in value['items']))
-        return {'chapters':chapters},'\n\n'.join(notes)
+            notes.append('## '+c['title']+'\n\n'+sentences_markdown(value));warnings.extend(value['warnings'])
+        return {'chapters':chapters,'warnings':warnings},'\n\n'.join(notes)
+
+    def chapter_sentences(self, chapter, ideas):
+        def produce():
+            local={f'I{n}':idea for n,idea in enumerate(ideas,1)};warnings=[]
+            payload={'chapter':{k:v for k,v in chapter.items() if k!='idea_ids'},
+                     'ideas':[{'ref':ref,'statement':i['statement'],'explanation':i['explanation']} for ref,i in local.items()]}
+            try:
+                value=self.client.ask('key_sentences',payload,
+                    '''Écris une phrase complète par idée, exprimant son apport essentiel et son rôle
+                    causal si pertinent. Préserve les conditions. Utilise les références courtes ; le
+                    logiciel rétablit les identifiants du PDF. Structure : {"sentences":{"I1":"phrase",
+                    "I2":"phrase"}}. Une phrase pour chaque référence fournie, sans ajout.''',
+                    lambda v:quality.validate_reference_map(v,'sentences'))
+                sentences=value['sentences']
+            except (InvalidResponseError,RepetitionError) as error:
+                sentences={};warnings.append(chapter['id']+' : formulation automatique non concluante ; les énoncés sources sont conservés. '+str(error)[:300])
+            if set(sentences)-set(local):warnings.append(chapter['id']+' : références étrangères ignorées.')
+            items=[]
+            for ref,idea in local.items():
+                sentence=sentences.get(ref)
+                if not isinstance(sentence,str) or not sentence.strip():
+                    sentence=idea['statement']
+                    warnings.append(idea['id']+' : énoncé source conservé, formulation à revoir.')
+                items.append({'idea_id':idea['id'],'sentence':sentence.strip()})
+            ids_exact([i['idea_id'] for i in items],[i['id'] for i in ideas])
+            return {'items':items,'warnings':warnings}
+        return self.unit(6,chapter['id'],chapter['title'],
+                         {'protocol':'local-references-v1','chapter':chapter,'ideas':ideas},produce,sentences_markdown)
 
     def step7(self):
         plan, keys, facts = self.saved(5), self.saved(6), self.saved(4)
@@ -608,6 +651,7 @@ class Pipeline:
         covered = {i for c in chapters for turn in c['turns'] for i in turn['idea_ids']}
         result = {'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(covered),
                   'source_uncertainties':facts.get('source_uncertainties',[]),
+                  'generation_warnings':facts.get('classification_warnings',[])+self.saved(6).get('warnings',[]),
                   'expected_idea_ids':sorted(expected),'all_planned_ids_present':covered==expected,
                   'excluded_ideas':plan['exclusions'],'word_count':words,'estimated_minutes':round(words/145,1),
                   'target_minutes':self.config['minutes'],'markdown':script_markdown(chapters,self.config['speakers']),
@@ -622,6 +666,8 @@ class Pipeline:
         if result['source_uncertainties']:
             notes+='\n\n## Idées sources à vérifier, écartées du script provisoire\n\n'+'\n'.join(
                 '- '+i['id']+' — '+i['reason'] for i in result['source_uncertainties'])
+        if result['generation_warnings']:
+            notes+='\n\n## Classements et formulations provisoires\n\n'+'\n'.join('- '+w for w in result['generation_warnings'])
         return result,notes
 
 
@@ -648,6 +694,18 @@ def review_markdown(value):
                       ' / '.join(i['evidence'])+'\n  '+i['status']+' : '+i['reason'] for i in value['kept'])+(
                       '\n\n### Écartés\n\n'+'\n'.join('- '+i['id']+' : '+i['reason'] for i in value['excluded'])
                       if value['excluded'] else '')
+
+
+def group_markdown(value):
+    result='\n\n'.join('## '+g['title']+'\n\n'+', '.join(g['idea_ids']) for g in value['groups'])
+    if value['warnings']:result+='\n\n### Classement à vérifier\n\n'+'\n'.join('- '+w for w in value['warnings'])
+    return result
+
+
+def sentences_markdown(value):
+    result='\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in value['items'])
+    if value['warnings']:result+='\n\n### Formulations à vérifier\n\n'+'\n'.join('- '+w for w in value['warnings'])
+    return result
 
 
 def idea_markdown(ideas):

@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.6
+# Sources complètes — Podcast pédagogique 0.1.7
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -104,39 +104,73 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.6 — ACRONYMES EN FRANCAIS
+PODCAST PEDAGOGIQUE 0.1.7 — REFERENCES DES IDEES
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.6 en haut de la page.
+4. Verifier Version 0.1.7 en haut de la page.
 5. Cliquer sur Continuer pour reprendre le traitement bloque.
 
-Le faux rejet de "intelligence artificielle (AI)" est corrige lorsque le
-PDF definit AI par Artificial intelligence. Les traductions usuelles sont
-activees par le libelle source, sans supposer le sens d'un acronyme seul.
-Les mauvaises definitions de WSS et SOA restent refusees.
-Les citations, les pages et les unites physiques gardent leurs controles.
+Les identifiants du PDF sont conserves par le programme. Le modele utilise
+seulement des reperes courts pour le regroupement et les phrases essentielles.
+Si une affectation manque, l'idee reste dans un groupe provisoire signale.
+Si une phrase manque, son enonce source est conserve et indique a revoir.
+Les avertissements sont dans les etapes 4 et 6 et dans le rapport final JSON.
 
-Les parties terminees, PDF, projets, modeles et dependances sont conserves.
-Pas de reinstallation ni de changement du contexte 16/32/65 k necessaire.
+Les PDF, projets et modeles sont conserves. Les etapes precedentes ne sont
+pas a refaire. Pas de changement du contexte 16/32/65 k necessaire.
 L'ancien message d'erreur peut rester visible jusqu'a la nouvelle tentative.
-Pour reexaminer d'anciennes exclusions d'une etape 2 terminee, utiliser
-Ameliorer les resumes existants au lieu de forcer une nouvelle extraction.
+Les correctifs precedents sont inclus.
 
-Les correctifs precedents sont inclus. Les traductions non reconnues peuvent
-encore etre signalees a verifier. La validation native Windows et celle du
-PDF complet restent a faire.
+La conservation des references ne prouve pas la fidelite scientifique du texte.
+Le PDF complet et l'execution native Windows restent a verifier.
 ```
 
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.6
+# Podcast pédagogique — version 0.1.7
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.7 — références des idées conservées par le programme
+
+Le regroupement thématique (étape 4) et les phrases essentielles (étape 6)
+n'exigent plus que le modèle recopie les identifiants complets du PDF. Chaque
+requête utilise des repères courts I1, I2… avec un schéma JSON à une clé par
+idée. Le programme rétablit ensuite les identifiants originaux et contrôle que
+chaque idée source est présente exactement une fois. Les anciennes réponses
+en listes, où un identifiant pouvait être oublié ou dupliqué, ne sont pas
+réutilisées pour ces nouvelles requêtes.
+
+Si une affectation manque ou est inexploitable, les idées correspondantes sont
+conservées dans un **groupe provisoire** marqué « classement à revoir ». Une
+référence étrangère n'ajoute aucune idée et ne remplace pas une référence source.
+Si une phrase manque, son **énoncé source** est conservé avec un avertissement.
+Après une erreur persistante de format ou de répétition dans ces tâches, le
+programme applique ces mêmes reprises explicites. Les erreurs réseau, 404,
+annulations et sauvegardes disque restent signalées normalement.
+
+Les classements et formulations provisoires sont listés dans les Markdown des
+étapes 4 et 6 et dans le rapport de l'étape 9 ; le JSON final contient
+`generation_warnings`. Ce mécanisme garantit la conservation des références,
+pas la justesse scientifique des idées ni celle de leur reformulation.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire le ZIP correctif,
+ouvrir **Mettre-a-jour.cmd** et sélectionner le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.7**, puis cliquer sur **Continuer**.
+Le traitement reprend l'étape interrompue, sans refaire les étapes précédentes.
+Les projets, PDF et modèles sont conservés. Pour demander une nouvelle proposition
+à la place d'un classement provisoire déjà terminé, utiliser **Refaire cette étape**.
+
+Les tests reproduisent la liste de douze identifiants signalée, les références
+omises et étrangères, les formats invalides, les reprises et un parcours complet
+avec des réponses incomplètes. Le parcours navigateur avec fournisseur simulé
+reste également vérifié. Le PDF complet et l'interface native Windows restent
+à valider.
 
 ## Correctif 0.1.6 — acronymes et traductions françaises
 
@@ -471,7 +505,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.6'
+APP_VERSION = '0.1.7'
 
 
 def settings(value):
@@ -1704,25 +1738,12 @@ class Pipeline:
         if not ideas:
             raise ValueError('Aucune idée explicative n’a été extraite. Consultez les résumés de l’étape 2 avant de refaire cette étape ou de choisir un autre modèle.')
         compact = [{'id':i['id'],'statement':i['statement']} for i in ideas]
-        grouped=[]
+        grouped=[];classification_warnings=[]
         for number,batch in enumerate(quality.batches(compact,max_chars=6000,max_items=12),1):
-            wanted=[i['id'] for i in batch]
-            def validate_groups(v):
-                if not isinstance(v.get('groups'),list) or not v['groups']:
-                    raise ValueError('Définir des groupes thématiques.')
-                seen=[]
-                for g in v['groups']:
-                    text(g,'title');strings(g.get('idea_ids'));seen.extend(g['idea_ids'])
-                    if not g['idea_ids']:raise ValueError('Groupe vide.')
-                ids_exact(seen,wanted)
-            value=self.ask_unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
-                'global_groups',{'ideas':batch},
-                '''Ordonne ces idées en groupes thématiques, selon une progression de causes,
-                problèmes et solutions. Chaque identifiant apparaît exactement une fois. Conserve
-                les contradictions. Les lots seront rapprochés lors de la création du plan.
-                Structure : {"groups":[{"title":"thème", "idea_ids":["identifiants"]}]}''',
-                validate_groups,lambda v:'\n\n'.join('## '+g['title']+'\n\n'+', '.join(g['idea_ids']) for g in v['groups']))
+            value=self.classify_batch(batch,number)
             grouped.extend(value['groups'])
+            classification_warnings.extend(value['warnings'])
+        ids_exact([identity for g in grouped for identity in g['idea_ids']],[i['id'] for i in ideas])
         registry = {i['id']:i for i in ideas}
         notes = []
         for number,group in enumerate(grouped,1):
@@ -1737,10 +1758,48 @@ class Pipeline:
                 Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids),lambda v:v['text'])
             group['text'] = result['text']
             notes.append('## '+group['title']+'\n\n'+group['text'])
+        if classification_warnings:
+            notes.append('## Classements provisoires à vérifier\n\n'+'\n'.join('- '+w for w in classification_warnings))
         result = {'groups':grouped,'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']],
+                  'classification_warnings':classification_warnings,
                   'source_uncertainties':[{'document':d['id'],'id':i['id'],'pages':i.get('pages',[]),'reason':i['reason']}
                        for d in data['documents'] for p in d['parts'] for i in p.get('uncertain_ideas',[])]}
         return result,'\n\n'.join(notes)+'\n\n## Sources et idées\n\n'+idea_markdown(ideas)
+
+    def classify_batch(self, batch, number):
+        def produce():
+            local={f'I{n}':idea for n,idea in enumerate(batch,1)}
+            payload={'ideas':[{'ref':ref,'statement':i['statement']} for ref,i in local.items()]}
+            warnings=[]
+            try:
+                value=self.client.ask('global_groups',payload,
+                    '''Classe chaque idée dans un thème court et précis, en français. Réutilise
+                    exactement le même titre pour les idées d'un même thème. Les thèmes seront
+                    ordonnés dans le plan. Le logiciel conserve les identifiants du PDF : ne les
+                    recopie pas. Réponds avec une affectation par référence courte fournie.
+                    Structure : {"assignments":{"I1":"titre du thème","I2":"titre du thème"}}.''',
+                    lambda v:quality.validate_reference_map(v,'assignments'))
+                assignments=value['assignments']
+            except (InvalidResponseError,RepetitionError) as error:
+                assignments={}
+                warnings.append(f'Lot {number} : classement automatique non concluant ; les idées sont conservées dans un groupe provisoire. '+str(error)[:300])
+            foreign=set(assignments)-set(local)
+            if foreign:warnings.append(f'Lot {number} : références étrangères ignorées ; aucune idée source ajoutée ou supprimée.')
+            groups={};unassigned=[]
+            for ref,idea in local.items():
+                title=assignments.get(ref)
+                if not isinstance(title,str) or not title.strip() or len(title.strip())>160:
+                    unassigned.append(idea['id']);continue
+                title=title.strip()
+                groups.setdefault(title,{'title':title,'idea_ids':[]})['idea_ids'].append(idea['id'])
+            result=list(groups.values())
+            if unassigned:
+                result.append({'title':f'Idées du lot {number} — classement à revoir','idea_ids':unassigned})
+                warnings.append('Références conservées dans un groupe provisoire : '+', '.join(unassigned))
+            ids_exact([identity for g in result for identity in g['idea_ids']],[i['id'] for i in batch])
+            return {'groups':result,'warnings':warnings}
+        return self.unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
+            {'protocol':'local-references-v1','ideas':batch},produce,group_markdown)
 
     def step5(self):
         data = self.saved(4)
@@ -1818,22 +1877,40 @@ class Pipeline:
     def step6(self):
         plan, data = self.saved(5), self.saved(4)
         registry = {i['id']:i for i in data['ideas']}
-        chapters, notes = [], []
+        chapters, notes, warnings = [], [], []
         for c in plan['chapters']:
-            def validate(v):
-                if not isinstance(v.get('items'),list):
-                    raise ValueError('Liste items requise.')
-                for item in v['items']:
-                    text(item,'idea_id');text(item,'sentence')
-                ids_exact([i['idea_id'] for i in v['items']],c['idea_ids'])
-            value = self.ask_unit(6,c['id'],c['title'],'key_sentences',{'chapter':c,'ideas':[model_idea(registry[i]) for i in c['idea_ids']]},
-                '''Pour chaque idée de ce chapitre, écris une phrase complète exprimant son apport
-                essentiel, avec son rôle causal si pertinent. Une phrase par idée, sans perdre les conditions.
-                Structure : {"items":[{"idea_id":"...","sentence":"..."}]}''',validate,
-                lambda v:'\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in v['items']))
+            value=self.chapter_sentences(c,[registry[i] for i in c['idea_ids']])
             chapters.append({'id':c['id'],'items':value['items']})
-            notes.append('## '+c['title']+'\n\n'+'\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in value['items']))
-        return {'chapters':chapters},'\n\n'.join(notes)
+            notes.append('## '+c['title']+'\n\n'+sentences_markdown(value));warnings.extend(value['warnings'])
+        return {'chapters':chapters,'warnings':warnings},'\n\n'.join(notes)
+
+    def chapter_sentences(self, chapter, ideas):
+        def produce():
+            local={f'I{n}':idea for n,idea in enumerate(ideas,1)};warnings=[]
+            payload={'chapter':{k:v for k,v in chapter.items() if k!='idea_ids'},
+                     'ideas':[{'ref':ref,'statement':i['statement'],'explanation':i['explanation']} for ref,i in local.items()]}
+            try:
+                value=self.client.ask('key_sentences',payload,
+                    '''Écris une phrase complète par idée, exprimant son apport essentiel et son rôle
+                    causal si pertinent. Préserve les conditions. Utilise les références courtes ; le
+                    logiciel rétablit les identifiants du PDF. Structure : {"sentences":{"I1":"phrase",
+                    "I2":"phrase"}}. Une phrase pour chaque référence fournie, sans ajout.''',
+                    lambda v:quality.validate_reference_map(v,'sentences'))
+                sentences=value['sentences']
+            except (InvalidResponseError,RepetitionError) as error:
+                sentences={};warnings.append(chapter['id']+' : formulation automatique non concluante ; les énoncés sources sont conservés. '+str(error)[:300])
+            if set(sentences)-set(local):warnings.append(chapter['id']+' : références étrangères ignorées.')
+            items=[]
+            for ref,idea in local.items():
+                sentence=sentences.get(ref)
+                if not isinstance(sentence,str) or not sentence.strip():
+                    sentence=idea['statement']
+                    warnings.append(idea['id']+' : énoncé source conservé, formulation à revoir.')
+                items.append({'idea_id':idea['id'],'sentence':sentence.strip()})
+            ids_exact([i['idea_id'] for i in items],[i['id'] for i in ideas])
+            return {'items':items,'warnings':warnings}
+        return self.unit(6,chapter['id'],chapter['title'],
+                         {'protocol':'local-references-v1','chapter':chapter,'ideas':ideas},produce,sentences_markdown)
 
     def step7(self):
         plan, keys, facts = self.saved(5), self.saved(6), self.saved(4)
@@ -1921,6 +1998,7 @@ class Pipeline:
         covered = {i for c in chapters for turn in c['turns'] for i in turn['idea_ids']}
         result = {'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(covered),
                   'source_uncertainties':facts.get('source_uncertainties',[]),
+                  'generation_warnings':facts.get('classification_warnings',[])+self.saved(6).get('warnings',[]),
                   'expected_idea_ids':sorted(expected),'all_planned_ids_present':covered==expected,
                   'excluded_ideas':plan['exclusions'],'word_count':words,'estimated_minutes':round(words/145,1),
                   'target_minutes':self.config['minutes'],'markdown':script_markdown(chapters,self.config['speakers']),
@@ -1935,6 +2013,8 @@ class Pipeline:
         if result['source_uncertainties']:
             notes+='\n\n## Idées sources à vérifier, écartées du script provisoire\n\n'+'\n'.join(
                 '- '+i['id']+' — '+i['reason'] for i in result['source_uncertainties'])
+        if result['generation_warnings']:
+            notes+='\n\n## Classements et formulations provisoires\n\n'+'\n'.join('- '+w for w in result['generation_warnings'])
         return result,notes
 
 
@@ -1961,6 +2041,18 @@ def review_markdown(value):
                       ' / '.join(i['evidence'])+'\n  '+i['status']+' : '+i['reason'] for i in value['kept'])+(
                       '\n\n### Écartés\n\n'+'\n'.join('- '+i['id']+' : '+i['reason'] for i in value['excluded'])
                       if value['excluded'] else '')
+
+
+def group_markdown(value):
+    result='\n\n'.join('## '+g['title']+'\n\n'+', '.join(g['idea_ids']) for g in value['groups'])
+    if value['warnings']:result+='\n\n### Classement à vérifier\n\n'+'\n'.join('- '+w for w in value['warnings'])
+    return result
+
+
+def sentences_markdown(value):
+    result='\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in value['items'])
+    if value['warnings']:result+='\n\n### Formulations à vérifier\n\n'+'\n'.join('- '+w for w in value['warnings'])
+    return result
 
 
 def idea_markdown(ideas):
@@ -2018,12 +2110,20 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
+    if task in ('global_groups','key_sentences'):
+        field='assignments' if task=='global_groups' else 'sentences'
+        return obj({field:obj({i['ref']:string for i in payload['ideas']})})
     if task=='part_structure':return obj({key:string for key in TITLES})
     if task=='review_facts':
         decision=obj({'statement':string,'explanation':string,'evidence':{'type':'array','items':string},
                       'status':{'type':'string','enum':['kept','corrected','excluded','uncertain']},'reason':string})
         return obj({'decisions':obj({i['id']:decision for i in payload['candidates']})})
     return None
+
+
+def validate_reference_map(value, field):
+    if not isinstance(value,dict) or not isinstance(value.get(field),dict):
+        raise ValueError('Un objet '+field+' indexé par les références courtes est requis.')
 
 
 def normalized(value):
@@ -2571,8 +2671,8 @@ def answer(task,p):
                 'methods':'Étudier les moyens de compensation.',
                 'results':'Les sources précisent les effets observés.','limits':'Les dispositifs ont des limites à examiner.'}
     if task=='global_groups':
-        ids=[i['id'] for i in p['ideas']];cut=max(1,len(ids)//2)
-        return {'groups':[{'title':'Comprendre les pertes','idea_ids':ids[:cut]},{'title':'Compenser les pertes','idea_ids':ids[cut:]}]}
+        cut=max(1,len(p['ideas'])//2)
+        return {'assignments':{i['ref']:'Comprendre les pertes' if n<cut else 'Compenser les pertes' for n,i in enumerate(p['ideas'])}}
     if task=='global_text':return {'text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task in ('plan','plan_groups'):
         import math
@@ -2584,7 +2684,7 @@ def answer(task,p):
                 'known':'Les points précédents.','new':'Les relations de cause à effet.','why_next':'Étudier la suite du raisonnement.',
                 **({'group_ids':g['group_ids']} if task=='plan_groups' else {'idea_ids':g['idea_ids']}),
                 'target_words':400} for n,g in enumerate(groups,1)],'exclusions':[]}
-    if task=='key_sentences':return {'items':[{'idea_id':i['id'],'sentence':i['statement']} for i in p['ideas']]}
+    if task=='key_sentences':return {'sentences':{i['ref']:i['statement'] for i in p['ideas']}}
     if task=='explanation':return {'transition':'Nous avons posé le problème ; voyons comment le résoudre.','text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task=='dialogue':
         return {'opening_transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',
@@ -3324,6 +3424,149 @@ class PartTests(unittest.TestCase):
         self.assertEqual(note['archived_counts']['ideas'],200)
         self.assertIn('Terme1',note['definitions'])
         self.assertIn('I199',note['explained_ideas'])
+
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_source_refs.py
+
+```python
+"""Régressions des identifiants omis, répétés ou inventés par le modèle."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from fixtures import FakeClient,StubServer,make_pdf
+from llm import Cancelled,InvalidResponseError,ModelError,Ollama
+from pipeline import Pipeline,ids_exact
+from storage import defaults,read,write
+
+REPORTED_IDS=[f'PDF1-P1-I{n:03}' for n in (46,47,48,49,50,67,68,69,121,122,123,124)]
+
+
+def ideas():
+    return [{'id':identity,'statement':f'Le phénomène numéro {n} a une condition précise.',
+             'explanation':'La condition explique le comportement observé dans le système.',
+             'pages':[n],'document':'PDF1'} for n,identity in enumerate(REPORTED_IDS,1)]
+
+
+class ReferenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.project=Path(self.temp.name)
+        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[]})
+    def tearDown(self):self.temp.cleanup()
+    def pipeline(self,client):return Pipeline(self.project,client)
+    def test_reported_twelve_ids_are_restored_without_being_sent_to_the_classifier(self):
+        with self.assertRaisesRegex(ValueError,'Attendus : PDF1-P1-I046'):
+            ids_exact(REPORTED_IDS[:-1]+[REPORTED_IDS[0]],REPORTED_IDS)
+        client=FakeClient();result=self.pipeline(client).classify_batch(ideas(),1)
+        covered=[i for g in result['groups'] for i in g['idea_ids']]
+        self.assertEqual(covered,REPORTED_IDS)
+        self.assertFalse(result['warnings'])
+        payload=client.calls[0][1]
+        self.assertEqual([i['ref'] for i in payload['ideas']],[f'I{n}' for n in range(1,13)])
+        self.assertNotIn('PDF1-P1-I',json.dumps(payload))
+    def test_incomplete_and_foreign_assignments_keep_all_source_ideas_once(self):
+        class Incomplete(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                value={'assignments':{'I1':'Propagation','I2':'Propagation','I3':'',
+                         'I4':17,'I999':'Sujet inventé','PDF1-P1-I999':'Autre sujet'}}
+                validate(value);return value
+        source=ideas();before=copy.deepcopy(source)
+        result=self.pipeline(Incomplete()).classify_batch(source,1)
+        covered=[i for g in result['groups'] for i in g['idea_ids']]
+        self.assertEqual(set(covered),set(REPORTED_IDS));self.assertEqual(len(covered),12)
+        self.assertEqual(result['groups'][0]['idea_ids'],REPORTED_IDS[:2])
+        self.assertEqual(result['groups'][-1]['idea_ids'],REPORTED_IDS[2:])
+        self.assertTrue(result['warnings']);self.assertEqual(source,before)
+    def test_persistent_format_failure_keeps_one_explicit_provisional_group(self):
+        class Invalid(FakeClient):
+            def ask(self,*args,**kwargs):raise InvalidResponseError('Références manquantes')
+        result=self.pipeline(Invalid()).classify_batch(ideas(),1)
+        self.assertEqual(len(result['groups']),1)
+        self.assertEqual(result['groups'][0]['idea_ids'],REPORTED_IDS)
+        self.assertIn('à revoir',result['groups'][0]['title'])
+        self.assertTrue(result['warnings'])
+    def test_network_failure_and_cancellation_are_not_hidden_as_provisional_groups(self):
+        class Failure(FakeClient):
+            def ask(self,*args,**kwargs):raise self.error
+        for error in (ModelError('HTTP 404'),Cancelled()):
+            client=Failure();client.error=error
+            with self.subTest(error=type(error)),self.assertRaises(type(error)):
+                self.pipeline(client).classify_batch(ideas(),1)
+        self.assertFalse((self.project/'etapes/parties/04-Lot1.json').exists())
+    def test_completed_classification_resumes_and_different_source_ids_are_rebound(self):
+        client=FakeClient();pipeline=self.pipeline(client)
+        first=pipeline.classify_batch(ideas(),1)
+        self.assertEqual(pipeline.classify_batch(ideas(),1),first)
+        self.assertEqual(len(client.calls),1)
+        other=[{**i,'id':i['id'].replace('PDF1','PDF2')} for i in ideas()]
+        result=pipeline.classify_batch(other,1)
+        self.assertEqual(len(client.calls),2)
+        self.assertTrue(all(i.startswith('PDF2') for g in result['groups'] for i in g['idea_ids']))
+    def test_missing_sentences_use_the_original_statement_and_keep_source_order(self):
+        class Missing(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                value={'sentences':{'I2':'Une deuxième idée reformulée.','I1':'','I3':7,'I999':'Phrase étrangère.'}}
+                validate(value);return value
+        source=ideas();chapter={'id':'C1','title':'Essai','idea_ids':REPORTED_IDS}
+        result=self.pipeline(Missing()).chapter_sentences(chapter,source)
+        self.assertEqual([i['idea_id'] for i in result['items']],REPORTED_IDS)
+        self.assertEqual(result['items'][0]['sentence'],source[0]['statement'])
+        self.assertEqual(result['items'][1]['sentence'],'Une deuxième idée reformulée.')
+        self.assertTrue(result['warnings'])
+    def test_invalid_sentence_format_keeps_every_original_statement(self):
+        class Invalid(FakeClient):
+            def ask(self,*args,**kwargs):raise InvalidResponseError('JSON incomplet')
+        source=ideas();chapter={'id':'C1','title':'Essai','idea_ids':REPORTED_IDS}
+        result=self.pipeline(Invalid()).chapter_sentences(chapter,source)
+        self.assertEqual([i['sentence'] for i in result['items']],[i['statement'] for i in source])
+        self.assertTrue(result['warnings'])
+    def test_nine_stages_preserve_coverage_and_export_provisional_warnings(self):
+        (self.project/'sources').mkdir();make_pdf(self.project/'sources/a.pdf')
+        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Essai.pdf'}]})
+        class Missing(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task in ('global_groups','key_sentences'):
+                    value={'assignments':{'I1':'Propagation'}} if task=='global_groups' else {'sentences':{}}
+                    validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        self.pipeline(Missing()).run(1,9)
+        final=read(self.project/'exports/podcast.json')
+        self.assertTrue(final['all_planned_ids_present'])
+        self.assertTrue(final['generation_warnings'])
+        self.assertIn('Classements et formulations provisoires',(self.project/'etapes/09.md').read_text())
+
+
+class ReferenceHTTPTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.project=Path(self.temp.name);self.stub=StubServer()
+        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[]})
+        self.client=Ollama({**defaults(),'endpoint':self.stub.endpoint},self.project/'cache')
+        self.pipeline=Pipeline(self.project,self.client)
+    def tearDown(self):self.stub.close();self.temp.cleanup()
+    def test_http_classifier_schema_requires_one_short_key_per_source_idea(self):
+        self.pipeline.classify_batch(ideas(),1)
+        schema=self.stub.requests[0]['format']
+        fields=schema['properties']['assignments']
+        self.assertEqual(fields['required'],[f'I{n}' for n in range(1,13)])
+        self.assertFalse(fields['additionalProperties'])
+        self.assertNotIn('PDF1-P1-I',json.dumps(self.stub.requests[0]))
+    def test_an_old_invalid_response_is_retried_before_coverage_is_restored(self):
+        self.stub.responses=[(200,[{'message':{'content':json.dumps({'groups':[{'title':'Test','idea_ids':REPORTED_IDS[:-1]}]})},
+                                    'done':True,'done_reason':'stop'}])]
+        result=self.pipeline.classify_batch(ideas(),1)
+        self.assertEqual(len(self.stub.calls),2)
+        self.assertEqual([i for g in result['groups'] for i in g['idea_ids']],REPORTED_IDS)
+    def test_sentence_schema_uses_local_keys_and_program_restores_the_ids(self):
+        result=self.pipeline.chapter_sentences({'id':'C1','title':'Essai','idea_ids':REPORTED_IDS},ideas())
+        fields=self.stub.requests[0]['format']['properties']['sentences']
+        self.assertEqual(fields['required'],[f'I{n}' for n in range(1,13)])
+        self.assertEqual([i['idea_id'] for i in result['items']],REPORTED_IDS)
+        self.assertNotIn('PDF1-P1-I',json.dumps(self.stub.requests[0]))
 
 
 if __name__=='__main__':unittest.main()
