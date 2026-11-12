@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.1.9
+# Sources complètes — Podcast pédagogique 0.1.10
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.
@@ -104,42 +104,79 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.1.9 — TEXTE COMMUN ET CONTROLE DES IDEES
+PODCAST PEDAGOGIQUE 0.1.10 — PLAN PEDAGOGIQUE PAR LOTS
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.9 en haut de la page.
+4. Verifier Version 0.1.10 en haut de la page.
+5. Cliquer sur Continuer pour reprendre l'etape 5.
 
-Pour debloquer l'etape 4 : cliquer sur Continuer.
-Le programme ajoute les references des idees lui-meme. Si un paragraphe manque,
-l'enonce source est conserve et signale a relire. La meme protection s'applique
-aux explications de l'etape 7. Les corrections precedentes sont incluses.
+Le plan traite les themes par petits lots et redige chaque chapitre separement.
+Chaque fragment est sauvegarde avant le suivant et peut etre repris apres arret.
+Les references des idees sont ajoutees et controlees par le programme.
+Les apercus envoyes au modele sont abreges explicitement ; le texte complet de
+l'etape 4 reste conserve. Les propositions de secours sont signalees a relire.
 
-Pour revoir aussi la qualite de votre ancien 02.md : cliquer sur Ameliorer les
-resumes existants, puis Continuer. Les anciens resultats sont archives et les
-candidats disponibles sont reutilises. Cette relecture prend du temps avec le
-modele ; elle peut changer les idees retenues et relance les etapes suivantes.
+Pas besoin d'augmenter le contexte Ollama ni de refaire les quatre premieres
+etapes pour ce correctif. Les PDF, projets et modeles sont conserves.
+Les correctifs precedents sont inclus.
 
-L'etape 2 reprend les controles invalides idee par idee. Les citations qui ne
-contiennent qu'un titre, un en-tete ou une reference bibliographique sont refusees.
-Une seconde lecture automatique examine si la citation soutient le sens de l'idee.
-Les rubriques de tous les blocs et les enonces retenus restent dans la synthese.
-
-Les PDF, projets et modeles sont conserves. Pas de reinstallation de Mistral ni
-de changement du contexte 16/32/65 k necessaire.
-Ces controles automatiques ne garantissent pas la fidelite scientifique.
-La generation du PDF integral et l'interface native Windows restent a verifier.
+La limite de 20 chapitres de 24 idees reste appliquee. Toute idee hors podcast
+est listee avec motif, sans suppression du dossier. Le cas de 181 idees fourni
+est couvert sans exclusion dans le test de regression.
+Les controles techniques ne garantissent pas la qualite scientifique du script.
+Le parcours complet avec Mistral et l'interface native Windows restent a verifier.
 ```
 
 ## README.md
 
 ````text
-# Podcast pédagogique — version 0.1.9
+# Podcast pédagogique — version 0.1.10
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.10 — plan pédagogique par lots
+
+L’étape 5 ne transmet plus tous les thèmes dans une seule requête. Le fichier
+signalé contenait 176 thèmes pour 181 idées ; ses aperçus représentaient environ
+66 600 caractères avant les instructions. Augmenter le contexte n’est plus
+nécessaire pour cette requête de plan.
+
+Le programme prépare une vue d’ensemble à partir de titres répartis dans le
+document, puis traite **tous** les thèmes par lots de six. Il rapproche les
+thèmes dans de grands chapitres, choisit leur ordre, puis rédige une fiche par
+chapitre. Chaque lot et chaque fiche sont sauvegardés en Markdown et JSON.
+Une reprise conserve les fragments du plan déjà terminés.
+
+Seules les métadonnées nécessaires sont envoyées au modèle : titres, aperçus
+explicitement abrégés, nombres d’idées et acquis précédents. Les textes complets
+de l’étape 4 et les consignes de public sont conservés. Le programme rétablit
+les références et contrôle que chaque idée figure exactement une fois dans un
+chapitre ou dans la liste motivée des exclusions.
+
+Une proposition manquante ou mal formée produit un plan provisoire signalé à
+relire. Les avertissements figurent dans `05.md`, les fragments et le rapport
+final. Les pannes Ollama, les annulations et les erreurs disque restent des
+arrêts explicites. La limite existante de 20 chapitres de 24 idées est conservée :
+les idées qui dépasseraient cette capacité restent dans le dossier et sont
+signalées hors podcast. La régression sur les 181 idées fournies n’en exclut
+aucune.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire tout le ZIP,
+ouvrir **Mettre-a-jour.cmd**, choisir le dossier contenant `Lancer-Podcast.cmd`,
+vérifier **Version 0.1.10**, puis cliquer sur **Continuer**. L’étape 5 reprend ;
+les quatre premières étapes, les PDF et les modèles restent conservés.
+Il n’est pas nécessaire de refaire les résumés pour ce correctif.
+
+Validation : plan complet du volume fourni à travers le client HTTP Ollama avec
+réponses simulées et contexte de 8 192 tokens ; couverture exacte des références,
+reprise des lots et chapitres, aperçus longs, avertissements et neuf étapes dans
+Chromium. Les essais Mistral sont ciblés. La qualité pédagogique et scientifique
+du plan, la génération complète avec Mistral et l’interface native Windows
+restent à vérifier.
 
 ## Correctif 0.1.9 — texte commun et contrôle des idées
 
@@ -602,7 +639,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.9'
+APP_VERSION = '0.1.10'
 
 
 def settings(value):
@@ -2084,77 +2121,162 @@ class Pipeline:
         return self.unit(4,f'Lot{number}','Classement des idées — lot '+str(number),
             {'protocol':'local-references-v1','ideas':batch},produce,group_markdown)
 
+    def plan_unit(self, key, title, task, payload, instructions, validate, fallback, budget, bindings=None):
+        def produce():
+            try:
+                value=self.client.ask(task,payload,instructions,validate,budget=budget)
+                return {'value':value,'warnings':[]}
+            except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
+                return {'value':fallback,'warnings':[title+' : proposition provisoire à relire. '+str(error)[:300]]}
+        return self.unit(5,key,title,{'protocol':'bounded-plan-v1','task':task,'payload':payload,
+            'instructions':instructions,'budget':budget,'bindings':bindings},produce,
+            lambda v:json.dumps(v['value'],ensure_ascii=False,indent=2)+
+                ('\n\n### À relire\n\n'+'\n'.join('- '+w for w in v['warnings']) if v['warnings'] else ''))
+
     def step5(self):
-        data = self.saved(4)
-        ids = [i['id'] for i in data['ideas']]
-        def validate(v):
+        data=self.saved(4);ids=[i['id'] for i in data['ideas']]
+        if not ids:raise ValueError('Aucune idée disponible pour construire le plan.')
+        # Les aperçus sont explicitement abrégés ; les textes et références du
+        # registre ne sont jamais modifiés pour faire rentrer une requête.
+        groups=[]
+        for number,original in enumerate(data['groups'],1):
+            for start in range(0,len(original['idea_ids']),24):
+                groups.append({'id':f'G{number}S{start//24+1}','title':original['title'],
+                    'text':original.get('text',''),'idea_ids':original['idea_ids'][start:start+24]})
+        ids_exact([i for g in groups for i in g['idea_ids']],ids)
+        def compact(g):
+            return {'title':g['title'][:120],'title_is_excerpt':len(g['title'])>120,
+                    'overview':g['text'][:140],'overview_is_excerpt':len(g['text'])>140,
+                    'idea_count':len(g['idea_ids'])}
+        audience=self.config['audience'];warnings=[]
+        positions=sorted({n*(len(groups)-1)//19 for n in range(20)}) if len(groups)>20 else range(len(groups))
+        samples=[{'position':n+1,'title':groups[n]['title'][:120]} for n in positions]
+        def seed_valid(v):
             text(v,'central_question')
-            if not isinstance(v.get('chapters'),list) or not v['chapters'] or len(v['chapters'])>20:
-                raise ValueError('Définir entre 1 et 20 chapitres.')
-            seen, chapter_ids = [], []
-            for c in v['chapters']:
-                for key in ('id','title','question','known','new','why_next'):
-                    text(c,key)
-                if not re.fullmatch(r'C[0-9]{1,2}',c['id']):
-                    raise ValueError('Les chapitres doivent porter les identifiants C1, C2…')
-                chapter_ids.append(c['id'])
-                strings(c.get('idea_ids'))
-                if not c['idea_ids']:
-                    raise ValueError('Chaque chapitre doit porter au moins une idée.')
-                seen.extend(c['idea_ids'])
-                if type(c.get('target_words')) is not int or not 50<=c['target_words']<=4000:
-                    raise ValueError('Budget de mots invalide.')
-            if len(chapter_ids)!=len(set(chapter_ids)):
-                raise ValueError('Identifiants de chapitre répétés.')
-            if not isinstance(v.get('exclusions'),list):
-                raise ValueError('Liste exclusions requise, éventuellement vide.')
-            for e in v['exclusions']:
-                text(e,'idea_id');text(e,'reason');seen.append(e['idea_id'])
-            ids_exact(seen,ids)
-        groups={g.get('id',f'G{n}'):g for n,g in enumerate(data['groups'],1)}
-        def expand(v):
-            if not isinstance(v,dict) or not isinstance(v.get('chapters'),list) or not isinstance(v.get('exclusions'),list):
-                raise ValueError('Plan structuré requis.')
-            used=[];chapters=[];exclusions=[]
-            for chapter in v['chapters']:
-                group_ids=chapter.get('group_ids');strings(group_ids)
-                used.extend(group_ids)
-                if not group_ids or any(g not in groups for g in group_ids):raise ValueError('Groupe inconnu ou chapitre vide.')
-                idea_ids=[i for g in group_ids for i in groups[g]['idea_ids']]
-                if len(idea_ids)>24:raise ValueError('Maximum 24 idées par chapitre : répartir les groupes ou déclarer une exclusion motivée.')
-                chapters.append({k:val for k,val in chapter.items() if k!='group_ids'}|{'idea_ids':idea_ids})
-            for excluded in v['exclusions']:
-                text(excluded,'group_id');text(excluded,'reason')
-                g=excluded['group_id'];used.append(g)
-                if g not in groups:raise ValueError('Groupe exclu inconnu.')
-                exclusions.extend({'idea_id':i,'reason':excluded['reason']} for i in groups[g]['idea_ids'])
-            ids_exact(used,list(groups))
-            result={'central_question':v.get('central_question'),'chapters':chapters,'exclusions':exclusions}
-            validate(result)
-            return result
-        grouped_plan=self.client.ask('plan_groups',{'groups':[
-            {'id':key,'title':g['title'],'overview':g['text'][:220],
-             'overview_is_excerpt':len(g['text'])>220,'idea_count':len(g['idea_ids'])} for key,g in groups.items()],
-            'audience':self.config['audience'],'target_minutes':self.config['minutes'],
-            'approximate_total_words':self.config['minutes']*145},
-            '''Construis un plan pédagogique autour d'une question centrale. Rapproche les thèmes
-            redondants issus de lots différents. Chaque chapitre résout une question préparant la suivante.
-            overview est un aperçu abrégé ; les textes complets et les idées restent dans le registre.
-            Indique les acquis, la nouveauté et le raccord. Affecte chaque groupe exactement une fois à
-            un chapitre ou à exclusions avec un motif lié au sujet ou à la durée, jamais silencieusement.
-            Le logiciel rattache ensuite toutes les idées du groupe : n'invente pas d'identifiants d'idées.
-            Maximum 20 chapitres et 24 idées par chapitre (somme des idea_count des groupes affectés).
-            Répartis le budget de mots indiqué ; ne remplis pas la durée par des répétitions.
-            Structure : {"central_question":"...", "chapters":[{"id":"C1","title":"...",
-            "question":"...","known":"...","new":"...","why_next":"...","group_ids":["G1"],
-            "target_words":400}],"exclusions":[{"group_id":"G2","reason":"..."}]}''',
-            lambda v:expand(v))
-        value=expand(grouped_plan)
-        lines = ['Question centrale : '+value['central_question']]
-        for c in value['chapters']:
+            if len(v['central_question'])>400 or not isinstance(v.get('topics'),list) or not 1<=len(v['topics'])<=12:
+                raise ValueError('Question brève et un à douze grands thèmes requis.')
+            if any(not isinstance(t,str) or not t.strip() or len(t)>120 for t in v['topics']):
+                raise ValueError('Chaque thème doit être un titre bref de 120 caractères maximum.')
+            quality.french_text(v['central_question']+' '+' '.join(v['topics']))
+        seed=self.plan_unit('Vue','Vue d’ensemble du plan','plan_seed',
+            {'sampled_titles':samples,'samples_are_partial':len(groups)>20,'total_groups':len(groups),'audience':audience},
+            '''Propose une question centrale et quelques grands thèmes pour un podcast pédagogique.
+            Ces titres sont un échantillon réparti dans le document, pas une liste exhaustive.
+            Les groupes seront ensuite tous affectés par petits lots ; le plan pourra être enrichi.
+            Préfère 4 à 10 thèmes larges, sans inventer de faits. Réponds en français avec
+            {"central_question":"question brève","topics":["titre bref"]}.''',seed_valid,
+            {'central_question':'Comment relier les notions et les résultats présentés dans ces documents ?','topics':[]},1000)
+        warnings.extend(seed['warnings'])
+        slots=[]
+        for title in seed['value']['topics']:
+            if quality.definition_key(title) not in {quality.definition_key(s['title']) for s in slots}:
+                slots.append({'id':f'C{len(slots)+1}','title':title,'groups':[],'idea_ids':[]})
+        exclusions=[]
+        for number,start in enumerate(range(0,len(groups),6),1):
+            batch=groups[start:start+6]
+            self.progress(f'Plan — affectation des thèmes, lot {number}')
+            local={f'I{n}':g for n,g in enumerate(batch,1)}
+            payload={'chapters':[{'id':s['id'],'title':s['title'],'idea_count':len(s['idea_ids'])} for s in slots],
+                'groups':[{'ref':ref,**compact(g)} for ref,g in local.items()],
+                'max_chapters':20,'max_ideas_per_chapter':24,'audience':audience}
+            packet=self.plan_unit(f'Placement{number}',f'Plan — thèmes du lot {number}','plan_assignments',payload,
+                '''Affecte chaque groupe à un grand chapitre pédagogique. Réutilise les chapitres
+                existants lorsqu'ils traitent du même sujet. chapter est leur référence C1, C2, etc.
+                Pour un sujet réellement distinct, utilise chapter:"new" et un title bref (120
+                caractères maximum). Limites : 20 chapitres, 24 idées par chapitre. Les aperçus sont
+                abrégés ; n'en déduis aucun fait nouveau. Le logiciel conserve les idées sources.
+                Réponds en français : {"assignments":{"I1":{"chapter":"C1","title":""},
+                "I2":{"chapter":"new","title":"autre thème"}}}.''',
+                lambda v:quality.validate_reference_map(v,'assignments'),{'assignments':{}},1200,
+                bindings=[(g['id'],g['idea_ids']) for g in batch])
+            warnings.extend(packet['warnings']);assignments=packet['value']['assignments']
+            if set(assignments)-set(local):warnings.append(f'Lot {number} : références étrangères ignorées dans le plan.')
+            for ref,g in local.items():
+                choice=assignments.get(ref);target=None;provisional=False
+                if isinstance(choice,dict):
+                    target=next((s for s in slots if s['id']==choice.get('chapter')),None)
+                    title=choice.get('title')
+                    if choice.get('chapter')=='new' and isinstance(title,str) and title.strip() and len(title)<=120:
+                        target=next((s for s in slots if quality.definition_key(s['title'])==quality.definition_key(title)),None)
+                        if target is None and len(slots)<20:
+                            target={'id':f'C{len(slots)+1}','title':title.strip(),'groups':[],'idea_ids':[]};slots.append(target)
+                if target is None or len(target['idea_ids'])+len(g['idea_ids'])>24:
+                    provisional=True
+                    available=[s for s in slots if len(s['idea_ids'])+len(g['idea_ids'])<=24]
+                    if available:
+                        words=set(quality.definition_key(g['title']).split())
+                        target=max(available,key=lambda s:(len(words & set(quality.definition_key(s['title']).split())),-len(s['idea_ids'])))
+                    elif len(slots)<20:
+                        target={'id':f'C{len(slots)+1}','title':g['title'][:110]+' — suite','groups':[],'idea_ids':[]};slots.append(target)
+                    else:
+                        reason='Capacité du plan atteinte (20 chapitres de 24 idées) ; idée conservée dans le dossier, hors podcast provisoire.'
+                        exclusions.extend({'idea_id':i,'reason':reason} for i in g['idea_ids'])
+                        warnings.append(g['id']+' : '+reason);continue
+                target['groups'].append(g);target['idea_ids'].extend(g['idea_ids'])
+                if provisional:warnings.append(g['id']+' : affectation provisoire à relire dans « '+target['title']+' ».')
+        slots=[s for s in slots if s['idea_ids']]
+        if not slots:raise ValueError('Aucun chapitre ne contient d’idée ; consultez les groupes de l’étape 4.')
+        def order_valid(v):
+            text(v,'central_question');strings(v.get('order'))
+            if len(v['central_question'])>400:raise ValueError('Question centrale trop longue.')
+            quality.french_text(v['central_question'])
+        ordered=self.plan_unit('Ordre','Question et ordre pédagogique','plan_question',
+            {'chapters':[{'id':s['id'],'title':s['title'],'idea_count':len(s['idea_ids'])} for s in slots],
+             'audience':audience,'target_minutes':self.config['minutes']},
+            '''Ordonne ces grands chapitres du plus accessible vers les applications. Donne une
+            question centrale en français qui relie les thèmes, sans inventer de faits. Une seule
+            occurrence de chaque référence de chapitre. Structure :
+            {"central_question":"question","order":["C1","C2"]}.''',order_valid,
+            {'central_question':seed['value']['central_question'],'order':[s['id'] for s in slots]},600)
+        warnings.extend(ordered['warnings']);by_id={s['id']:s for s in slots};order=[]
+        for ref in ordered['value']['order']:
+            if ref in by_id and ref not in order:order.append(ref)
+            else:warnings.append('Ordre du plan : référence inconnue ou répétée ignorée.')
+        missing=[s['id'] for s in slots if s['id'] not in order]
+        if missing:warnings.append('Chapitres absents de l’ordre proposé ajoutés en fin de plan : '+', '.join(missing))
+        slots=[by_id[ref] for ref in order+missing]
+        central=ordered['value']['central_question'];chapters=[]
+        count=len(slots);requested=self.config['minutes']*145
+        total=max(50*count,min(4000*count,requested));budgets=[50]*count
+        remaining=total-sum(budgets)
+        while remaining:
+            available=[n for n in range(count) if budgets[n]<4000]
+            weight=sum(len(slots[n]['idea_ids']) for n in available)
+            share=remaining
+            for n in available:
+                amount=min(remaining,4000-budgets[n],max(1,share*len(slots[n]['idea_ids'])//weight))
+                budgets[n]+=amount;remaining-=amount
+                if not remaining:break
+        if total!=requested:warnings.append('Budget de mots adapté au nombre de chapitres ; durée à vérifier.')
+        for number,slot in enumerate(slots,1):
+            self.progress(f'Plan — rédaction du chapitre {number}/{count}')
+            previous=chapters[-1] if chapters else None
+            payload={'central_question':central,'topic':slot['title'],
+                'groups':[compact(g) for g in slot['groups']],
+                'previous':{'title':previous['title'],'new':previous['new']} if previous else None,
+                'audience':audience,'target_words':budgets[number-1]}
+            fallback={'title':slot['title'],'question':'Comment comprendre '+slot['title'].rstrip('. ?')+' ?',
+                'known':previous['new'] if previous else 'Aucune connaissance préalable n’est supposée.',
+                'new':'Comprendre les notions regroupées sous « '+slot['title']+' ».',
+                'why_next':'Relier ces notions au thème suivant.'}
+            packet=self.plan_unit(f'Chapitre{number}',f'Plan — chapitre {number}','plan_chapter',payload,
+                '''Rédige la fiche de ce chapitre en français, sans personnages. Une phrase brève
+                par champ : title, question, known (acquis précédent), new (apport actuel), why_next
+                (raccord). Pour le premier chapitre, pose les prérequis. Les aperçus sont abrégés ;
+                ne crée pas de résultat scientifique. N'ajoute aucun identifiant ni exclusion.
+                Structure : {"title":"titre","question":"question","known":"acquis",
+                "new":"nouveauté","why_next":"raccord"}.''',quality.validate_plan_chapter,fallback,1000,
+                bindings=slot['idea_ids'])
+            warnings.extend(packet['warnings'])
+            chapters.append({k:packet['value'][k] for k in fallback}|{'id':f'C{number}',
+                'idea_ids':slot['idea_ids'],'target_words':budgets[number-1]})
+        ids_exact([i for c in chapters for i in c['idea_ids']]+[e['idea_id'] for e in exclusions],ids)
+        value={'central_question':central,'chapters':chapters,'exclusions':exclusions,'warnings':warnings}
+        lines=['Question centrale : '+central]
+        for c in chapters:
             lines.append(f'## {c["id"]} — {c["title"]}\n\nQuestion : {c["question"]}\n\nDéjà acquis : {c["known"]}\n\nÀ apprendre : {c["new"]}\n\nSuite : {c["why_next"]}\n\nBudget : {c["target_words"]} mots\n\nIdées : '+', '.join(c['idea_ids']))
-        if value['exclusions']:
-            lines.append('## Idées conservées dans le dossier mais hors podcast\n\n'+'\n'.join('- '+e['idea_id']+' : '+e['reason'] for e in value['exclusions']))
+        if exclusions:lines.append('## Idées conservées dans le dossier mais hors podcast\n\n'+'\n'.join('- '+e['idea_id']+' : '+e['reason'] for e in exclusions))
+        if warnings:lines.append('## Plan à relire\n\n'+'\n'.join('- '+w for w in warnings))
         return value,'\n\n'.join(lines)
 
     def step6(self):
@@ -2277,7 +2399,7 @@ class Pipeline:
         result = {'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(covered),
                   'source_uncertainties':facts.get('source_uncertainties',[]),
                   'synthesis_warnings':facts.get('synthesis_warnings',[]),
-                  'generation_warnings':facts.get('classification_warnings',[])+facts.get('text_warnings',[])+self.saved(6).get('warnings',[])+self.saved(7).get('warnings',[]),
+                  'generation_warnings':facts.get('classification_warnings',[])+facts.get('text_warnings',[])+plan.get('warnings',[])+self.saved(6).get('warnings',[])+self.saved(7).get('warnings',[]),
                   'expected_idea_ids':sorted(expected),'all_planned_ids_present':covered==expected,
                   'excluded_ideas':plan['exclusions'],'word_count':words,'estimated_minutes':round(words/145,1),
                   'target_minutes':self.config['minutes'],'markdown':script_markdown(chapters,self.config['speakers']),
@@ -2414,6 +2536,12 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
+    if task=='plan_seed':return obj({'central_question':string,'topics':{'type':'array','items':string,'maxItems':12}})
+    if task=='plan_assignments':
+        choice=obj({'chapter':string,'title':string})
+        return obj({'assignments':obj({g['ref']:choice for g in payload['groups']})})
+    if task=='plan_question':return obj({'central_question':string,'order':{'type':'array','items':string}})
+    if task=='plan_chapter':return obj({key:string for key in ('title','question','known','new','why_next')})
     if task=='pdf_synthesis':return obj({'text':string})
     if task in ('common_paragraphs','explanation_paragraphs'):
         fields={'paragraphs':obj({i['ref']:string for i in payload['ideas']})}
@@ -2436,6 +2564,15 @@ def response_schema(task, payload):
 def validate_reference_map(value, field):
     if not isinstance(value,dict) or not isinstance(value.get(field),dict):
         raise ValueError('Un objet '+field+' indexé par les références courtes est requis.')
+
+
+def validate_plan_chapter(value):
+    fields=('title','question','known','new','why_next')
+    if not isinstance(value,dict) or any(not isinstance(value.get(k),str) or not value[k].strip() for k in fields):
+        raise ValueError('Titre, question, acquis, nouveauté et raccord textuels requis.')
+    if len(value['title'])>160 or any(len(value[k])>700 for k in fields) or sum(len(value[k].split()) for k in fields)>300:
+        raise ValueError('Chapitre trop long : phrases brèves, 300 mots maximum pour sa fiche.')
+    french_text(' '.join(value[k] for k in fields))
 
 
 def normalized(value):
@@ -3087,6 +3224,15 @@ def answer(task,p):
         cut=max(1,len(p['ideas'])//2)
         return {'assignments':{i['ref']:'Comprendre les pertes' if n<cut else 'Compenser les pertes' for n,i in enumerate(p['ideas'])}}
     if task=='global_text':return {'text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
+    if task=='plan_seed':return {'central_question':'Comment transmettre un signal plus loin ?',
+        'topics':['Comprendre les pertes','Compenser les pertes']}
+    if task=='plan_assignments':
+        return {'assignments':{g['ref']:{'chapter':next((c['id'] for c in p['chapters'] if c['title']==g['title']),'new'),
+                                      'title':g['title']} for g in p['groups']}}
+    if task=='plan_question':return {'central_question':'Comment transmettre un signal plus loin ?',
+        'order':[c['id'] for c in p['chapters']]}
+    if task=='plan_chapter':return {'title':p['topic'],'question':'Pourquoi ces phénomènes ?',
+        'known':'Les points précédents.','new':'Les relations de cause à effet.','why_next':'Étudier la suite du raisonnement.'}
     if task in ('plan','plan_groups'):
         import math
         groups=p['groups']
@@ -3404,9 +3550,9 @@ class PipelineTests(unittest.TestCase):
         client=FakeClient();pipeline=Pipeline(self.project,client);pipeline.run(1,4)
         class BadPlan(FakeClient):
             def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan_groups':validate({'central_question':'question','chapters':[],'exclusions':[]})
+                if task=='plan_chapter':raise ModelError('Ollama répond HTTP 500')
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaises(ValueError):Pipeline(self.project,BadPlan()).run(5,9)
+        with self.assertRaises(ModelError):Pipeline(self.project,BadPlan()).run(5,9)
         self.assertTrue((self.project/'etapes/04.json').exists());self.assertFalse((self.project/'etapes/05.json').exists())
 
     def test_source_without_extractible_text_is_rejected(self):
@@ -3640,6 +3786,181 @@ class ServerTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_plan_context.py
+
+```python
+"""Plans nombreux : requêtes bornées, références conservées et reprises."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from fixtures import FakeClient,StubServer,make_pdf
+from llm import Cancelled,InvalidResponseError,ModelError,Ollama,ResponseLimitError
+from pipeline import Pipeline
+from storage import defaults,read,write
+
+
+def planning_data(count=181,groups_count=176):
+    ideas=[{'id':f'PDF1-P2-I{n:03}','statement':f'Le phénomène {n} dépend des conditions expérimentales.',
+        'explanation':'Les conditions doivent être précisées pour interpréter les résultats.',
+        'document':'PDF1','pages':[n]} for n in range(1,count+1)]
+    groups=[{'id':f'G{n+1}','title':('Thème '+str(n)+' — '+('notion scientifique '*10))[:160],
+        'text':('Le texte complet est conservé dans le registre. '*200),
+        'idea_ids':[i['id'] for i in ideas[n::groups_count]]} for n in range(min(groups_count,count))]
+    return {'ideas':ideas,'groups':groups,'documents':[{'id':'PDF1','name':'Essai.pdf'}]}
+
+
+class PlanContextTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.project=Path(self.temp.name)
+        write(self.project/'projet.json',{'settings':{**defaults(),'num_ctx':8192},'pdfs':[]})
+    def tearDown(self):self.temp.cleanup()
+    def prepare(self,data):write(self.project/'etapes/04.json',{'data':data})
+    def check_coverage(self,value,data):
+        seen=[i for c in value['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in value['exclusions']]
+        self.assertEqual(set(seen),{i['id'] for i in data['ideas']});self.assertEqual(len(seen),len(data['ideas']))
+        self.assertLessEqual(len(value['chapters']),20)
+        self.assertTrue(all(1<=len(c['idea_ids'])<=24 for c in value['chapters']))
+
+    def test_176_groups_and_181_ideas_fit_8192_context_without_modifying_stage4(self):
+        data=planning_data();self.prepare(data);before=(self.project/'etapes/04.json').read_bytes()
+        stub=StubServer()
+        try:
+            client=Ollama({**defaults(),'num_ctx':8192,'endpoint':stub.endpoint},self.project/'cache')
+            Pipeline(self.project,client).run(5,5)
+            result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
+            self.assertFalse(result['exclusions']);self.assertEqual(sum(c['target_words'] for c in result['chapters']),2900)
+            self.assertEqual((self.project/'etapes/04.json').read_bytes(),before)
+            self.assertTrue(stub.requests)
+            for request in stub.requests:
+                prompt=request['messages'][1]['content'];budget=request['options']['num_predict']
+                self.assertLessEqual(len(prompt),max(2000,(8192-budget-1200)*3))
+                self.assertNotIn('PDF1-P2-I',prompt)
+                self.assertNotIn(data['groups'][0]['text'],prompt)
+            assignments=[p for task,p in stub.calls if task=='plan_assignments']
+            self.assertEqual(sum(len(p['groups']) for p in assignments),176)
+            self.assertTrue(all(len(p['groups'])<=6 for p in assignments))
+        finally:stub.close()
+
+    def test_invalid_assignments_and_order_do_not_lose_source_ideas(self):
+        data=planning_data(30,30);self.prepare(data)
+        class Invalid(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='plan_assignments':
+                    value={'assignments':{'I1':{'chapter':'C999','title':'Fantôme'},'I999':{'chapter':'C1','title':''}}}
+                elif task=='plan_question':value={'central_question':'Comment relier ces notions ?','order':['C999','C1','C1']}
+                else:return super().ask(task,payload,instructions,validate,budget)
+                validate(value);return value
+        Pipeline(self.project,Invalid()).run(5,5)
+        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
+        self.assertTrue(result['warnings']);self.assertFalse(result['exclusions'])
+
+    def test_long_metadata_is_abbreviated_explicitly_without_cutting_audience_or_sources(self):
+        data=planning_data(30,30)
+        for g in data['groups']:g['title']+=' — '+('précision '*600)
+        self.prepare(data);before=(self.project/'etapes/04.json').read_bytes()
+        meta=read(self.project/'projet.json');meta['settings']['audience']='Public : '+('consigne '*248)
+        write(self.project/'projet.json',meta);stub=StubServer()
+        try:
+            config={**meta['settings'],'endpoint':stub.endpoint}
+            client=Ollama(config,self.project/'cache');Pipeline(self.project,client).run(5,5)
+            self.assertEqual((self.project/'etapes/04.json').read_bytes(),before)
+            for task,payload in stub.calls:
+                self.assertEqual(payload['audience'],meta['settings']['audience'])
+                for g in payload.get('groups',[]):
+                    self.assertTrue(g['title_is_excerpt']);self.assertTrue(g['overview_is_excerpt'])
+            self.check_coverage(read(self.project/'etapes/05.json')['data'],data)
+        finally:stub.close()
+
+    def test_invalid_or_truncated_generation_produces_an_explicit_provisional_plan(self):
+        for error in (InvalidResponseError,ResponseLimitError):
+            class Failed(FakeClient):
+                def ask(self,*args,**kwargs):raise error('Réponse non concluante')
+            folder=self.project/error.__name__;folder.mkdir()
+            write(folder/'projet.json',{'settings':defaults(),'pdfs':[]})
+            data=planning_data(4,4);write(folder/'etapes/04.json',{'data':data})
+            Pipeline(folder,Failed()).run(5,5)
+            result=read(folder/'etapes/05.json')['data'];self.check_coverage(result,data)
+            self.assertTrue(result['warnings']);self.assertIn('Plan à relire',(folder/'etapes/05.md').read_text())
+
+    def test_completed_assignment_batches_are_reused_after_a_network_failure(self):
+        data=planning_data(18,18);self.prepare(data)
+        class Interrupted(FakeClient):
+            def ask(self,task,payload,*args,**kwargs):
+                if task=='plan_assignments':
+                    self.seen+=1
+                    if self.seen==2:raise ModelError('HTTP 500')
+                return super().ask(task,payload,*args,**kwargs)
+        client=Interrupted();client.seen=0
+        with self.assertRaisesRegex(ModelError,'Étape 5/9.*500'):Pipeline(self.project,client).run(5,5)
+        path=self.project/'etapes/parties/05-Placement1.md';before=path.read_bytes()
+        self.assertFalse((self.project/'etapes/05.json').exists())
+        client=FakeClient();Pipeline(self.project,client).run(5,5)
+        calls=[p for task,p in client.calls if task=='plan_assignments']
+        self.assertEqual(len(calls),2);self.assertTrue(calls[0]['groups'][0]['title'].startswith('Thème 6'))
+        self.assertEqual(path.read_bytes(),before)
+
+    def test_completed_chapter_survives_a_later_chapter_failure(self):
+        data=planning_data(12,12);self.prepare(data)
+        class Interrupted(FakeClient):
+            def ask(self,task,payload,*args,**kwargs):
+                if task=='plan_chapter':
+                    self.seen+=1
+                    if self.seen==2:raise ModelError('HTTP 404')
+                return super().ask(task,payload,*args,**kwargs)
+        client=Interrupted();client.seen=0
+        with self.assertRaisesRegex(ModelError,'404'):Pipeline(self.project,client).run(5,5)
+        path=self.project/'etapes/parties/05-Chapitre1.md';before=path.read_bytes()
+        client=FakeClient();Pipeline(self.project,client).run(5,5)
+        self.assertEqual(path.read_bytes(),before)
+        self.assertEqual(len([p for t,p in client.calls if t=='plan_chapter']),11)
+
+    def test_source_group_larger_than_one_chapter_is_split_with_exact_coverage(self):
+        data=planning_data(60,1);self.prepare(data);Pipeline(self.project,FakeClient()).run(5,5)
+        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
+        self.assertFalse(result['exclusions'])
+
+    def test_capacity_exclusions_are_explicit_and_all_sources_remain_in_the_dossier(self):
+        data=planning_data(500,500);self.prepare(data)
+        Pipeline(self.project,FakeClient()).run(5,5)
+        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
+        self.assertTrue(result['exclusions']);self.assertTrue(result['warnings'])
+        self.assertTrue(all('Capacité du plan' in e['reason'] for e in result['exclusions']))
+        self.assertEqual(len(read(self.project/'etapes/04.json')['data']['ideas']),500)
+
+    def test_wrong_source_coverage_stops_before_any_model_request(self):
+        data=planning_data(3,3);data['groups'][1]['idea_ids']=data['groups'][0]['idea_ids'][:]
+        self.prepare(data);client=FakeClient()
+        with self.assertRaisesRegex(ValueError,'identifiants'):Pipeline(self.project,client).run(5,5)
+        self.assertFalse(client.calls)
+
+    def test_model_connectivity_and_cancellation_are_never_turned_into_a_fallback_plan(self):
+        data=planning_data(3,3);self.prepare(data)
+        for error in (ModelError,Cancelled,OSError):
+            class Failed(FakeClient):
+                def ask(self,*args,**kwargs):raise error('Arrêt')
+            with self.subTest(error=error),self.assertRaises(error):Pipeline(self.project,Failed()).run(5,5)
+        self.assertFalse((self.project/'etapes/05.json').exists())
+
+    def test_plan_warnings_reach_the_final_report(self):
+        (self.project/'sources').mkdir();make_pdf(self.project/'sources/a.pdf')
+        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Essai.pdf'}]})
+        class Missing(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='plan_question':
+                    value={'central_question':'Comment relier ces notions ?','order':[]};validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        Pipeline(self.project,Missing()).run(1,9)
+        final=read(self.project/'exports/podcast.json')
+        self.assertTrue(final['all_planned_ids_present'])
+        self.assertTrue(any('Chapitres absents' in w for w in final['generation_warnings']))
+
+
+if __name__=='__main__':unittest.main()
+```
+
 ## tests/test_quality.py
 
 ```python
@@ -3832,7 +4153,7 @@ class QualityPipelineTests(unittest.TestCase):
         plan=read(self.project/'etapes/05.json')['data']
         covered=[i for c in plan['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in plan['exclusions']]
         self.assertEqual(set(covered),{i['id'] for i in ideas});self.assertEqual(len(covered),250)
-        payload=next(p for task,p in client.calls if task=='plan_groups')
+        payload=next(p for task,p in client.calls if task=='plan_assignments')
         self.assertNotIn('ideas',payload)
         self.assertTrue(all('idea_ids' not in g for g in payload['groups']))
 

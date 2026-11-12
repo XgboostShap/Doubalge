@@ -1,8 +1,48 @@
-# Podcast pédagogique — version 0.1.9
+# Podcast pédagogique — version 0.1.10
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.10 — plan pédagogique par lots
+
+L’étape 5 ne transmet plus tous les thèmes dans une seule requête. Le fichier
+signalé contenait 176 thèmes pour 181 idées ; ses aperçus représentaient environ
+66 600 caractères avant les instructions. Augmenter le contexte n’est plus
+nécessaire pour cette requête de plan.
+
+Le programme prépare une vue d’ensemble à partir de titres répartis dans le
+document, puis traite **tous** les thèmes par lots de six. Il rapproche les
+thèmes dans de grands chapitres, choisit leur ordre, puis rédige une fiche par
+chapitre. Chaque lot et chaque fiche sont sauvegardés en Markdown et JSON.
+Une reprise conserve les fragments du plan déjà terminés.
+
+Seules les métadonnées nécessaires sont envoyées au modèle : titres, aperçus
+explicitement abrégés, nombres d’idées et acquis précédents. Les textes complets
+de l’étape 4 et les consignes de public sont conservés. Le programme rétablit
+les références et contrôle que chaque idée figure exactement une fois dans un
+chapitre ou dans la liste motivée des exclusions.
+
+Une proposition manquante ou mal formée produit un plan provisoire signalé à
+relire. Les avertissements figurent dans `05.md`, les fragments et le rapport
+final. Les pannes Ollama, les annulations et les erreurs disque restent des
+arrêts explicites. La limite existante de 20 chapitres de 24 idées est conservée :
+les idées qui dépasseraient cette capacité restent dans le dossier et sont
+signalées hors podcast. La régression sur les 181 idées fournies n’en exclut
+aucune.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire tout le ZIP,
+ouvrir **Mettre-a-jour.cmd**, choisir le dossier contenant `Lancer-Podcast.cmd`,
+vérifier **Version 0.1.10**, puis cliquer sur **Continuer**. L’étape 5 reprend ;
+les quatre premières étapes, les PDF et les modèles restent conservés.
+Il n’est pas nécessaire de refaire les résumés pour ce correctif.
+
+Validation : plan complet du volume fourni à travers le client HTTP Ollama avec
+réponses simulées et contexte de 8 192 tokens ; couverture exacte des références,
+reprise des lots et chapitres, aperçus longs, avertissements et neuf étapes dans
+Chromium. Les essais Mistral sont ciblés. La qualité pédagogique et scientifique
+du plan, la génération complète avec Mistral et l’interface native Windows
+restent à vérifier.
 
 ## Correctif 0.1.9 — texte commun et contrôle des idées
 

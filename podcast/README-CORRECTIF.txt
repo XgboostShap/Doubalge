@@ -1,26 +1,23 @@
-PODCAST PEDAGOGIQUE 0.1.9 — TEXTE COMMUN ET CONTROLE DES IDEES
+PODCAST PEDAGOGIQUE 0.1.10 — PLAN PEDAGOGIQUE PAR LOTS
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.9 en haut de la page.
+4. Verifier Version 0.1.10 en haut de la page.
+5. Cliquer sur Continuer pour reprendre l'etape 5.
 
-Pour debloquer l'etape 4 : cliquer sur Continuer.
-Le programme ajoute les references des idees lui-meme. Si un paragraphe manque,
-l'enonce source est conserve et signale a relire. La meme protection s'applique
-aux explications de l'etape 7. Les corrections precedentes sont incluses.
+Le plan traite les themes par petits lots et redige chaque chapitre separement.
+Chaque fragment est sauvegarde avant le suivant et peut etre repris apres arret.
+Les references des idees sont ajoutees et controlees par le programme.
+Les apercus envoyes au modele sont abreges explicitement ; le texte complet de
+l'etape 4 reste conserve. Les propositions de secours sont signalees a relire.
 
-Pour revoir aussi la qualite de votre ancien 02.md : cliquer sur Ameliorer les
-resumes existants, puis Continuer. Les anciens resultats sont archives et les
-candidats disponibles sont reutilises. Cette relecture prend du temps avec le
-modele ; elle peut changer les idees retenues et relance les etapes suivantes.
+Pas besoin d'augmenter le contexte Ollama ni de refaire les quatre premieres
+etapes pour ce correctif. Les PDF, projets et modeles sont conserves.
+Les correctifs precedents sont inclus.
 
-L'etape 2 reprend les controles invalides idee par idee. Les citations qui ne
-contiennent qu'un titre, un en-tete ou une reference bibliographique sont refusees.
-Une seconde lecture automatique examine si la citation soutient le sens de l'idee.
-Les rubriques de tous les blocs et les enonces retenus restent dans la synthese.
-
-Les PDF, projets et modeles sont conserves. Pas de reinstallation de Mistral ni
-de changement du contexte 16/32/65 k necessaire.
-Ces controles automatiques ne garantissent pas la fidelite scientifique.
-La generation du PDF integral et l'interface native Windows restent a verifier.
+La limite de 20 chapitres de 24 idees reste appliquee. Toute idee hors podcast
+est listee avec motif, sans suppression du dossier. Le cas de 181 idees fourni
+est couvert sans exclusion dans le test de regression.
+Les controles techniques ne garantissent pas la qualite scientifique du script.
+Le parcours complet avec Mistral et l'interface native Windows restent a verifier.

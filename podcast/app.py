@@ -23,7 +23,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.9'
+APP_VERSION = '0.1.10'
 
 
 def settings(value):

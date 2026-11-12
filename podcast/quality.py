@@ -12,6 +12,12 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
+    if task=='plan_seed':return obj({'central_question':string,'topics':{'type':'array','items':string,'maxItems':12}})
+    if task=='plan_assignments':
+        choice=obj({'chapter':string,'title':string})
+        return obj({'assignments':obj({g['ref']:choice for g in payload['groups']})})
+    if task=='plan_question':return obj({'central_question':string,'order':{'type':'array','items':string}})
+    if task=='plan_chapter':return obj({key:string for key in ('title','question','known','new','why_next')})
     if task=='pdf_synthesis':return obj({'text':string})
     if task in ('common_paragraphs','explanation_paragraphs'):
         fields={'paragraphs':obj({i['ref']:string for i in payload['ideas']})}
@@ -34,6 +40,15 @@ def response_schema(task, payload):
 def validate_reference_map(value, field):
     if not isinstance(value,dict) or not isinstance(value.get(field),dict):
         raise ValueError('Un objet '+field+' indexé par les références courtes est requis.')
+
+
+def validate_plan_chapter(value):
+    fields=('title','question','known','new','why_next')
+    if not isinstance(value,dict) or any(not isinstance(value.get(k),str) or not value[k].strip() for k in fields):
+        raise ValueError('Titre, question, acquis, nouveauté et raccord textuels requis.')
+    if len(value['title'])>160 or any(len(value[k])>700 for k in fields) or sum(len(value[k].split()) for k in fields)>300:
+        raise ValueError('Chapitre trop long : phrases brèves, 300 mots maximum pour sa fiche.')
+    french_text(' '.join(value[k] for k in fields))
 
 
 def normalized(value):

@@ -58,9 +58,9 @@ class PipelineTests(unittest.TestCase):
         client=FakeClient();pipeline=Pipeline(self.project,client);pipeline.run(1,4)
         class BadPlan(FakeClient):
             def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan_groups':validate({'central_question':'question','chapters':[],'exclusions':[]})
+                if task=='plan_chapter':raise ModelError('Ollama répond HTTP 500')
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaises(ValueError):Pipeline(self.project,BadPlan()).run(5,9)
+        with self.assertRaises(ModelError):Pipeline(self.project,BadPlan()).run(5,9)
         self.assertTrue((self.project/'etapes/04.json').exists());self.assertFalse((self.project/'etapes/05.json').exists())
 
     def test_source_without_extractible_text_is_rejected(self):

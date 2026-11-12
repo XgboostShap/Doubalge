@@ -54,6 +54,15 @@ def answer(task,p):
         cut=max(1,len(p['ideas'])//2)
         return {'assignments':{i['ref']:'Comprendre les pertes' if n<cut else 'Compenser les pertes' for n,i in enumerate(p['ideas'])}}
     if task=='global_text':return {'text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
+    if task=='plan_seed':return {'central_question':'Comment transmettre un signal plus loin ?',
+        'topics':['Comprendre les pertes','Compenser les pertes']}
+    if task=='plan_assignments':
+        return {'assignments':{g['ref']:{'chapter':next((c['id'] for c in p['chapters'] if c['title']==g['title']),'new'),
+                                      'title':g['title']} for g in p['groups']}}
+    if task=='plan_question':return {'central_question':'Comment transmettre un signal plus loin ?',
+        'order':[c['id'] for c in p['chapters']]}
+    if task=='plan_chapter':return {'title':p['topic'],'question':'Pourquoi ces phénomènes ?',
+        'known':'Les points précédents.','new':'Les relations de cause à effet.','why_next':'Étudier la suite du raisonnement.'}
     if task in ('plan','plan_groups'):
         import math
         groups=p['groups']

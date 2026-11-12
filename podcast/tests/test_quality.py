@@ -187,7 +187,7 @@ class QualityPipelineTests(unittest.TestCase):
         plan=read(self.project/'etapes/05.json')['data']
         covered=[i for c in plan['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in plan['exclusions']]
         self.assertEqual(set(covered),{i['id'] for i in ideas});self.assertEqual(len(covered),250)
-        payload=next(p for task,p in client.calls if task=='plan_groups')
+        payload=next(p for task,p in client.calls if task=='plan_assignments')
         self.assertNotIn('ideas',payload)
         self.assertTrue(all('idea_ids' not in g for g in payload['groups']))
 
