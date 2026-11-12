@@ -40,6 +40,10 @@ def answer(task,p):
         return {'decisions':{i['id']:{'statement':i['statement'],'explanation':i['explanation'],
                         'evidence':[p['source_text'][:100]],'status':'kept','reason':'Appui simulé pour le test.'}
                        for i in p['candidates']}}
+    if task=='fact_support':return {'verdicts':{i['ref']:{'status':'supported','reason':'Appui sémantique simulé pour ce test.'} for i in p['facts']}}
+    if task=='common_paragraphs':return {'paragraphs':{i['ref']:i['statement']+' '+i.get('explanation','') for i in p['ideas']}}
+    if task=='explanation_paragraphs':return {'transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',
+        'paragraphs':{i['ref']:i['statement']+' '+i.get('explanation','') for i in p['ideas']}}
     if task=='part_structure':
         items=p['elements']
         return {'problem':'Comprendre les pertes de signal.',

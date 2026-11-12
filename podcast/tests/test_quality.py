@@ -47,12 +47,16 @@ class ContractsTests(unittest.TestCase):
         terms={'AI':[{'definition':'Artificial intelligence','page':1}],
                'DT':[{'definition':'Digital twin','page':1}],
                'LLM':[{'definition':'Large language model','page':1}],
-               'SOA':[{'definition':'Semiconductor optical amplifier','page':1}]}
+               'SOA':[{'definition':'Semiconductor optical amplifier','page':1}],
+               'NLSE':[{'definition':'Nonlinear Schrödinger equation','page':1}],
+               'BER':[{'definition':'Bit error rate','page':1}]}
         for value in ('L’intelligence artificielle (AI) utilise les données.',
                       'AI désigne l’intelligence artificielle.',
                       'AI signifie intelligence artificielle.',
                       'Les jumeaux numériques (DT) représentent le réseau.',
                       'Les grands modèles de langage (LLM) traitent les textes.',
+                      'L’équation de Schrödinger non linéaire (NLSE) décrit la propagation.',
+                      'Le taux d’erreur binaire (BER) est une mesure.',
                       'Un amplificateur optique à semi-conducteurs (SOA) amplifie le signal.',
                       '(AI) est employé dans cette partie.',
                       'Le terme AI (AI) est repris dans le texte.'):
@@ -117,9 +121,10 @@ class QualityPipelineTests(unittest.TestCase):
            {'id':f'PDF1-P{n}-I001','statement':'Une idée.','explanation':'[65, 66].','pages':[n]}]} for n in (1,2,3)]}]}
         from storage import fingerprint
         write(self.project/'reprises/02.json',{'source':fingerprint({'documents':[doc]}),'generation':'initial','data':previous})
-        # Le client simulé conserve cette explication invalide : le contrôle doit l'arrêter.
-        with self.assertRaises(ValueError):Pipeline(self.project,FakeClient()).run(2,2)
-        self.assertFalse((self.project/'etapes/02.json').exists())
+        # Une explication invalide est isolée sans arrêter les autres parties.
+        Pipeline(self.project,FakeClient()).run(2,2)
+        parts=read(self.project/'etapes/02.json')['data']['documents'][0]['parts']
+        self.assertTrue(all(not p['ideas'] and p['uncertain_ideas'] for p in parts))
     def test_inconclusive_review_is_reported_without_accepting_invalid_facts(self):
         self.prepare(document(['Le signal perd de la puissance dans la fibre et un amplificateur peut compenser les pertes.']*3))
         class Uncertain(FakeClient):

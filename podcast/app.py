@@ -23,7 +23,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.8'
+APP_VERSION = '0.1.9'
 
 
 def settings(value):
@@ -123,7 +123,7 @@ class App:
         with self.lock:
             if self.runtime['page_sources']!='pdf-page-v1':
                 raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
-            if self.runtime['summary_quality']!='source-review-v1':
+            if self.runtime['summary_quality']!='source-review-v2':
                 raise ValueError('Mise à jour incomplète : les contrôles de synthèse sont absents. Fermez le programme et utilisez le nouveau correctif.')
             self.idle(folder)
             meta = read(folder/'projet.json')

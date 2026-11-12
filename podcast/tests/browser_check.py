@@ -73,7 +73,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.evaluate('() => refresh()');page.wait_for_function('() => current()?.completed.length===2')
             assert page.locator('#quality-upgrade').is_visible()
             before_extract=len([p for task,p in stub.calls if task=='part_summary'])
-            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v1"',timeout=60000)
+            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v2"',timeout=60000)
             assert len([p for task,p in stub.calls if task=='part_summary'])==before_extract
             assert page.locator('#quality-upgrade').is_hidden()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Problème posé")')

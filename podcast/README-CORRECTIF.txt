@@ -1,28 +1,26 @@
-PODCAST PEDAGOGIQUE 0.1.8 — SYNTHESES, DT ET ETAPE 3
+PODCAST PEDAGOGIQUE 0.1.9 — TEXTE COMMUN ET CONTROLE DES IDEES
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.8 en haut de la page.
-5. Cliquer sur Continuer pour reprendre le traitement bloque.
+4. Verifier Version 0.1.9 en haut de la page.
 
-DT accepte les variantes usuelles de Digital twin lorsque ce libelle vient
-du glossaire source. Un autre sens de DT ne recoit pas ces variantes.
-Une formulation de synthese incertaine est signalee sans bloquer toutes les
-rubriques. Le texte automatique non retenu reste consultable dans le rapport.
-Les idees sources restent conservees.
+Pour debloquer l'etape 4 : cliquer sur Continuer.
+Le programme ajoute les references des idees lui-meme. Si un paragraphe manque,
+l'enonce source est conserve et signale a relire. La meme protection s'applique
+aux explications de l'etape 7. Les corrections precedentes sont incluses.
 
-L'etape 3 compile les resumes longs en blocs sauvegardes en Markdown et JSON.
-En cas de reponse invalide, repetitive ou tronquee, les resumes sources sont
-conserves avec une mention provisoire a relire. Une panne Ollama, une annulation
-ou une erreur disque reste signalee normalement.
-Les avertissements figurent dans les etapes 2, 3 et 9 et le rapport final JSON
-(synthesis_warnings). Les correctifs des references des idees restent inclus.
+Pour revoir aussi la qualite de votre ancien 02.md : cliquer sur Ameliorer les
+resumes existants, puis Continuer. Les anciens resultats sont archives et les
+candidats disponibles sont reutilises. Cette relecture prend du temps avec le
+modele ; elle peut changer les idees retenues et relance les etapes suivantes.
 
-Les PDF, projets et modeles sont conserves. Les etapes precedentes ne sont
-pas a refaire. Pas de changement du contexte 16/32/65 k necessaire.
-L'ancien message d'erreur peut rester visible jusqu'a la nouvelle tentative.
-Les correctifs precedents sont inclus.
+L'etape 2 reprend les controles invalides idee par idee. Les citations qui ne
+contiennent qu'un titre, un en-tete ou une reference bibliographique sont refusees.
+Une seconde lecture automatique examine si la citation soutient le sens de l'idee.
+Les rubriques de tous les blocs et les enonces retenus restent dans la synthese.
 
-Les sources conservees et les controles ne prouvent pas la fidelite scientifique.
-Une generation integrale des 147 pages et Windows natif restent a verifier.
+Les PDF, projets et modeles sont conserves. Pas de reinstallation de Mistral ni
+de changement du contexte 16/32/65 k necessaire.
+Ces controles automatiques ne garantissent pas la fidelite scientifique.
+La generation du PDF integral et l'interface native Windows restent a verifier.

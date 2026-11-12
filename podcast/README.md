@@ -1,8 +1,61 @@
-# Podcast pédagogique — version 0.1.8
+# Podcast pédagogique — version 0.1.9
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.9 — texte commun et contrôle des idées
+
+L’étape 4 ne demande plus au modèle de recopier les identifiants complets des
+idées. Elle reçoit un paragraphe par référence courte ; le programme rétablit
+les références du PDF dans l’ordre source. Cela corrige notamment le blocage
+« Citer chaque idée attendue… PDF1-P2-I109 ». Une formulation manquante ou une
+réponse invalide, répétitive ou tronquée laisse l’énoncé et son explication
+sources dans le texte, avec un avertissement. Les références étrangères sont
+ignorées. La même protection s’applique aux explications de l’étape 7.
+L’énoncé précis reste affiché avant l’explication du modèle pour éviter qu’une
+simple annonce du sujet remplace l’information essentielle.
+Les avertissements restent dans les Markdown et dans `generation_warnings`
+du JSON final. La conservation d’une référence ne valide pas le sens du texte.
+
+Les nouveaux contrôles de l’étape 2 (`source-review-v2`) apportent :
+
+- une reprise individuelle des décisions mal formées ou des citations rejetées,
+  sans écarter les autres idées du même groupe ;
+- le refus des citations constituées uniquement d’un en-tête, de colonnes de
+  tableau ou d’une référence bibliographique, ainsi que des descriptions du
+  seul plan du PDF ;
+- une seconde lecture automatique qui vérifie si les citations appuient le sens,
+  la causalité et la portée de l’affirmation ; les avis incertains ou
+  contradictoires restent à vérifier et ne deviennent pas des faits acceptés ;
+- la conservation des rubriques de tous les blocs résumés et une liste compacte
+  des énoncés retenus, transmise à la compilation pour éviter d’omettre les
+  notions des derniers blocs.
+
+Un motif de seconde lecture qui recopie l’affirmation reste incertain : il
+ne constitue pas une justification indépendante de son appui dans les citations.
+Ces contrôles utilisent le même modèle local et restent imparfaits. Une citation
+exacte et une seconde lecture automatique ne remplacent pas la vérification
+scientifique. Les résumés peuvent être plus longs et l’étape 2 demande davantage
+d’appels au modèle. Les erreurs de connexion, les annulations et les erreurs
+disque arrêtent toujours le traitement ; elles ne sont pas traitées comme un
+simple avis incertain.
+
+Pour mettre à jour : fermer la fenêtre de lancement, extraire tout le ZIP
+correctif, ouvrir **Mettre-a-jour.cmd**, choisir le dossier contenant
+`Lancer-Podcast.cmd`, puis vérifier **Version 0.1.9**.
+
+- **Continuer** reprend l’étape 4 interrompue avec les résumés déjà enregistrés.
+- Pour réexaminer aussi le contenu d’un ancien `02.md`, choisir **Améliorer les
+  résumés existants**, puis **Continuer**. Les résultats précédents sont archivés,
+  les candidats disponibles et le texte extrait sont réutilisés. Cette relecture
+  peut changer les idées retenues et relance les étapes suivantes.
+
+Les PDF, projets et modèles sont conservés. Les tests couvrent la référence
+signalée, les références manquantes ou étrangères, la reprise par groupe, les
+preuves structurelles rejetées, la récupération individuelle, les avis de seconde
+lecture et la conservation des blocs. La validation native Windows, la génération
+intégrale des 147 pages et la fidélité scientifique restent à vérifier.
 
 ## Correctif 0.1.8 — synthèses, DT et reprise de l’étape 3
 

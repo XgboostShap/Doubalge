@@ -21,7 +21,7 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
- const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v1';
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v2';
  document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
@@ -33,7 +33,7 @@ function render(){
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
  $('continue').disabled=outdated||busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
  $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);
- $('quality-upgrade').hidden=!p.completed.includes(2)||p.summary_quality==='source-review-v1';
+ $('quality-upgrade').hidden=!p.completed.includes(2)||p.summary_quality==='source-review-v2';
  $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Ces idées restent consultables dans le rapport et sont écartées du script provisoire.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});

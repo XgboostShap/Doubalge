@@ -243,34 +243,33 @@ class Pipeline:
         return None
 
     def structured_summary(self, key, title, items, terms, details=False):
-        level=0;warnings=[]
-        while True:
-            results=[]
-            for index,batch in enumerate(quality.batches(items,max_chars=10000,max_items=10),1):
-                payload={'elements':batch,'glossary':quality.relevant_terms(terms,batch)}
-                def produce():
-                    try:
-                        raw=self.client.ask('part_structure',payload,quality.SYNTHESIS_PROMPT,quality.validate_sections,budget=3000)
-                        safe,issues=quality.checked_sections(raw,terms)
-                    except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
-                        safe={field:'' for field in quality.TITLES}
-                        issues=[{'section':'Synthèse','reason':'Formulation automatique non concluante ; énoncés sources conservés. '+str(error)[:500],'original':''}]
-                    if not any(v.strip() for v in safe.values()):
-                        safe['concepts']=quality.source_text(batch)
-                        issues.append({'section':'Synthèse','reason':'Aucune rubrique automatique confirmée ; les énoncés sources sont conservés.','original':''})
-                    return {'sections':safe,'warnings':issues}
-                packet=self.unit(2,f'{key}-S{level}B{index}',title+' — synthèse',
-                    {'protocol':'checked-sections-v2','payload':payload,'instructions':quality.SYNTHESIS_PROMPT},
-                    produce,checked_summary_markdown)
-                warnings.extend(packet['warnings']);results.append(packet['sections'])
-            if len(results)==1:
-                result={'text':quality.section_markdown(results[0]),'warnings':warnings}
-                return result if details else result['text']
-            if len(results)>=len(items):
-                warnings.append({'section':'Regroupement','reason':'Synthèse provisoire : sous-synthèses conservées séparément, sans perte du registre source.','original':''})
-                result={'text':'\n\n'.join(quality.section_markdown(v) for v in results),'warnings':warnings}
-                return result if details else result['text']
-            items=results;level+=1
+        warnings=[];results=[]
+        for index,batch in enumerate(quality.batches(items,max_chars=10000,max_items=10),1):
+            payload={'elements':batch,'glossary':quality.relevant_terms(terms,batch)}
+            def produce():
+                try:
+                    raw=self.client.ask('part_structure',payload,quality.SYNTHESIS_PROMPT,quality.validate_sections,budget=3000)
+                    safe,issues=quality.checked_sections(raw,terms)
+                except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
+                    safe={field:'' for field in quality.TITLES}
+                    issues=[{'section':'Synthèse','reason':'Formulation automatique non concluante ; énoncés sources conservés. '+str(error)[:500],'original':''}]
+                if not any(v.strip() for v in safe.values()):
+                    safe['concepts']=quality.source_text(batch)
+                    issues.append({'section':'Synthèse','reason':'Aucune rubrique automatique confirmée ; les énoncés sources sont conservés.','original':''})
+                return {'sections':safe,'warnings':issues}
+            packet=self.unit(2,f'{key}-S0B{index}',title+' — synthèse, bloc '+str(index),
+                {'protocol':'checked-sections-v2','payload':payload,'instructions':quality.SYNTHESIS_PROMPT},
+                produce,checked_summary_markdown)
+            warnings.extend(packet['warnings']);results.append(packet['sections'])
+        # Réunir toutes les rubriques sans une nouvelle compression qui pourrait
+        # ne garder que le premier thème. Les énoncés brefs accompagnent la synthèse
+        # dans l'étape 3 ; les explications et citations restent dans le registre.
+        merged={field:'\n\n'.join(dict.fromkeys(v[field] for v in results if v[field].strip())) for field in quality.TITLES}
+        summary=quality.section_markdown(merged)
+        anchors=['- ['+i['id']+'] '+i['statement'] for i in items if i.get('id') and i.get('statement')]
+        if anchors:summary+='\n\n### Repères essentiels à conserver\n\n'+'\n'.join(anchors)
+        result={'text':summary,'warnings':warnings}
+        return result if details else result['text']
 
     def review_candidates(self, payload, batch, raw):
         ambiguous=[i for i in batch if quality.ambiguous_subject(i['statement'])]
@@ -279,16 +278,74 @@ class Pipeline:
         candidates=[i for i in batch if i not in ambiguous]
         if not candidates:return {'kept':[],'excluded':uncertain}
         payload={**payload,'candidates':[i for i in payload['candidates'] if i['id'] in {c['id'] for c in candidates}]}
+        failure=None
         try:
-            result=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,
-                lambda v:quality.validate_review(v,candidates,raw,payload.get('glossary')),budget=3000)
-            result=quality.review_result(result)
-            return {'kept':result['kept'],'excluded':result['excluded']+uncertain}
-        except (InvalidResponseError,RepetitionError) as error:
-            # Aucune réponse invalide n'est promue en fait accepté. Une difficulté
-            # locale du modèle devient une incertitude visible, pas une preuve.
-            self.progress('Contrôle non concluant : '+str(len(batch))+' idée(s) signalée(s) à vérifier.')
-            return {'kept':[],'excluded':uncertain+[{'id':i['id'],'reason':'À vérifier : contrôle automatique non concluant. '+str(error)[:500]} for i in candidates]}
+            response=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,quality.validate_review_envelope,budget=3000)
+            decisions=response['decisions']
+        except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
+            decisions={};failure=error
+        kept=[];excluded=uncertain[:]
+        for candidate in candidates:
+            identity=candidate['id'];initial=decisions.get(identity)
+            one={**payload,'candidates':[i for i in payload['candidates'] if i['id']==identity]}
+            def produce():
+                problem=failure
+                try:
+                    result={'decisions':{identity:initial}}
+                    quality.validate_review(result,[candidate],raw,payload.get('glossary'))
+                    return quality.review_result(result)
+                except (ValueError,KeyError,TypeError) as error:problem=problem or error
+                # Une réponse globale inutilisable est reprise par idée. Pour une
+                # idée déjà seule, l'échec de génération reste borné à cet appel.
+                if failure is None or len(candidates)>1:
+                    self.progress('Relecture individuelle — '+identity)
+                    try:
+                        result=self.client.ask('review_facts',one,quality.REVIEW_PROMPT+
+                            '\nCorrige uniquement cette idée. Le contrôle a relevé : '+str(problem)[:500],
+                            lambda v:quality.validate_review(v,[candidate],raw,payload.get('glossary')),budget=1500)
+                        return quality.review_result(result)
+                    except (InvalidResponseError,RepetitionError,ResponseLimitError,ValueError) as error:problem=error
+                return {'kept':[],'excluded':[{'id':identity,'reason':'À vérifier : contrôle individuel non concluant. '+str(problem)[:500]}]}
+            result=self.unit(2,'Verify-'+identity,'Appui source — '+identity,
+                {'protocol':quality.VERSION,'payload':one,'initial':initial},produce,review_markdown)
+            kept.extend(result['kept']);excluded.extend(result['excluded'])
+        if kept:
+            checked=self.check_support(kept,payload.get('source_page'))
+            kept=checked['kept'];excluded.extend(checked['excluded'])
+        return {'kept':kept,'excluded':excluded}
+
+    def check_support(self, facts, page):
+        """Deuxième lecture : les citations appuient-elles le sens de chaque idée ?"""
+        local={f'I{n}':fact for n,fact in enumerate(facts,1)}
+        entries=[{'ref':ref,'statement':f['statement'],'explanation':f['explanation'],
+                  'evidence':f['evidence']} for ref,f in local.items()]
+        payload={'source_page':page,'facts':entries}
+        def produce():
+            try:
+                response=self.client.ask('fact_support',payload,quality.SUPPORT_PROMPT,quality.validate_support,budget=1800)
+                verdicts=response['verdicts']
+            except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
+                verdicts={};self.progress('Seconde lecture à reprendre : '+str(error)[:200])
+            kept=[];excluded=[]
+            for ref,fact in local.items():
+                verdict=verdicts.get(ref)
+                try:quality.validate_support({'verdicts':{ref:verdict}},[ref])
+                except ValueError:
+                    try:
+                        value=self.client.ask('fact_support',{'source_page':page,'facts':[entries[int(ref[1:])-1]]},
+                            quality.SUPPORT_PROMPT,lambda v:quality.validate_support(v,[ref]),budget=600)
+                        verdict=value['verdicts'][ref]
+                    except (InvalidResponseError,RepetitionError,ResponseLimitError,ValueError) as error:
+                        verdict={'status':'uncertain','reason':'Seconde lecture non concluante. '+str(error)[:300]}
+                if verdict['status']=='supported' and quality.copied_support_reason(verdict,fact):
+                    verdict={'status':'uncertain','reason':'Le motif de seconde lecture recopie l’affirmation sans justifier son appui dans les citations.'}
+                if verdict['status']=='supported':kept.append({**fact,'support_reason':verdict['reason']})
+                else:
+                    label='citations en contradiction avec l’idée' if verdict['status']=='contradicted' else 'citations insuffisantes pour confirmer l’idée'
+                    excluded.append({'id':fact['id'],'reason':'À vérifier : '+label+'. '+verdict['reason']})
+            return {'kept':kept,'excluded':excluded}
+        return self.unit(2,'Support-'+facts[0]['id'],'Seconde lecture des citations — page '+str(page),
+            {'protocol':'source-support-v2','quality':quality.VERSION,'payload':payload,'facts':facts,'prompt':quality.SUPPORT_PROMPT},produce,review_markdown)
 
     def summarize_part(self, doc, part, pages, terms, previous=None):
         ideas, empty_excerpts, excluded, page_notes = [], [], [], []
@@ -329,12 +386,13 @@ class Pipeline:
                          'candidates':[{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in batch],
                          'glossary':quality.relevant_terms(terms,raw)}
                 reviewed=self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
-                    f'{doc["id"]} — contrôle page {page}',{'payload':payload,'prompt':quality.REVIEW_PROMPT},
+                    f'{doc["id"]} — contrôle page {page}',{'protocol':quality.VERSION,'payload':payload,'prompt':quality.REVIEW_PROMPT},
                     lambda:self.review_candidates(payload,batch,raw),review_markdown)
                 originals={i['id']:i for i in batch}
                 for fact in reviewed['kept']:
                     ideas.append({'id':fact['id'],'statement':fact['statement'],'explanation':fact['explanation'],
                                   'pages':[page],'document':doc['id'],'status':fact['status'],'review_reason':fact['reason'],
+                                  'support_reason':fact.get('support_reason',''),
                                   'evidence':[{'page':page,'quote':quality.source_quote(q)} for q in fact['evidence']]})
                 excluded.extend({**originals[i['id']],'reason':i['reason']} for i in reviewed['excluded'])
         # Fusion seulement des formulations strictement identiques : pas de
@@ -358,7 +416,7 @@ class Pipeline:
                 'ideas':ideas,'quality_version':quality.VERSION,
                 'excerpts_without_ideas':empty_excerpts,'excluded_ideas':excluded,'page_notes':page_notes,
                 'uncertain_ideas':uncertain,
-                'quality_note':'Citations contrôlées dans le texte source ; la fidélité scientifique nécessite encore une relecture.'}
+                'quality_note':'Citations exactes et seconde lecture automatique de leur appui aux idées. Ces contrôles ne garantissent pas la fidélité scientifique ; une relecture reste nécessaire.'}
 
     def step2(self):
         source = self.saved(1)
@@ -454,23 +512,22 @@ class Pipeline:
             classification_warnings.extend(value['warnings'])
         ids_exact([identity for g in grouped for identity in g['idea_ids']],[i['id'] for i in ideas])
         registry = {i['id']:i for i in ideas}
-        notes = []
+        notes = [];text_warnings=[]
         for number,group in enumerate(grouped,1):
             group['id']=f'G{number}'
             self.progress('Texte commun — '+group['title'])
             ids = group['idea_ids']
-            result = self.ask_unit(4,f'G{number}',group['title'],'global_text',{'group':group,'ideas':[model_idea(registry[i]) for i in ids], 'audience':self.config['audience']},
-                '''Rédige un texte pédagogique suivi regroupant ces idées. Relie les causes et les
-                conséquences, explicite les prérequis, rapproche les doublons sans perdre les nuances.
-                Mentionne les contradictions si elles existent. Chaque idée doit être citée dans le texte
-                par [IDENTIFIANT] ; ces références servent au contrôle et ne seront pas lues dans le dialogue.
-                Structure : {"text":"texte avec références"}.''',lambda v:citations(v,ids),lambda v:v['text'])
+            result = self.common_text(group,[registry[i] for i in ids])
             group['text'] = result['text']
+            text_warnings.extend(result['warnings'])
             notes.append('## '+group['title']+'\n\n'+group['text'])
         if classification_warnings:
             notes.append('## Classements provisoires à vérifier\n\n'+'\n'.join('- '+w for w in classification_warnings))
+        if text_warnings:
+            notes.append('## Passages du texte commun à relire\n\n'+'\n'.join('- '+w for w in text_warnings))
         result = {'groups':grouped,'ideas':ideas,'documents':[{'id':d['id'],'name':d['name']} for d in data['documents']],
                   'classification_warnings':classification_warnings,
+                  'text_warnings':text_warnings,
                   'synthesis_warnings':[{'document':d['id'],**w} for d in data['documents']
                        for w in d.get('synthesis_warnings',[])]+[
                        {'document':d['id'],'part':p['number'],**w} for d in data['documents']
@@ -478,6 +535,71 @@ class Pipeline:
                   'source_uncertainties':[{'document':d['id'],'id':i['id'],'pages':i.get('pages',[]),'reason':i['reason']}
                        for d in data['documents'] for p in d['parts'] for i in p.get('uncertain_ideas',[])]}
         return result,'\n\n'.join(notes)+'\n\n## Sources et idées\n\n'+idea_markdown(ideas)
+
+    def common_text(self, group, ideas, step=4, context=None):
+        def produce():
+            local={f'I{n}':idea for n,idea in enumerate(ideas,1)}
+            payload={'theme':group['title'],'audience':self.config['audience'],
+                     'ideas':[{'ref':ref,'statement':i['statement'],'explanation':i.get('explanation','')} for ref,i in local.items()]}
+            task='explanation_paragraphs' if context is not None else 'common_paragraphs'
+            if context is not None:payload['context']=context
+            warnings=[]
+            value={}
+            try:
+                value=self.client.ask(task,payload,
+                    '''Rédige en français un paragraphe explicatif pour CHAQUE référence courte.
+                    Deux à quatre phrases par idée suffisent ; évite les répétitions.
+                    Le programme affichera l'énoncé source avant le paragraphe : explique-le,
+                    ne te limite pas à annoncer le sujet ou à recopier cet énoncé.
+                    Les paragraphes seront assemblés dans l'ordre fourni en un texte pédagogique.
+                    Relie les causes et conséquences étayées, explicite les prérequis et les limites.
+                    Ne généralise pas un résultat d'expérience à toutes les situations. Ne copie pas
+                    les références dans les paragraphes : le logiciel les ajoutera lui-même.
+                    Sans fait nouveau ni citation inventée. Structure :
+                    {"paragraphs":{"I1":"paragraphe pour la première idée","I2":"paragraphe suivant"}}.
+                    Si context est fourni, ajoute transition : une phrase qui rappelle le point
+                    précédent et annonce la question actuelle. Définis les termes avant leur emploi.''',
+                    lambda v:quality.validate_reference_map(v,'paragraphs'),budget=3000)
+                paragraphs=value['paragraphs']
+            except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
+                paragraphs={};warnings.append(group['title']+' : formulation non concluante ; énoncés sources conservés. '+str(error)[:300])
+            if set(paragraphs)-set(local):warnings.append(group['title']+' : références étrangères ignorées dans le texte commun.')
+            result=[]
+            for ref,idea in local.items():
+                paragraph=paragraphs.get(ref)
+                try:
+                    if not isinstance(paragraph,str) or not paragraph.strip():raise ValueError('Paragraphe manquant.')
+                    quality.substantive(paragraph);quality.french_text(paragraph)
+                    if len(paragraph.split())>700:raise ValueError('Paragraphe trop long.')
+                    # Une référence générée ne doit jamais être confondue avec une
+                    # référence restaurée depuis le registre source du programme.
+                    if re.search(r'\[(?:[A-Z][A-Z0-9-]*-I\d+|I\d+)\]',paragraph):
+                        warnings.append(idea['id']+' : références générées retirées ; référence source restaurée.')
+                        paragraph=re.sub(r'\[(?:[A-Z][A-Z0-9-]*-I\d+|I\d+)\]','',paragraph)
+                except ValueError:
+                    paragraph=idea['statement']+' '+idea.get('explanation','')
+                    warnings.append(idea['id']+' : paragraphe à reformuler ; énoncé source conservé.')
+                # L'ancrage source reste visible même si le modèle rédige une
+                # annonce vague ou omet un détail essentiel de cette idée.
+                statement=idea['statement'].rstrip('. ')+'.'
+                if not quality.normalized(paragraph).startswith(quality.normalized(idea['statement'])):
+                    paragraph=statement+' '+paragraph
+                result.append(paragraph.strip()+' ['+idea['id']+']')
+            packet={'text':'\n\n'.join(result),'warnings':warnings}
+            if context is not None:
+                transition=value.get('transition')
+                try:
+                    if not isinstance(transition,str) or not transition.strip() or len(transition)>800:raise ValueError('Transition manquante.')
+                    quality.french_text(transition)
+                except ValueError:
+                    transition=('Rappel : '+str(context['known']).rstrip('. ')+'. ' if context.get('previous') else '')+'Nous abordons maintenant cette question : '+context['question']
+                    warnings.append(group['id']+' : transition de secours à relire.')
+                packet['transition']=transition
+            citations(packet,[i['id'] for i in ideas])
+            return packet
+        return self.unit(step,group['id'],group['title'],
+            {'protocol':'common-paragraphs-v2','group':group,'ideas':ideas,'context':context},produce,
+            lambda v:(v['transition']+'\n\n' if 'transition' in v else '')+v['text']+('\n\n### Passages à relire\n\n'+'\n'.join('- '+w for w in v['warnings']) if v['warnings'] else ''))
 
     def classify_batch(self, batch, number):
         def produce():
@@ -628,22 +750,17 @@ class Pipeline:
     def step7(self):
         plan, keys, facts = self.saved(5), self.saved(6), self.saved(4)
         registry = {i['id']:i for i in facts['ideas']}
-        result, notes = [], []
+        result, notes, warnings = [], [], []
         for index,c in enumerate(plan['chapters']):
-            def validate(v):
-                citations(v,c['idea_ids']);text(v,'transition')
-            value = self.ask_unit(7,c['id'],c['title'],'explanation',{'chapter':c,'key_sentences':keys['chapters'][index]['items'],
-                'ideas':[model_idea(registry[i]) for i in c['idea_ids']], 'previous':plan['chapters'][index-1]['new'] if index else None,
-                'audience':self.config['audience']},
-                '''Transforme les phrases essentielles en explication pédagogique continue, sans personnages.
-                Conserve tous les points et leurs liens. Définis les termes avant de les utiliser.
-                Écris une transition d'une phrase rappelant le point précédent et annonçant la question
-                actuelle ; pour le premier chapitre, introduis la question. Cite chaque idée [IDENTIFIANT].
-                Structure : {"transition":"une phrase", "text":"explication sourcée"}.''',validate,
-                lambda v:v['transition']+'\n\n'+v['text'])
+            sentences={i['idea_id']:i['sentence'] for i in keys['chapters'][index]['items']}
+            value=self.common_text(c,[{**registry[i],'statement':sentences[i]} for i in c['idea_ids']],step=7,
+                context={'question':c['question'],'known':c['known'],'new':c['new'],
+                         'previous':plan['chapters'][index-1]['new'] if index else None})
+            warnings.extend(value['warnings'])
             result.append({'id':c['id'],**value})
             notes.append('## '+c['title']+'\n\n'+value['transition']+'\n\n'+value['text'])
-        return {'chapters':result},'\n\n'.join(notes)
+        if warnings:notes.append('## Explications à relire\n\n'+'\n'.join('- '+w for w in warnings))
+        return {'chapters':result,'warnings':warnings},'\n\n'.join(notes)
 
     def step8(self):
         plan, explanations, facts = self.saved(5), self.saved(7), self.saved(4)
@@ -712,7 +829,7 @@ class Pipeline:
         result = {'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(covered),
                   'source_uncertainties':facts.get('source_uncertainties',[]),
                   'synthesis_warnings':facts.get('synthesis_warnings',[]),
-                  'generation_warnings':facts.get('classification_warnings',[])+self.saved(6).get('warnings',[]),
+                  'generation_warnings':facts.get('classification_warnings',[])+facts.get('text_warnings',[])+self.saved(6).get('warnings',[])+self.saved(7).get('warnings',[]),
                   'expected_idea_ids':sorted(expected),'all_planned_ids_present':covered==expected,
                   'excluded_ideas':plan['exclusions'],'word_count':words,'estimated_minutes':round(words/145,1),
                   'target_minutes':self.config['minutes'],'markdown':script_markdown(chapters,self.config['speakers']),
@@ -800,6 +917,7 @@ def idea_markdown(ideas):
         if i.get('evidence'):
             line+='\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i['evidence'])
         if i.get('status')=='corrected':line+='\n  Correction proposée : '+i['review_reason']
+        if i.get('support_reason'):line+='\n  Seconde lecture automatique : '+i['support_reason']
         lines.append(line)
     return '\n\n'.join(lines)
 
