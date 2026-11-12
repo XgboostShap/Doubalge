@@ -1,9 +1,9 @@
 {
-  "version": "0.1.7",
+  "version": "0.1.8",
   "files": [
     {
       "path": "app.py",
-      "sha256": "2c4c4dcb944821d966a9c2a7261654c72d789633acf665cedb34165843227a3f"
+      "sha256": "a2732019850c184b27733b32baf77084985335fae8ee4ebdc0a2e9305d8feffd"
     },
     {
       "path": "storage.py",
@@ -11,15 +11,15 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "afda2b8f3260891ff142de5786191bab8dea1cb76da7dfbe2e1379161a8191c4"
+      "sha256": "4e636530385e7517b474d0872b6d4b431c357c36d55ad44e897f2c8b136e9fbd"
     },
     {
       "path": "quality.py",
-      "sha256": "63798a8ee724023756bf537e7a2dd90de6b9f68ec77aaa1d48e63253cd3f243c"
+      "sha256": "f747cf9bacbf15af038a79c99aa2362515de33198e74a4ba424dc1ddef1bb5a3"
     },
     {
       "path": "llm.py",
-      "sha256": "0ea46fea1248313016610b2e6e7379439a94c6adf763331b91a1332c8761f55d"
+      "sha256": "5c0dbf7160df421ea9981ea30f8a0d5b58e0d5623874694dbac31e9c4a1b22db"
     },
     {
       "path": "pdfs.py",
@@ -43,15 +43,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "d4f81caa77863c146f175cd5ec03f2b9ac44736fc2710d21ca041c6d93486d8b"
+      "sha256": "97d869a370d8d526fd34b6d32e161c2446bccb86e3086b513ac842fc7106c650"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "d9ec95f22491a66d6b0953b1d69d2c5073040edd6136bce1cbe75157920de34b"
+      "sha256": "45036677074afe778b9bca6bbdbf11c181e2a2664e3e5f2b92272c7de889f18d"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "1bc2aad3e20a9d81b018937cd735022f59ecdc2296266838d33041103614d43d"
+      "sha256": "aea6a8e786e9fc8b4b2caa05489a8bf65d652854417c98fd2d3af075f1298ab6"
     }
   ]
 }

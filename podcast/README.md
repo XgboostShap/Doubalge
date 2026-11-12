@@ -1,8 +1,47 @@
-# Podcast pédagogique — version 0.1.7
+# Podcast pédagogique — version 0.1.8
 
 Application locale pour transformer plusieurs PDF en un script de podcast
 progressif, en français, avec Mistral via Ollama. Le programme produit le **texte
 du dialogue** ; la synthèse audio n’est pas incluse dans cette version.
+
+## Correctif 0.1.8 — synthèses, DT et reprise de l’étape 3
+
+Le glossaire du PDF de test définit DT par « Digital twin » (page 27). Avec
+cette définition source, le contrôle accepte aussi « digital twins »,
+« jumeau numérique » et « double numérique », au singulier et au pluriel.
+Ces variantes ne sont pas accordées à un autre sens de DT, par exemple
+« Decision tree ». Les citations et les unités conservent leurs contrôles.
+
+Une formulation de synthèse dont l’acronyme reste incertain est isolée dans
+**Formulations de synthèse à vérifier**, avec son motif et le texte automatique
+non retenu. Les autres rubriques et le registre d’idées sources sont conservés.
+Si aucune rubrique n’est exploitable, les énoncés sources servent de résultat
+provisoire. Cela ne confirme pas la formulation rejetée ni la fidélité scientifique.
+
+L’étape 3 découpe les résumés longs, compile des blocs bornés puis rassemble
+leurs synthèses. Chaque bloc est enregistré en Markdown et JSON avant le suivant.
+Le modèle reçoit les résumés et les termes utiles du glossaire ; le registre
+détaillé reste conservé séparément. Les appels ne cumulent pas un historique
+de conversation. Si un format, une répétition ou une limite de sortie empêche
+une compilation, les résumés concernés restent disponibles, avec une mention
+**Compilation provisoire à relire**. Une réponse tronquée n’est pas acceptée.
+Les pannes Ollama, les annulations et les erreurs disque restent signalées.
+
+Les avertissements figurent dans les Markdown des étapes 2, 3 et 9 et dans le
+JSON final sous `synthesis_warnings`. L’étape exacte est précisée dans les
+erreurs du modèle qui arrêtent encore le traitement.
+
+Pour mettre à jour depuis 0.1.7 : fermer la fenêtre de lancement, extraire tout
+le ZIP correctif, ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant
+`Lancer-Podcast.cmd`. Vérifier **Version 0.1.8** et cliquer sur **Continuer**.
+Les PDF, les projets et les parties terminées restent conservés. Il n’est pas
+nécessaire de réinstaller Mistral ni de changer le contexte 16/32/65 k.
+
+Validation : régression DT, isolement des formulations, réponses incomplètes,
+conservation des sources, découpage et reprise par bloc ; parcours Chromium avec
+fournisseur simulé. L’essai Mistral sur les synthèses fournies est ciblé : il ne
+constitue pas une nouvelle génération complète des 147 pages du PDF ni une
+validation de l’interface native Windows.
 
 ## Correctif 0.1.7 — références des idées conservées par le programme
 

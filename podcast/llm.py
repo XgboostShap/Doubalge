@@ -22,6 +22,10 @@ class InvalidResponseError(ModelError):
     """Le modèle a épuisé sa correction de structure ou d'appui aux sources."""
 
 
+class ResponseLimitError(ModelError):
+    """La réponse a atteint sa limite et ne doit pas être acceptée comme complète."""
+
+
 class RepetitionError(ModelError):
     """Arrêt de génération répétitive, distinct d'une panne réseau ou d'un 404."""
 
@@ -169,7 +173,7 @@ class Ollama:
                 if event.get('done'):
                     done = True
                     if event.get('done_reason')=='length':
-                        raise ModelError('Le modèle a atteint sa limite de sortie. La réponse incomplète '
+                        raise ResponseLimitError('Le modèle a atteint sa limite de sortie. La réponse incomplète '
                                          'n’est pas enregistrée. Réduisez la taille de la partie ou essayez '
                                          'un autre modèle ; augmenter le contexte seul ne change pas cette limite.')
             if self.cancelled.is_set():

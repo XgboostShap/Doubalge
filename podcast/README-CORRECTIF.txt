@@ -1,21 +1,28 @@
-PODCAST PEDAGOGIQUE 0.1.7 — REFERENCES DES IDEES
+PODCAST PEDAGOGIQUE 0.1.8 — SYNTHESES, DT ET ETAPE 3
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.7 en haut de la page.
+4. Verifier Version 0.1.8 en haut de la page.
 5. Cliquer sur Continuer pour reprendre le traitement bloque.
 
-Les identifiants du PDF sont conserves par le programme. Le modele utilise
-seulement des reperes courts pour le regroupement et les phrases essentielles.
-Si une affectation manque, l'idee reste dans un groupe provisoire signale.
-Si une phrase manque, son enonce source est conserve et indique a revoir.
-Les avertissements sont dans les etapes 4 et 6 et dans le rapport final JSON.
+DT accepte les variantes usuelles de Digital twin lorsque ce libelle vient
+du glossaire source. Un autre sens de DT ne recoit pas ces variantes.
+Une formulation de synthese incertaine est signalee sans bloquer toutes les
+rubriques. Le texte automatique non retenu reste consultable dans le rapport.
+Les idees sources restent conservees.
+
+L'etape 3 compile les resumes longs en blocs sauvegardes en Markdown et JSON.
+En cas de reponse invalide, repetitive ou tronquee, les resumes sources sont
+conserves avec une mention provisoire a relire. Une panne Ollama, une annulation
+ou une erreur disque reste signalee normalement.
+Les avertissements figurent dans les etapes 2, 3 et 9 et le rapport final JSON
+(synthesis_warnings). Les correctifs des references des idees restent inclus.
 
 Les PDF, projets et modeles sont conserves. Les etapes precedentes ne sont
 pas a refaire. Pas de changement du contexte 16/32/65 k necessaire.
 L'ancien message d'erreur peut rester visible jusqu'a la nouvelle tentative.
 Les correctifs precedents sont inclus.
 
-La conservation des references ne prouve pas la fidelite scientifique du texte.
-Le PDF complet et l'execution native Windows restent a verifier.
+Les sources conservees et les controles ne prouvent pas la fidelite scientifique.
+Une generation integrale des 147 pages et Windows natif restent a verifier.

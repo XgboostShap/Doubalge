@@ -12,6 +12,7 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
+    if task=='pdf_synthesis':return obj({'text':string})
     if task in ('global_groups','key_sentences'):
         field='assignments' if task=='global_groups' else 'sentences'
         return obj({field:obj({i['ref']:string for i in payload['ideas']})})
@@ -113,7 +114,8 @@ _FRENCH_DEFINITIONS = {
     'artificial intelligence':('intelligence artificielle','IA'),
     'machine learning':('apprentissage automatique','apprentissage machine'),
     'deep learning':('apprentissage profond',),
-    'digital twin':('jumeau numérique','jumeaux numériques'),
+    'digital twin':('digital twins','jumeau numérique','jumeaux numériques','double numérique','doubles numériques',
+                     'jumeau digital','jumeaux digitaux'),
     'large language model':('large language models','grand modèle de langage','grands modèles de langage',
                             'modèle de langage de grande taille','modèles de langage de grande taille'),
     'retrieval augmented generation':('génération augmentée par recherche','génération augmentée par récupération'),
@@ -247,6 +249,43 @@ def validate_sections(value):
     if sum(len(v.split()) for v in value.values())>950:
         raise ValueError('Synthèse trop longue : 950 mots maximum, sans répéter les mêmes faits.')
     french_text(' '.join(value.values()))
+
+
+def validate_compilation(value):
+    if not isinstance(value,dict) or not isinstance(value.get('text'),str) or not value['text'].strip():
+        raise ValueError('La compilation doit contenir un texte non vide dans text.')
+    if len(value['text'].split())>1000:
+        raise ValueError('Compilation trop longue : 1000 mots maximum, sans répétition.')
+    french_text(value['text'])
+
+
+def checked_sections(value, terms):
+    """Isoler un champ incertain sans rejeter les autres rubriques ou les faits sources."""
+    safe=dict(value);warnings=[]
+    for key,content in value.items():
+        try:validate_acronyms(content,terms)
+        except ValueError as error:
+            safe[key]=''
+            warnings.append({'section':TITLES[key],'reason':str(error),'original':content})
+    return safe,warnings
+
+
+def source_text(elements):
+    lines=[]
+    for item in elements:
+        if 'statement' in item:lines.append(item['statement'])
+        else:lines.extend(item.get(key,'') for key in TITLES if item.get(key,''))
+    return '\n\n'.join(lines)
+
+
+def text_fragments(value, max_chars=6000):
+    """Découpe un résumé long sans perdre de caractères."""
+    while len(value)>max_chars:
+        end=value.rfind('\n\n',0,max_chars+1)
+        if end<max_chars//2:end=value.rfind(' ',0,max_chars+1)
+        if end<max_chars//2:end=max_chars
+        yield value[:end];value=value[end:]
+    if value:yield value
 
 
 def section_markdown(value):
