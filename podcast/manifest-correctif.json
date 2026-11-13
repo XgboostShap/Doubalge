@@ -1,9 +1,9 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "files": [
     {
       "path": "app.py",
-      "sha256": "c55dfbdf1f55b0014e057036ba7e560ab7e8fefbfa2f5e8cdfbce01442bc0804"
+      "sha256": "2fb6ea16bbb6070e8329c54d310cff06173bb1a6751ff615b230fa9874395d06"
     },
     {
       "path": "storage.py",
@@ -15,11 +15,15 @@
     },
     {
       "path": "quality.py",
-      "sha256": "d9f3e2109759c7befc4bbedba09cfa68d8f110833a57d52acc989e5a9cbd2fd4"
+      "sha256": "a5fb38a5131f8a028d5ef852a4991363efd5df51c80d6f83943093fee6970147"
     },
     {
       "path": "editorial.py",
-      "sha256": "f70fbfee4146c6b3b2f1f7ffe581f799858de0a2cba4400b4b6ccfe3079f7d43"
+      "sha256": "7d23d6e9418b210ba00712b206e101c5aedb5096e49717b0fb50143839ab93b9"
+    },
+    {
+      "path": "audio_export.py",
+      "sha256": "37f75c1c1b1f42c8097a510c9840abdd862b9ff0fcf960edddbe64fb3fe810de"
     },
     {
       "path": "llm.py",
@@ -31,15 +35,15 @@
     },
     {
       "path": "web/index.html",
-      "sha256": "937f1e79a0c128c0279cbbaf85ce5aa5bbc5a1916a41e6443ba35c2ab7129153"
+      "sha256": "9dca0851231dce0cbb03bcf5169a866033e7a128d8b4d0fd313ae90a89f91cab"
     },
     {
       "path": "web/app.js",
-      "sha256": "5033690c2b93f7e4528553a8e5dd617c4d6a2a428bd0d879fc59f9717a37cbe3"
+      "sha256": "93b18d51ca9a7642ee3962e6f1ba1d3c81f06fe3cd80fcf27eb001cc06b99444"
     },
     {
       "path": "web/style.css",
-      "sha256": "0ae5fce3bea22ca035b0eb0eca9c79431c10d70fa1beb3a3c634e0a9611280cb"
+      "sha256": "70af06b267b91f5d3aff16bc0a672ada49c86637a7c50916f86f2e58c3ef609d"
     },
     {
       "path": "Lancer-Podcast.cmd",
@@ -47,15 +51,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "6a12585deaaa5195a8531b8fcb1d385fc1b0036bae0a4c02fdb3b190d116616e"
+      "sha256": "46168aab9ee1823a5d527bbfa80092cb6349a45dc006c8b1fbf1ac68f68f8c07"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "0d2f6953e374c68bf242a7141a18be5181c1c959cd7e343a146c347d679224e2"
+      "sha256": "753415538e9fdf3cab0ebf20b028ab4874b06f38c48c430fd5b437d103205b22"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "0b970785c877b7065b1670175a42c9ead0be338027e62821cf406b7ee9ee5ee9"
+      "sha256": "5de926c8973a71da4dab74d14416695c6f5dd5d9dc1c8050b5247146a4d42462"
     }
   ]
 }

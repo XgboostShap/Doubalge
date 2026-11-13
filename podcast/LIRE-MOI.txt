@@ -7,8 +7,8 @@ PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
 5. Ouvrir Lancer-Podcast.cmd.
 6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
 
-Le programme cree le SCRIPT du podcast, en texte. Il ne genere pas encore
-les voix audio. Chaque partie est sauvegardee en Markdown avant la suivante.
+Le programme cree le script du podcast, puis le MP3 avec vos voix VoiceStudio.
+Ouvrir VoiceStudio, puis Charger mes voix dans la section Voix et podcast MP3. Chaque partie est sauvegardee en Markdown avant la suivante.
 En cas d'arret, Continuer reprend les parties manquantes.
 Une courte fiche de continuite relie les chapitres sans accumuler le dialogue.
 

@@ -7,10 +7,10 @@ from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 from storage import fingerprint, read
 import quality
 
-VERSION = 'grounded-editorial-v1'
+VERSION = 'grounded-editorial-v2'
 MAX_QUESTION_WORDS = 20
 EXPECTED_QUESTION_WORDS = 12
-CHAPTER_OVERHEAD_WORDS = 30
+CHAPTER_OVERHEAD_WORDS = 60
 RECOVERABLE = (InvalidResponseError, RepetitionError, ResponseLimitError)
 ROLES = ('concept','problem','method','result','application','limit')
 LABELS = {'concept':'Les notions pour comprendre','problem':'Le problème à résoudre',
@@ -44,7 +44,14 @@ def passage(idea):
         return statement.rstrip('. ')+'.'
     if quality.normalized(explanation).startswith(quality.normalized(statement)):
         return explanation
-    return statement.rstrip('. ')+'. '+explanation
+    combined=statement.rstrip('. ')+'. '+explanation
+    sentences=[];seen=set()
+    for sentence in re.split(r'(?<=[.!?])\s+',combined):
+        clean=re.sub(r'^(?:Le texte|Le passage|L.extrait)\s+(?:explique|indique|mentionne|précise)\s+que\s+', '',sentence)
+        key=quality.normalized(clean).rstrip('. ')
+        if key in seen:continue
+        seen.add(key);sentences.append(clean)
+    return ' '.join(sentences)
 
 def words(text):
     return len(text.split())
@@ -68,11 +75,11 @@ def document_commentary(text):
 
 def annotated(pipe, ideas, step=4, key='Roles'):
     """Le modèle classe les idées, sans pouvoir réécrire leurs faits."""
-    result=[];warnings=[]
+    result=[];warnings=[];known_topics=[]
     for index,start in enumerate(range(0,len(ideas),5),1):
         batch=ideas[start:start+5]
         local={'F'+source_hash(i)[:10]:i for i in batch}
-        payload={'ideas':[{'ref':ref,'statement':i['statement'][:1000],'statement_is_excerpt':len(i['statement'])>1000,
+        payload={'known_topics':known_topics[:12],'ideas':[{'ref':ref,'statement':i['statement'][:1000],'statement_is_excerpt':len(i['statement'])>1000,
                           'explanation':i.get('explanation','')[:1200],
                           'explanation_is_excerpt':len(i.get('explanation',''))>1200} for ref,i in local.items()]}
         def produce():
@@ -84,8 +91,14 @@ def annotated(pipe, ideas, step=4, key='Roles'):
                     Pour un débutant, privilégie définitions, problème, principe de méthode,
                     résultats AVEC conditions, applications et limites. Index, titres et tableaux
                     sans apport explicatif sont des détails. reason : motif bref en français.
+                    topic : thème nominal de 2 à 7 mots ; réutilise les thèmes connus et reste
+                    autour de 6 grands thèmes cohérents. level vaut foundation pour une notion
+                    indispensable à expliquer avant les méthodes, core pour le raisonnement et
+                    les résultats, detail pour les paramètres, cas numérotés, listes et réglages.
+                    Un sigle, une API ou un paramètre n'est pas une notion de base par sa seule présence.
                     Structure : {"roles":{"REFERENCE":{"role":"concept","importance":"essential",
-                    "reason":"motif"}}}. Ne retourne aucun énoncé ni identifiant du PDF.''',
+                    "reason":"motif","topic":"thème","level":"foundation"}}}.
+                    Ne retourne aucun énoncé ni identifiant du PDF.''',
                     lambda v:quality.validate_reference_map(v,'roles'),budget=1100)
                 mapping=raw['roles']
             except RECOVERABLE as error:
@@ -97,7 +110,13 @@ def annotated(pipe, ideas, step=4, key='Roles'):
                     row.get('importance') not in ('essential','support','detail') or
                     not isinstance(row.get('reason'),str) or not row['reason'].strip()):
                     row=role_fallback(idea);issues.append(idea['id']+' : classement éditorial de secours.')
-                decisions[idea['id']]={k:row[k] for k in ('role','importance','reason')}
+                decision={k:row[k] for k in ('role','importance','reason')}
+                topic=row.get('topic')
+                if isinstance(topic,str) and 1<=len(topic.split())<=7 and not re.search(r'[.!?;\n]|\bPDF\d+\b',topic):decision['topic']=topic.strip()
+                decision['level']=row.get('level') if row.get('level') in ('foundation','core','detail') else ('foundation' if decision['role']=='concept' else 'core')
+                if re.match(r'^Case[- ]?\d\b',idea['statement'],re.I):
+                    decision.update(level='detail',importance='detail',reason='Scénario numéroté et paramètres conservés au dossier ; le podcast privilégie le principe de la méthode.')
+                decisions[idea['id']]=decision
             return {'decisions':decisions,'warnings':issues}
         packet=pipe.unit(step,f'{key}{index}','Classement éditorial — lot '+str(index),
             {'protocol':VERSION,'payload':payload,'source_hashes':[source_hash(i) for i in batch]},
@@ -105,7 +124,9 @@ def annotated(pipe, ideas, step=4, key='Roles'):
                                      for i,r in v['decisions'].items()))
         warnings.extend(packet['warnings'])
         for idea in batch:
-            result.append({**idea,**packet['decisions'][idea['id']],'source_hash':source_hash(idea)})
+            entry={**idea,**packet['decisions'][idea['id']],'source_hash':source_hash(idea)}
+            if entry.get('topic') and entry['topic'] not in known_topics:known_topics.append(entry['topic'])
+            result.append(entry)
     return result,warnings
 
 def summary(ideas, maximum=12):
@@ -195,7 +216,7 @@ def definitions(data):
 def fact_definitions(idea, terms):
     text=idea['statement']+' '+idea.get('explanation','')
     return [row for (document,term),row in terms.items() if document==idea.get('document') and
-            re.search(r'\b'+re.escape(term)+r'\b',text)]
+            re.search(r'\b'+re.escape(term)+r's?\b',text)]
 
 def selection(data, minutes):
     ideas=data['ideas'];terms=definitions(data);total=minutes*145
@@ -214,22 +235,29 @@ def selection(data, minutes):
             choice={**idea}
             queues[idea.get('role',role_fallback(idea)['role'])].append(choice)
     priority={'essential':0,'support':1,'detail':2}
+    position={i['id']:n for n,i in enumerate(ideas)}
     for role in ROLES:
-        # Diversité documentaire : ne pas absorber le budget dans les premières pages.
-        queues[role].sort(key=lambda i:(priority.get(i.get('importance'),1),words(passage(i)),i['id']))
-    selected=[];cost=80;known=set();counts={r:0 for r in ROLES}
+        queues[role].sort(key=lambda i:({'foundation':0,'core':1,'detail':2}.get(i.get('level'),0 if role=='concept' else 1),
+            priority.get(i.get('importance'),1),position[i['id']]))
+    selected=[];cost=200;known=set();counts={}
     while any(queues.values()):
+        tier=min({'foundation':0,'core':1,'detail':2}.get(q[0].get('level'),0 if r=='concept' else 1) for r,q in queues.items() if q)
         for role in ROLES:
             if not queues[role]:continue
+            if {'foundation':0,'core':1,'detail':2}.get(queues[role][0].get('level'),0 if role=='concept' else 1)!=tier:continue
             idea=queues[role].pop(0)
+            if idea.get('level')=='detail' or idea.get('importance')=='detail':
+                excluded[idea['id']]='Détail spécialisé conservé au dossier pour privilégier les notions et le raisonnement dans le podcast.'
+                continue
             defs=[d for d in fact_definitions(idea,terms) if (d['document'],d['term']) not in known]
             definition_cost=sum(words(definition_text(d)) for d in defs)
             increment=words(passage(idea))+EXPECTED_QUESTION_WORDS+definition_cost
+            group=quality.definition_key(idea.get('topic') or LABELS[role])
             # Le coût vient du texte retenu, des définitions et d'une question brève.
-            increment=increment+(CHAPTER_OVERHEAD_WORDS if counts[role]%5==0 else 0)
+            increment=increment+(CHAPTER_OVERHEAD_WORDS if counts.get(group,0)%5==0 else 0)
             if cost+increment<=available:
                 selected.append(idea);cost+=increment
-                counts[role]+=1
+                counts[group]=counts.get(group,0)+1
                 known.update((d['document'],d['term']) for d in defs)
             else:
                 excluded[idea['id']]='Détail ou point complémentaire hors budget de durée ; conservé dans le dossier.'
@@ -244,6 +272,17 @@ def plan(pipe):
     selected,excluded,cost,terms=selection(data,pipe.config['minutes'])
     if not selected:raise ValueError('Aucune idée ne tient dans la durée visée ; augmenter la durée ou choisir un extrait.')
     roles=[r for r in ROLES if any(i['role']==r for i in selected)]
+    topic_groups={}
+    for idea in selected:
+        name=idea.get('topic') or LABELS[idea['role']]
+        key=quality.definition_key(name)
+        topic_groups.setdefault(key,{'title':name,'ideas':[]})['ideas'].append(idea)
+    groups=sorted(topic_groups.values(),key=lambda g:(min({'foundation':0,'core':1}.get(i.get('level'),0 if i['role']=='concept' else 1) for i in g['ideas']),
+        min(data['ideas'].index(i) for i in g['ideas'])))
+    topic_rows=[{'ref':f'T{n}','title':g['title'],
+        'level':'foundation' if any(i.get('level')=='foundation' or (not i.get('level') and i['role']=='concept') for i in g['ideas']) else 'core',
+        'sample':g['ideas'][0]['statement'][:180]} for n,g in enumerate(groups,1)]
+    by_topic={r['ref']:g for r,g in zip(topic_rows,groups)}
     samples=[]
     for role in roles:
         for idea in [i for i in selected if i['role']==role][:2]:
@@ -255,7 +294,8 @@ def plan(pipe):
     def propose_outline():
         issues=[]
         payload={'roles':roles,'samples':samples,'samples_are_incomplete':True,'audience':pipe.config['audience'],
-                 'glossary':[d for d in terms.values() if d['term'] in quality.subject_symbols(vocabulary)][:10]}
+                 'glossary':[d for d in terms.values() if d['term'] in quality.subject_symbols(vocabulary)][:10],
+                 'topics':topic_rows if len(topic_rows)<=12 else []}
         try:
             value=pipe.client.ask('editorial_outline',payload,
                 '''Propose une question centrale neutre et un titre bref par rôle pédagogique.
@@ -263,6 +303,10 @@ def plan(pipe):
                 Utilise les termes des points fournis et du lexique, sans ajouter de résultat.
                 Titres distincts, 12 mots maximum ; question centrale de 30 mots maximum, finissant
                 par ?. Pas de promesse de garantie, d'autonomie totale ou de supériorité générale.
+                topic_order : toutes les références de topics, une fois chacune, dans un ordre
+                pédagogique. Les notions fondatrices précèdent les méthodes qui les utilisent.
+                Regroupe les notions proches ; les API, paramètres et cas numérotés viennent après
+                les principes du domaine. N'invente aucun thème ni aucune référence.
                 Structure : {"central_question":"question ?","titles":{"concept":"titre"}}.''',
                 lambda v:(quality.validate_reference_map(v,'titles'),quality.validate_compilation({'text':v.get('central_question','')})),budget=900)
         except RECOVERABLE as error:
@@ -292,30 +336,44 @@ def plan(pipe):
                 title=LABELS[role];key=quality.definition_key(title)
                 issues.append('Titre '+role+' remplacé par un intitulé distinct et neutre.')
             titles[role]=title;seen.append(key)
-        return {'central_question':question,'titles':titles,'warnings':issues}
+        order=value.get('topic_order',[])
+        if (not isinstance(order,list) or any(not isinstance(ref,str) for ref in order) or
+            len(order)!=len(by_topic) or set(order)!=set(by_topic)):
+            order=list(by_topic)
+            if any(i.get('topic') for i in selected):issues.append('Ordre thématique indicatif : les notions fondatrices restent prioritaires.')
+        # Même si le modèle propose l'inverse, les prérequis restent devant.
+        levels={r['ref']:r['level'] for r in topic_rows}
+        order=sorted(order,key=lambda ref:0 if levels[ref]=='foundation' else 1)
+        return {'central_question':question,'titles':titles,'warnings':issues,'topic_order':order}
     outline=pipe.unit(5,'Fil','Fil conducteur et titres du podcast',
-        {'protocol':VERSION,'samples':samples,'roles':roles,'sources':[source_hash(i) for i in selected],
+        {'protocol':VERSION,'samples':samples,'roles':roles,'topics':topic_rows,'sources':[source_hash(i) for i in selected],
          'glossary':list(terms.values())},propose_outline,
         lambda v:v['central_question']+'\n\n'+'\n'.join('- '+v['titles'][r] for r in roles))
     chapters=[]
-    for role in ROLES:
-        entries=[i for i in selected if i['role']==role]
+    for ref in outline['topic_order']:
+        group=by_topic[ref];entries=group['ideas']
+        role=min(ROLES,key=lambda r:-sum(i['role']==r for i in entries))
+        base_title=group['title'] if any(i.get('topic') for i in entries) else outline['titles'][role]
+        entries.sort(key=lambda i:({'foundation':0,'core':1}.get(i.get('level'),0 if i['role']=='concept' else 1),ROLES.index(i['role'])))
         for start in range(0,len(entries),5):
             chunk=entries[start:start+5]
-            title=outline['titles'][role]+(' — approfondissement '+str(start//5+1) if start else '')
+            title=base_title+(' — approfondissement '+str(start//5+1) if start else '')
             previous=chapters[-1]['title'] if chapters else None
             chapters.append({'id':f'C{len(chapters)+1}','title':title,'role':role,
                 'question':QUESTIONS[role],'known':previous or 'Aucune connaissance préalable n’est supposée.',
                 'new':'Comprendre les points sources de cette partie.',
                 'why_next':'Relier ces points à la partie suivante.',
+                'recap_id':chapters[-1]['idea_ids'][-1] if chapters else None,
                 'idea_ids':[i['id'] for i in chunk],
                 'target_words':sum(words(passage(i))+EXPECTED_QUESTION_WORDS+
                     sum(words(definition_text(d)) for d in fact_definitions(i,terms)) for i in chunk)+CHAPTER_OVERHEAD_WORDS})
     warnings=outline['warnings'][:]
     if len(chapters)>6:warnings.append('Certaines parties sont divisées pour limiter le nombre d’idées par échange.')
     if cost<pipe.config['minutes']*145*.6:warnings.append('Peu de matière vérifiée pour la durée demandée ; aucun remplissage inventé.')
+    named_topics=[g['title'] for g in groups if any(i.get('topic') for i in g['ideas'])]
+    central_question=('Comment comprendre '+', '.join(named_topics[:3])+' et leurs limites ?') if named_topics else outline['central_question']
     value={'workflow_version':VERSION,
-        'central_question':outline['central_question'],
+        'central_question':central_question,
         'chapters':chapters,'exclusions':excluded,'warnings':warnings,'selected_count':len(selected),
         'registry_count':len(data['ideas']),'estimated_content_words':cost,
         'glossary_hash':fingerprint(sorted(terms.values(),key=lambda d:(d['document'],d['term']))),
@@ -376,15 +434,33 @@ def explanations(pipe):
             if not key or key.get('source_hash')!=source_hash(registry[identity]) or key['sentence']!=registry[identity]['statement']:
                 raise ValueError('Phrase associée à une autre idée : refaire l’étape 6. '+identity)
             entries.append({'idea_id':identity,'source_hash':source_hash(registry[identity]),'text':passage(registry[identity])})
-        transition=chapter_transition(c,chapters[-1]['title'] if chapters else None)
+        transition=chapter_transition(c,chapters[-1]['title'] if chapters else None,registry)
         text='\n\n'.join(i['text']+' ['+i['idea_id']+']' for i in entries)
         chapters.append({'id':c['id'],'title':c['title'],'transition':transition,'text':text,'items':entries})
         notes+=['## '+c['title'],'',transition,'',text]
     return {'workflow_version':VERSION,'chapters':chapters,'warnings':[]},'\n\n'.join(notes)
 
-def chapter_transition(chapter, previous=None):
+def chapter_transition(chapter, previous=None, registry=None):
+    if registry and chapter.get('recap_id'):
+        previous_fact=registry[chapter['recap_id']]['statement'].rstrip('. ')
+        return 'Nous avons retenu ce point : « '+previous_fact+' » ; voyons maintenant « '+chapter['title']+' ».'
     if previous:return 'Après « '+previous+' », abordons « '+chapter['title']+' ».'
     return 'Pour commencer, voici les notions nécessaires pour comprendre le sujet.'
+
+def chapter_opening(chapter,plan,registry,first=False):
+    opening=chapter_transition(chapter,None,registry)
+    if first:return 'Bonjour et bienvenue. '+plan['central_question']+' Nous partirons des bases pour comprendre les méthodes, leurs résultats et leurs limites. '+opening
+    return opening
+
+def closing_text(plan,registry):
+    chosen=[]
+    for role in ('concept','method','limit'):
+        found=next((registry[i] for c in plan['chapters'] for i in c['idea_ids'] if registry[i]['role']==role),None)
+        if found and found['id'] not in chosen:chosen.append(found['id'])
+    if not chosen:chosen=[plan['chapters'][0]['idea_ids'][0]]
+    text='Pour conclure, voici les points à retenir. '+' '.join(registry[i]['statement'].rstrip('. ')+'.' for i in chosen)
+    text+=' Ces résultats doivent être interprétés dans les conditions des études présentées. Merci pour votre écoute.'
+    return text,chosen
 
 def definition_text(row):
     return 'Dans ce document, '+row['term']+' désigne '+row['definition']+'.'
@@ -506,8 +582,7 @@ def dialogue(pipe):
                         local_memory['asked_questions']=(local_memory['asked_questions']+[turn['text']])[-3:]
                 for idea in batch:local_memory['explained_ideas'][idea['id']]=idea['statement']
                 local_memory['last_turns']=turns[-2:]
-            opening=chapter_transition(c,chapters[-1]['title'] if chapters else None)
-            if not chapters:opening=plan['central_question']+' '+opening
+            opening=chapter_opening(c,plan,registry,not chapters)
             return {'id':c['id'],'title':c['title'],'opening_transition':opening,
                     'turns':turns,'memory':local_memory,'warnings':issues}
         packet=pipe.unit(8,c['id'],c['title'],{'protocol':VERSION,'chapter':c,
@@ -536,6 +611,8 @@ def review(pipe):
     for c in chapters:
         if c.get('id') not in chapter_map:raise ValueError('Chapitre de dialogue inconnu.')
         pipe.validate_dialogue(c,pipe.config['speakers'],chapter_map[c['id']]['idea_ids'])
+        expected_opening=chapter_opening(chapter_map[c['id']],plan,registry,c['id']==plan['chapters'][0]['id'])
+        if c['opening_transition']!=expected_opening:raise ValueError('Le rappel du chapitre ne correspond plus aux idées vérifiées : refaire le dialogue.')
         for turn in c['turns']:
             if turn.get('kind')=='source':
                 ids=turn['idea_ids']
@@ -543,6 +620,10 @@ def review(pipe):
                 idea=registry[ids[0]]
                 if turn.get('source_hash')!=source_hash(idea) or turn['text']!=passage(idea):
                     raise ValueError('Le dialogue modifie une idée source : reconstruire le chapitre. '+ids[0])
+                glossary={term:entries for doc in data.get('documents',[]) if doc['id']==idea.get('document') for term,entries in doc.get('glossary',{}).items()}
+                quality.validate_acronyms(turn['text'],glossary)
+                quality.validate_technical_wording(turn['text'],' '.join(e['quote'] for e in idea.get('evidence',[])))
+                if quality.unusable_fact_text(turn['text']):raise ValueError('Commentaire de document encore présent : réexaminer cette idée source. '+ids[0])
                 seen.extend(ids)
             elif turn.get('kind')=='definition':
                 d=turn.get('glossary_source',{});source=terms.get((d.get('document'),d.get('term')))
@@ -552,6 +633,9 @@ def review(pipe):
     expected=[i for c in plan['chapters'] for i in c['idea_ids']]
     if len(seen)!=len(set(seen)) or set(seen)!=set(expected):raise ValueError('Le dialogue doit traiter toutes les idées affectées à ce chapitre.')
     speakers=pipe.config['speakers']
+    conclusion,recap_ids=closing_text(plan,registry)
+    chapters[-1]['turns'].append({'speaker':speakers[0],'text':conclusion,'idea_ids':[],
+                                 'kind':'closing','recap_ids':recap_ids})
     plain='\n\n'.join(speakers[0]+' : '+c['opening_transition']+'\n\n'+'\n\n'.join(t['speaker']+' : '+t['text'] for t in c['turns']) for c in chapters)
     count=sum(words(c['opening_transition'])+sum(words(t['text']) for t in c['turns']) for c in chapters)
     target=pipe.config['minutes']*145
@@ -559,6 +643,9 @@ def review(pipe):
     duration_warning=not .75*target<=count<=1.15*target
     if duration_warning:issues.append({'chapter':'ensemble','note':'Durée à ajuster : matière source et durée cible ne coïncident pas encore.'})
     result={'workflow_version':VERSION,'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(seen),
+        'source_quality':quality.VERSION,'content_checks_passed':True,
+        'source_registry':[copy.deepcopy(registry[i]) for i in expected],
+        'source_glossaries':copy.deepcopy(data.get('documents',[])),
         'expected_idea_ids':sorted(expected),'all_planned_ids_present':True,'source_texts_preserved':True,
         'excluded_ideas':plan['exclusions'],'source_uncertainties':data.get('source_uncertainties',[]),
         'generation_warnings':warnings,'synthesis_warnings':[],'word_count':count,

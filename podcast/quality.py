@@ -2,7 +2,7 @@
 import re
 import unicodedata
 
-VERSION = 'source-review-v3'
+VERSION = 'source-review-v4'
 TITLES = {'problem':'Problème posé','concepts':'Notions essentielles','methods':'Méthodes et raisonnement',
           'results':'Résultats et apports','limits':'Limites et réserves'}
 
@@ -12,10 +12,14 @@ def response_schema(task, payload):
     def obj(properties):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
-    if task=='editorial_outline':return obj({'central_question':string,'titles':obj({r:string for r in payload['roles']})})
+    if task=='editorial_outline':
+        fields={'central_question':string,'titles':obj({r:string for r in payload['roles']})}
+        if payload.get('topics'):fields['topic_order']={'type':'array','items':{'type':'string','enum':[t['ref'] for t in payload['topics']]}}
+        return obj(fields)
     if task=='editorial_roles':
         role=obj({'role':{'type':'string','enum':['concept','problem','method','result','application','limit']},
-                  'importance':{'type':'string','enum':['essential','support','detail']},'reason':string})
+                  'importance':{'type':'string','enum':['essential','support','detail']},'reason':string,
+                  'topic':string,'level':{'type':'string','enum':['foundation','core','detail']}})
         return obj({'roles':obj({i['ref']:role for i in payload['ideas']})})
     if task=='dialogue':return obj({'questions':obj({i['ref']:string for i in payload['ideas']})})
     if task=='plan_seed':return obj({'central_question':string,'topics':{'type':'array','items':string,'maxItems':12}})
@@ -116,9 +120,12 @@ def glossary(pages):
     for page,info in pages.items():
         if info['kind']!='glossary':continue
         body=re.sub(r'^(?:acronyms and abbreviations|acronymes et abréviations|glossary|glossaire)\s*','',info['text'],flags=re.I)
-        matches=list(re.finditer(r'\b([A-Z][A-Z0-9-]{1,11})\s+',body))
+        # QoT, GSNR et LLaMA sont des sigles ; « Quality » n'en est pas un.
+        matches=[m for m in re.finditer(r'\b([A-Z][A-Za-z0-9-]{1,15})\s+',body)
+                 if sum(c.isupper() for c in m[1])>=2]
         for index,match in enumerate(matches):
             definition=body[match.end():matches[index+1].start() if index+1<len(matches) else len(body)].strip()
+            if match[1] in ('GN','EGN') and definition.startswith('model '):definition=definition[6:]
             definition=re.sub(r'\s+[ivxlcdm]+$','',definition)
             if 1<=len(definition.split())<=18 and re.search(r'[a-z]',definition):
                 terms.setdefault(match[1],[]).append({'definition':definition,'page':page})
@@ -127,7 +134,7 @@ def glossary(pages):
 
 def relevant_terms(terms, value):
     raw=str(value)
-    return {key:entries for key,entries in terms.items() if re.search(r'\b'+re.escape(key)+r'\b',raw)}
+    return {key:entries for key,entries in terms.items() if re.search(r'\b'+re.escape(key)+r's?\b',raw)}
 
 
 def definition_key(value):
@@ -162,6 +169,9 @@ _FRENCH_DEFINITIONS = {
     'software defined networking':('réseau défini par logiciel','réseaux définis par logiciel'),
     'forward error correction':('correction d’erreurs directe','correction d’erreurs anticipée','correction d’erreurs sans voie de retour'),
     'noise figure':('facteur de bruit',),
+    'optical multiplex section':('section de multiplexage optique','section multiplex optique'),
+    'quadrature amplitude modulation':('modulation d’amplitude en quadrature',),
+    'digital signal processing':('traitement numérique du signal',),
     'nonlinear schrodinger equation':('équation de Schrödinger non linéaire','équation non linéaire de Schrödinger'),
     'bit error rate':('taux d’erreur binaire','taux d’erreurs binaires','taux d’erreur de bit','taux d’erreur sur les bits'),
 }
@@ -184,6 +194,11 @@ def preferred_definition(value):
         'signal to noise ratio':'rapport signal sur bruit','optical signal to noise ratio':'rapport signal sur bruit optique',
         'quality of transmission':'qualité de transmission','wavelength selective switch':'commutateur sélectif en longueur d’onde',
         'software defined networking':'réseau défini par logiciel','forward error correction':'correction anticipée d’erreurs',
+        'optical multiplex section':'section de multiplexage optique',
+        'quadrature amplitude modulation':'modulation d’amplitude en quadrature',
+        'digital signal processing':'traitement numérique du signal',
+        'semiconductor optical amplifier':'amplificateur optique à semi-conducteurs',
+        'erbium doped fiber amplifier':'amplificateur à fibre dopée à l’erbium',
         'nonlinear schrodinger equation':'équation de Schrödinger non linéaire','noise figure':'facteur de bruit'}
     return preferred.get(key,value)
 
@@ -227,6 +242,13 @@ def normalize_terminology(fact, source):
             value[field]=re.sub(r'\b(égalisation|régulation|profil|niveau|transfert|transferts|ajustement) du pouvoir\b',r'\1 de la puissance',value[field],flags=re.I)
             value[field]=re.sub(r'\btransferts? de pouvoir\b','transfert de puissance',value[field],flags=re.I)
             value[field]=re.sub(r'\bgagnage\b','gain',value[field],flags=re.I)
+            value[field]=re.sub(r'\b(propagation|configuration|optimisation) du pouvoir\b',r'\1 de la puissance',value[field],flags=re.I)
+            value[field]=re.sub(r'\bpouvoir d.émission\b','puissance d’émission',value[field],flags=re.I)
+            value[field]=re.sub(r'\bdu puissance\b','de la puissance',value[field],flags=re.I)
+            value[field]=re.sub(r'\b(?:la|une) Raman amplification\b','l’amplification Raman',value[field],flags=re.I)
+        for field in ('statement','explanation'):
+            value[field]=re.sub(r'\bmodélage\b','modélisation',value[field],flags=re.I)
+            value[field]=re.sub(r'\bpropagater\b','se propager',value[field],flags=re.I)
     return value
 
 
@@ -234,7 +256,13 @@ def validate_acronyms(value, terms):
     """Libellé source ou traduction reconnue ; une mention seule reste autorisée."""
     for term,entries in (terms or {}).items():
         definitions=definition_aliases(entries)
-        for match in re.finditer(r'\('+re.escape(term)+r'\)',value):
+        for match in re.finditer(r'\b'+re.escape(term)+r's?\s*\(([^()]+)\)',value):
+            expanded=definition_key(match[1])
+            # Une parenthèse numérique ou une référence n'est pas un libellé.
+            if len(re.findall(r'[^\W\d_]+',match[1]))<2:continue
+            if expanded not in definitions:
+                raise ValueError('Développement non confirmé de '+term+' après le sigle : reprendre le glossaire source ou garder le sigle seul.')
+        for match in re.finditer(r'\('+re.escape(term)+r's?\)',value):
             before=definition_key(value[:match.start()])
             if not before or before.split()[-1:]==[definition_key(term)]:continue
             if not any(before==d or before.endswith(' '+d) for d in definitions):
@@ -274,6 +302,8 @@ def ambiguous_subject(value):
 def unusable_fact_text(value):
     """Repérer les sorties de gabarit et les commentaires de localisation."""
     return bool(re.search(r'\b(?:source_text|source_page|candidates|glossary)\b',value) or
+        re.search(r'\b(?:le|ce) document\b.{0,140}\b(?:diffusion|distribué|restreint|sensible|propriétaire)\b',value,re.I) or
+        re.search(r'^(?:un tableau est fourni|(?:la table|le tableau|la figure|le diagramme)\s+[\w.]+\s+(?:présente|montre|contient|fournit)\s+(?:une comparaison|des données|la gestion|les services))',value,re.I) or
         re.search(r'\b(?:extrait|passage|texte)\s+(?:provient|est extrait|est tiré|se trouve)\b',value,re.I) or
         re.search(r'\b(?:où|ou)\s+dans le document\b|\b(?:la|cette) page\s+\d+\s+(?:du document|contient|présente|décrit)',value,re.I))
 
@@ -330,6 +360,16 @@ def validate_review(value, candidates, source, terms=None):
                 raise ValueError('evidence doit recopier un passage exact du PDF fourni, jamais une paraphrase ni une référence seule.')
             explanatory_quote(source_quote(quote))
         source_subject_check(fact,terms)
+        validate_technical_wording(fact['statement']+' '+fact['explanation'],' '.join(quotes))
+        explanation=fact['explanation'].strip()
+        explanation=re.sub(r'^(?:le texte|le passage|l.extrait)\s+(?:explique|indique|mentionne|précise)\s+que\s+', '',explanation,flags=re.I)
+        if definition_key(explanation)==definition_key(fact['statement']):
+            raise ValueError('L’explication recopie l’énoncé : expliquer le mécanisme ou les conditions réellement appuyés par la citation.')
+        filler=set('cette celui celles leurs ainsi alors comme parce puisque pourquoi comment explique indique mentionne passage texte important particulierement vraiment aussi toutefois malgre aient sont permet permetter'.split())
+        concepts=lambda text:{w[:5] for w in definition_key(text).split() if len(w)>4 and w not in filler}
+        if (len(fact['statement'].split())>=8 and len(explanation.split())>=8 and concepts(explanation) and
+            not concepts(explanation)-concepts(fact['statement'])):
+            raise ValueError('L’explication reformule uniquement le même constat : ajouter un mécanisme, une condition ou une limite appuyée par la citation, sans inventer.')
         units=r'(?<!\w)\d+(?:[.,]\d+)?\s*(?:%|mW|MW|dB|GHz|MHz|THz|nm|GB|km|ms)(?!\w)'
         cited={re.sub(r'\s+','',n).replace(',','.') for n in re.findall(units,' '.join(quotes))}
         claimed={re.sub(r'\s+','',n).replace(',','.') for n in re.findall(units,fact['statement']+' '+fact['explanation'])}
@@ -345,6 +385,20 @@ def validate_review(value, candidates, source, terms=None):
         seen.append(fact.get('id'))
     if len(seen)!=len(set(seen)) or set(seen)!=expected:
         raise ValueError('Traiter chaque identifiant candidat exactement une fois dans kept ou excluded, sans en inventer.')
+
+
+def validate_technical_wording(text, evidence):
+    claim=definition_key(text);source=definition_key(evidence)
+    if 'step size' in source and (re.search(r'\bmarge dynamique\b',claim) or
+        ('snr margin' not in source and re.search(r'\bmarge de \d',claim))):
+        raise ValueError('step-size est le pas de réglage, distinct de la marge SNR ; traduire dynamic step-size par pas de réglage variable.')
+    if re.search(r'deux pas de regard a une etape|two.*one step',claim):
+        raise ValueError('2-step lookahead anticipe deux actions ; ne pas le traduire par deux pas à une étape.')
+    if 'colorless' in claim and 'sans concurrence' in claim and 'contentionless' not in claim:
+        raise ValueError('Distinguer colorless et contentionless : la réutilisation sans conflit relève de contentionless.')
+    if (re.search(r'\b(?:grid|grille)\b',source) and re.search(r'\b(?:ghz|thz)\b',claim) and
+        not re.search(r'\b(?:grille|exemple|configuration|experience|test|cas|ici)\b',claim)):
+        raise ValueError('L’espacement de fréquence appartient à une grille ou un exemple : conserver ce périmètre explicitement.')
 
 
 def explanatory_quote(value):
@@ -435,8 +489,14 @@ def section_markdown(value):
 
 
 REVIEW_PROMPT = '''Contrôle ces idées candidates contre le texte source fourni, en français.
-L'énoncé doit être une phrase précise et l'explication deux ou trois phrases accessibles.
+L'énoncé doit être une phrase précise (45 mots maximum), et l'explication deux phrases accessibles (80 mots maximum).
 L'explication ajoute le pourquoi, le comment et les conditions ; elle ne doit pas simplement répéter l'énoncé.
+Ne commence pas par « Le texte explique que » et ne décris pas seulement la présence d'un tableau.
+Pour un débutant, explicite le mécanisme avec les éléments présents dans la citation. Si elle
+ne l'explique pas, conserve uniquement ce qu'elle établit et signale la limite sans inventer.
+Ne transforme jamais une mention de diffusion, une légende ou un en-tête en connaissance.
+step-size = pas de réglage ; dynamic step-size = pas de réglage variable ; lookahead = anticipation.
+La marge de SNR est une autre grandeur. 2-step lookahead anticipe deux actions successives.
 Préserve le rôle exact des dispositifs : un composant ne doit pas devenir un autre équipement.
 Dans un contexte physique, traduire power par puissance et gain par gain.
 Conserver les conditions des expériences et des mesures, sans en faire des garanties universelles.

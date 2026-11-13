@@ -13,9 +13,10 @@ from playwright.sync_api import sync_playwright
 from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
 from storage import invalidate,read,write
+from test_audio_export import VoiceServer
 
 with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
-    temp=Path(temp);stub=StubServer();app=App(temp/'data');server=Server(('127.0.0.1',0),app)
+    temp=Path(temp);stub=StubServer();voices=VoiceServer();app=App(temp/'data');server=Server(('127.0.0.1',0),app)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         pdf1=make_pdf(temp/'optique.pdf');pdf2=make_pdf(temp/'laser.pdf','Laser')
@@ -63,6 +64,23 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert json.loads(output_json.read_text())['all_planned_ids_present']
             assert len(read(folder/'etapes/01.json')['data']['documents'])==2
             calls=[payload for task,payload in stub.calls if task=='dialogue'];assert calls[1]['memory']['last_turns']
+            # Deux profils existants, aperçu, lecture du vrai MP3 et téléchargement.
+            page.locator('#voice-endpoint').fill(voices.endpoint);page.locator('#load-voices').click()
+            page.wait_for_function('() => document.querySelector("#voices-status").textContent.includes("2 voix")')
+            assert page.locator('#voice-assignments select').nth(0).input_value()=='ref-sophie'
+            assert page.locator('#voice-assignments select').nth(1).input_value()=='ref-emma'
+            page.locator('#voice-assignments button').nth(0).click()
+            page.wait_for_function('() => current()?.task.state==="done"&&Boolean(current()?.audio.preview)',timeout=60000)
+            assert page.locator('#voice-preview').is_visible()
+            page.locator('#render-audio').click()
+            page.wait_for_function('() => current()?.task.state==="done"&&current()?.audio.available',timeout=60000)
+            page.wait_for_function('() => document.querySelector("#podcast-player").readyState>=1')
+            page.locator('#podcast-player').click(position={'x':20,'y':25})
+            page.wait_for_function('() => document.querySelector("#podcast-player").currentTime>0.02')
+            page.locator('#podcast-player').evaluate('player => player.pause()')
+            with page.expect_download() as download:page.locator('#download-mp3').click()
+            mp3=temp/'podcast.mp3';download.value.save_as(mp3);assert mp3.stat().st_size>1000
+            assert {c['voice'] for c in voices.calls}=={'ref-sophie','ref-emma'}
             # Rechargement d'un projet dont l'étape 2 date d'avant ce correctif.
             legacy=read(folder/'etapes/02.json');legacy['data'].pop('quality_version',None)
             for doc in legacy['data']['documents']:
@@ -73,7 +91,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.evaluate('() => refresh()');page.wait_for_function('() => current()?.completed.length===2')
             assert page.locator('#quality-upgrade').is_visible()
             before_extract=len([p for task,p in stub.calls if task=='part_summary'])
-            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v3"',timeout=60000)
+            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v4"',timeout=60000)
             assert len([p for task,p in stub.calls if task=='part_summary'])==before_extract
             assert page.locator('#quality-upgrade').is_hidden()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Notions essentielles")')
@@ -98,6 +116,6 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : neuf étapes, ancien projet amélioré sans refaire les extractions, synthèses structurées, Markdown partiel, reprise, exports, archives et annulation ; aucune erreur JS ou requête externe.')
+            print('Navigateur OK : neuf étapes, migration, profils VoiceStudio, aperçu, MP3 chargé et téléchargé, reprise, archives et annulation ; aucune erreur JS ou requête externe.')
     finally:
-        stub.close();server.shutdown();server.server_close();app.close();thread.join()
+        stub.close();voices.close();server.shutdown();server.server_close();app.close();thread.join()

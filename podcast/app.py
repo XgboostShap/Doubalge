@@ -21,9 +21,10 @@ from llm import Ollama, Cancelled, endpoint_parts, models
 import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
+import audio_export
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.2.0'
+APP_VERSION = '0.3.0'
 
 
 def settings(value):
@@ -104,7 +105,7 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
-        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v3'
+        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v4'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
@@ -114,8 +115,57 @@ class App:
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
+                'audio':self.audio_summary(folder,meta,needs_upgrade),
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
+
+    def audio_summary(self,folder,meta,needs_upgrade=False):
+        config=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers'])
+        try:audio_export.encoder();encoder_ready=True
+        except ValueError:encoder_ready=False
+        result={'settings':config,'encoder_ready':encoder_ready,'available':False,'preview':None}
+        path=folder/'exports/audio.json';final=folder/'exports/podcast.json'
+        if not needs_upgrade and path.exists() and final.exists() and (folder/'exports/podcast.mp3').exists():
+            record=read(path)
+            if record.get('signature')==audio_export.signature(read(final),config,meta['settings']['speakers']):
+                result.update(available=True,seconds=record['seconds'],signature=record['signature'])
+        preview=folder/'audio_cache/apercu.json'
+        if preview.exists() and (folder/'audio_cache/apercu.mp3').exists():
+            record=read(preview)
+            if record.get('settings_hash')==fingerprint(config):result['preview']=record
+        return result
+
+    def save_audio_settings(self,folder,body):
+        with self.lock:
+            self.idle(folder);meta=read(folder/'projet.json')
+            config=audio_export.settings(body,meta['settings']['speakers'])
+            if config!=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers']):
+                previous=[p for p in [folder/'exports/podcast.mp3',folder/'exports/audio.json'] if p.exists()]
+                if previous:
+                    archive=folder/'versions'/('audio-'+uuid.uuid4().hex[:12]);archive.mkdir(parents=True)
+                    for path in previous:audio_export.replace(path,archive/path.name)
+            meta['audio_settings']=config;write(folder/'projet.json',meta)
+            return {'saved':True}
+
+    def enqueue_audio(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            action=body.get('action','generate')
+            if action not in ('generate','preview','prepare'):raise ValueError('Commande audio inconnue.')
+            meta=read(folder/'projet.json')
+            if action=='generate':
+                final=folder/'exports/podcast.json'
+                if not final.exists():raise ValueError('Terminez le script avant de générer le MP3.')
+                value=read(final)
+                if value.get('workflow_version')!='grounded-editorial-v2' or value.get('source_quality')!=pipeline_module.SUMMARY_QUALITY_MODE or not value.get('content_checks_passed'):
+                    raise ValueError('Réexaminez les résumés et reconstruisez le dialogue avec les nouveaux contrôles avant de générer le MP3.')
+            speaker=body.get('speaker')
+            if action=='preview' and speaker not in meta['settings']['speakers']:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
+            task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
+                  'message':'Audio en attente','error':None,'app_version':APP_VERSION}
+            cancel=threading.Event();self.cancels[task['id']]=cancel
+            write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
+            self.pending.put((folder,task,cancel));return task
 
     def state(self):
         with self.lock:
@@ -127,9 +177,9 @@ class App:
         with self.lock:
             if self.runtime['page_sources']!='pdf-page-v1':
                 raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
-            if self.runtime['summary_quality']!='source-review-v3':
+            if self.runtime['summary_quality']!='source-review-v4':
                 raise ValueError('Mise à jour incomplète : les contrôles de synthèse sont absents. Fermez le programme et utilisez le nouveau correctif.')
-            if self.runtime['editorial_mode']!='grounded-editorial-v1':
+            if self.runtime['editorial_mode']!='grounded-editorial-v2':
                 raise ValueError('Mise à jour incomplète : les réponses reliées aux sources sont absentes. Réappliquer le correctif complet.')
             self.idle(folder)
             meta = read(folder/'projet.json')
@@ -148,7 +198,7 @@ class App:
                     raise ValueError('L’amélioration réutilise une étape 2 terminée, sans régénération forcée.')
                 # Copie privée de l'extraction AVANT l'archivage des résultats.
                 self.preserve_summaries(folder,meta)
-            elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v3':
+            elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v4':
                 raise ValueError('Ce projet utilise les anciens contrôles. Cliquer sur Améliorer les résumés existants : les résultats seront archivés et les sources réexaminées avant la reconstruction du plan et du dialogue.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
                     'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
@@ -169,7 +219,7 @@ class App:
                 if cancel.is_set():
                     raise Cancelled()
                 meta = read(folder/'projet.json')
-                if task['regenerate']:
+                if task.get('regenerate'):
                     meta['cache_generation'] = uuid.uuid4().hex
                     write(folder/'projet.json',meta)
                 config = {**meta['settings'],'_generation':meta.get('cache_generation','initial')}
@@ -179,6 +229,14 @@ class App:
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
+                if task.get('kind')=='audio':
+                    client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),meta['settings']['speakers'],cancel,progress)
+                    self.active=(task['id'],client)
+                    if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress)
+                    elif task['action']=='preview':client.preview(task['speaker'])
+                    else:client.render(read(folder/'exports/podcast.json'))
+                    task.update(state='done',message='Moteur MP3 prêt' if task['action']=='prepare' else 'Aperçu vocal prêt' if task['action']=='preview' else 'Podcast MP3 prêt à écouter et télécharger')
+                    continue
                 # Une simple reprise conserve les parties finies dans l'étape en cours.
                 # Leurs empreintes contrôlent les paramètres et données d'origine.
                 invalidate(folder,task['first'],partials=task['regenerate'] or task.get('refine',False))
@@ -187,7 +245,7 @@ class App:
                 Pipeline(folder,client,cancel,progress).run(task['first'],task['until'])
                 task.update(state='done',message='Étapes terminées et enregistrées')
             except Cancelled:
-                task.update(state='cancelled',message='Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
+                task.update(state='cancelled',message='Annulé. Les répliques audio terminées sont conservées pour la reprise.' if task.get('kind')=='audio' else 'Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
             except Exception as error:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
@@ -304,6 +362,13 @@ class Handler(BaseHTTPRequestHandler):
             if path in static:
                 name,mime=static[path];self.respond(200,(ROOT/'web'/name).read_bytes(),mime);return
             parts=path.split('/')
+            if len(parts)==4 and parts[1]=='media':
+                folder=self.app.project(parts[2]);name=parts[3]
+                state=self.app.summary(folder)['audio']
+                if name=='podcast.mp3' and state['available']:file=folder/'exports/podcast.mp3'
+                elif name=='apercu.mp3' and state['preview']:file=folder/'audio_cache/apercu.mp3'
+                else:raise FileNotFoundError('Audio non disponible pour ce script et ces voix.')
+                self.send_media(file);return
             if len(parts)==6 and parts[1:3]==['api','projects'] and parts[4]=='stages':
                 folder=self.app.project(parts[3]);number=int(parts[5])
                 if not 1<=number<=9:raise ValueError('Étape invalide.')
@@ -315,6 +380,9 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'etapes'/'parties'/name.removeprefix('partie-')
                     if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
                 elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
+                elif name=='podcast.mp3':
+                    if not self.app.summary(folder)['audio']['available']:raise FileNotFoundError('Le MP3 correspondant aux voix choisies n’est pas encore prêt.')
+                    file=folder/'exports/podcast.mp3'
                 elif name=='dossier.zip':
                     self.app.idle(folder)
                     file=folder/'dossier.zip'
@@ -332,7 +400,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_file(self,path):
         if not path.is_file():raise FileNotFoundError('Le résultat n’est pas encore disponible.')
-        mime='application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
+        mime='audio/mpeg' if path.suffix=='.mp3' else 'application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
         self.send_response(200);self.send_header('Content-Type',mime)
         self.send_header('Content-Length',str(path.stat().st_size))
         self.send_header('X-Content-Type-Options','nosniff')
@@ -341,12 +409,37 @@ class Handler(BaseHTTPRequestHandler):
         with path.open('rb') as f:
             while chunk:=f.read(256*1024):self.wfile.write(chunk)
 
+    def send_media(self,path):
+        total=path.stat().st_size;start=0;end=total-1;status=200
+        header=self.headers.get('Range')
+        if header:
+            match=re.fullmatch(r'bytes=(\d*)-(\d*)',header)
+            try:
+                if not match or not any(match.groups()):raise ValueError()
+                if match[1]:start=int(match[1]);end=min(end,int(match[2])) if match[2] else end
+                else:start=max(0,total-int(match[2]))
+                if start>end or start>=total:raise ValueError()
+            except ValueError:
+                self.respond(416,b'','audio/mpeg',[('Content-Range','bytes */'+str(total))]);return
+            status=206
+        self.send_response(status);self.send_header('Content-Type','audio/mpeg');self.send_header('Accept-Ranges','bytes')
+        self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(end-start+1))
+        if status==206:self.send_header('Content-Range',f'bytes {start}-{end}/{total}')
+        self.end_headers()
+        with path.open('rb') as f:
+            f.seek(start);remaining=end-start+1
+            while remaining:
+                chunk=f.read(min(256*1024,remaining))
+                if not chunk:break
+                self.wfile.write(chunk);remaining-=len(chunk)
+
     def do_POST(self):
         if not self.authorized(True):return
         try:
             self.connection.settimeout(120)
             path=urlsplit(self.path).path
             if path=='/api/models':self.json({'models':models(self.body().get('endpoint',defaults()['endpoint']))});return
+            if path=='/api/voices':self.json({'voices':audio_export.VoiceStudio(audio_export.settings(self.body())).voices()});return
             if path=='/api/projects':self.json(self.app.create(self.body()),201);return
             parts=path.split('/')
             if len(parts)!=5 or parts[1:3]!=['api','projects']:raise FileNotFoundError('Commande inconnue.')
@@ -356,6 +449,8 @@ class Handler(BaseHTTPRequestHandler):
             if action=='run':self.json(self.app.enqueue(folder,body),202)
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
+            elif action=='audio-settings':self.json(self.app.save_audio_settings(folder,body))
+            elif action=='audio':self.json(self.app.enqueue_audio(folder,body),202)
             else:raise FileNotFoundError('Commande inconnue.')
         except (BrokenPipeError,ConnectionResetError):pass
         except Busy as error:self.json({'error':str(error)},409)
