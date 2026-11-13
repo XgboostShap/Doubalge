@@ -30,6 +30,12 @@ def make_pdf(path, label='Optique', page_count=3):
 
 
 def answer(task,p):
+    if task=='editorial_outline':
+        from editorial import LABELS
+        return {'central_question':'Comment comprendre les notions et leurs limites dans ces documents ?',
+                'titles':{r:LABELS[r] for r in p['roles']}}
+    if task=='editorial_roles':return {'roles':{i['ref']:{'role':'concept' if n%2==0 else 'method',
+        'importance':'essential','reason':'Classement simulé pour le test.'} for n,i in enumerate(p['ideas'])}}
     if task=='part_summary':
         pages=sorted({b['page'] for b in p['blocks']})
         return {'summary':'Le signal s’atténue ; une amplification compense une partie des pertes.',
@@ -76,9 +82,7 @@ def answer(task,p):
     if task=='key_sentences':return {'sentences':{i['ref']:i['statement'] for i in p['ideas']}}
     if task=='explanation':return {'transition':'Nous avons posé le problème ; voyons comment le résoudre.','text':' '.join(i['statement']+' ['+i['id']+']' for i in p['ideas'])}
     if task=='dialogue':
-        return {'opening_transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',
-                'turns':[{'speaker':p['speakers'][n%len(p['speakers'])],'text':i['statement'],'idea_ids':[i['id']]} for n,i in enumerate(p['ideas'])],
-                'memory_update':{'definitions':{p['chapter']['id']:'Définition déjà expliquée.'},'examples':['Exemple '+p['chapter']['id']],'open_questions':['Quelle est la suite ?']}}
+        return {'questions':{i['ref']:'Peux-tu expliquer ce point ?' for i in p['ideas']}}
     if task=='review':return {'opening_transition':p['draft']['opening_transition'],'turns':p['draft']['turns'],'issues':['Contrôle technique simulé pour le test.']}
     raise ValueError(task)
 

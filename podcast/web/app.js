@@ -3,13 +3,13 @@ const $=id=>document.getElementById(id);
 const descriptions=[
  'Extraction du texte et découpage équilibré en trois parties. Les numéros de page sont conservés. Cette étape fonctionne sans modèle.',
  'Les pages secondaires sont classées à part. Les idées sont confrontées au PDF avec citations exactes, puis chaque partie reçoit une synthèse : problème, notions, méthodes, résultats et limites. Le registre et les motifs d’exclusion restent consultables.',
- 'Les trois résumés sont réunis en une synthèse par PDF, accompagnée du registre complet des idées extraites.',
- 'Toutes les idées extraites sont regroupées par thème puis reliées dans un texte commun, avec leurs références.',
- 'Une question centrale organise les chapitres. Chaque idée est affectée à un chapitre ou signalée explicitement hors podcast.',
- 'Une phrase complète est écrite pour chaque idée importante affectée à une partie du plan.',
- 'Les phrases sont reliées en une explication pédagogique, avant la mise en dialogue. Une phrase prépare le raccord entre chapitres.',
- 'Chaque chapitre est enregistré en Markdown. Le suivant reçoit une nouvelle conversation et une courte fiche de continuité ; les textes complets restent dans les fichiers.',
- 'Les chapitres sont revus pour la continuité, les répétitions et la fidélité aux idées sources. Le script final est exporté en texte et en JSON.'
+ 'Une sélection de phrases retenues dans les trois parties forme une synthèse par PDF. Le registre complet et les citations restent disponibles.',
+ 'Les passages retenus de tous les PDF sont rassemblés par rôle : notions, problème, méthode, résultats, applications et limites. Chaque passage conserve sa source.',
+ 'Les idées essentielles sont sélectionnées selon la durée, puis organisées des notions aux méthodes, résultats et limites. Les idées hors dialogue restent au dossier avec leur motif.',
+ 'Chaque phrase reprend exactement l’énoncé source de l’idée sélectionnée. Sa référence reste associée au même texte.',
+ 'Chaque énoncé est accompagné de son explication retenue lors de la lecture des sources. Une phrase prépare le raccord entre chapitres.',
+ 'Les questions sont proposées par petits blocs. Les réponses conservent les formulations sources, leurs références et une courte mémoire de continuité.',
+ 'Le programme vérifie les idées prévues, les réponses et les définitions, puis indique la durée estimée et les points à relire. Le script est exporté en texte et en JSON.'
 ];
 let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
 const current=()=>state?.projects.find(p=>p.id===selected);
@@ -21,7 +21,7 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
- const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v2';
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v3'||runtime.editorial_mode!=='grounded-editorial-v1';
  document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
@@ -31,9 +31,9 @@ function render(){
  if(!p)return;
  $('project-name').textContent=p.name;$('source-info').textContent=`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
- $('continue').disabled=outdated||busy(p)||p.next_step>9;$('save-settings').disabled=busy(p);$('continue').textContent=p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('continue').disabled=outdated||busy(p)||p.next_step>9||p.needs_source_upgrade;$('save-settings').disabled=busy(p);$('continue').textContent=p.needs_source_upgrade?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
  $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);
- $('quality-upgrade').hidden=!p.completed.includes(2)||p.summary_quality==='source-review-v2';
+ $('quality-upgrade').hidden=!p.needs_source_upgrade;
  $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Ces idées restent consultables dans le rapport et sont écartées du script provisoire.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});

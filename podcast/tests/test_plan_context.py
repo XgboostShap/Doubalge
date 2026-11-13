@@ -1,25 +1,25 @@
-"""Plans nombreux : requêtes bornées, références conservées et reprises."""
-import copy
-import json
+"""Sélection selon la durée, partitions du registre et contexte borné."""
 from pathlib import Path
 import tempfile
 import unittest
-
-from fixtures import FakeClient,StubServer,make_pdf
-from llm import Cancelled,InvalidResponseError,ModelError,Ollama,ResponseLimitError
+import editorial
+from fixtures import FakeClient,StubServer
+from llm import Ollama,ModelError,InvalidResponseError
 from pipeline import Pipeline
 from storage import defaults,read,write
 
-
 def planning_data(count=181,groups_count=176):
-    ideas=[{'id':f'PDF1-P2-I{n:03}','statement':f'Le phénomène {n} dépend des conditions expérimentales.',
-        'explanation':'Les conditions doivent être précisées pour interpréter les résultats.',
-        'document':'PDF1','pages':[n]} for n in range(1,count+1)]
-    groups=[{'id':f'G{n+1}','title':('Thème '+str(n)+' — '+('notion scientifique '*10))[:160],
-        'text':('Le texte complet est conservé dans le registre. '*200),
-        'idea_ids':[i['id'] for i in ideas[n::groups_count]]} for n in range(min(groups_count,count))]
-    return {'ideas':ideas,'groups':groups,'documents':[{'id':'PDF1','name':'Essai.pdf'}]}
-
+    ideas=[]
+    for n in range(1,count+1):
+        role=editorial.ROLES[(n-1)%6]
+        idea={'id':f'PDF1-P2-I{n:03}','statement':f'Le phénomène {n} dépend des conditions expérimentales.',
+              'explanation':'Les conditions doivent être précisées pour interpréter le résultat sans généralisation.',
+              'document':'PDF1','pages':[n],'role':role,'importance':'essential','evidence':[]}
+        idea['source_hash']=editorial.source_hash(idea);ideas.append(idea)
+    return {'workflow_version':editorial.VERSION,'ideas':ideas,'groups':[
+        {'id':f'G{n+1}','title':'Thème '+str(n),'text':'Texte intégral conservé. '*500,
+         'idea_ids':[i['id'] for i in ideas[n::groups_count]]} for n in range(min(groups_count,count))],
+        'documents':[{'id':'PDF1','name':'Essai.pdf','glossary':{}}]}
 
 class PlanContextTests(unittest.TestCase):
     def setUp(self):
@@ -27,144 +27,92 @@ class PlanContextTests(unittest.TestCase):
         write(self.project/'projet.json',{'settings':{**defaults(),'num_ctx':8192},'pdfs':[]})
     def tearDown(self):self.temp.cleanup()
     def prepare(self,data):write(self.project/'etapes/04.json',{'data':data})
-    def check_coverage(self,value,data):
-        seen=[i for c in value['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in value['exclusions']]
+    def check_coverage(self,plan,data):
+        seen=[i for c in plan['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in plan['exclusions']]
         self.assertEqual(set(seen),{i['id'] for i in data['ideas']});self.assertEqual(len(seen),len(data['ideas']))
-        self.assertLessEqual(len(value['chapters']),20)
-        self.assertTrue(all(1<=len(c['idea_ids'])<=24 for c in value['chapters']))
-
-    def test_176_groups_and_181_ideas_fit_8192_context_without_modifying_stage4(self):
+        self.assertTrue(all(len(c['idea_ids'])<=5 for c in plan['chapters']))
+        self.assertEqual(sum(c['target_words'] for c in plan['chapters']),plan['target_words'])
+    def test_176_themes_never_become_one_large_planning_request(self):
         data=planning_data();self.prepare(data);before=(self.project/'etapes/04.json').read_bytes()
         stub=StubServer()
         try:
             client=Ollama({**defaults(),'num_ctx':8192,'endpoint':stub.endpoint},self.project/'cache')
             Pipeline(self.project,client).run(5,5)
-            result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
-            self.assertFalse(result['exclusions']);self.assertEqual(sum(c['target_words'] for c in result['chapters']),2900)
+            plan=read(self.project/'etapes/05.json')['data'];self.check_coverage(plan,data)
+            self.assertLess(plan['selected_count'],181);self.assertTrue(plan['exclusions'])
             self.assertEqual((self.project/'etapes/04.json').read_bytes(),before)
-            self.assertTrue(stub.requests)
-            for request in stub.requests:
-                prompt=request['messages'][1]['content'];budget=request['options']['num_predict']
-                self.assertLessEqual(len(prompt),max(2000,(8192-budget-1200)*3))
-                self.assertNotIn('PDF1-P2-I',prompt)
-                self.assertNotIn(data['groups'][0]['text'],prompt)
-            assignments=[p for task,p in stub.calls if task=='plan_assignments']
-            self.assertEqual(sum(len(p['groups']) for p in assignments),176)
-            self.assertTrue(all(len(p['groups'])<=6 for p in assignments))
+            self.assertEqual(len(stub.requests),1)
+            request=stub.requests[0];prompt=request['messages'][1]['content']
+            self.assertNotIn(data['groups'][0]['text'],prompt)
+            self.assertLess(len(prompt),(8192-request['options']['num_predict']-1200)*3)
         finally:stub.close()
-
-    def test_invalid_assignments_and_order_do_not_lose_source_ideas(self):
-        data=planning_data(30,30);self.prepare(data)
-        class Invalid(FakeClient):
+    def test_selection_expands_with_duration_and_never_hides_exclusions(self):
+        data=planning_data(100,100);counts=[]
+        for minutes in (3,20,60):
+            selected,excluded,_,_=editorial.selection(data,minutes);counts.append(len(selected))
+            self.assertEqual({i['id'] for i in selected}|{i['idea_id'] for i in excluded},{i['id'] for i in data['ideas']})
+        self.assertLess(counts[0],counts[1]);self.assertLess(counts[1],counts[2])
+    def test_duplicate_and_unknown_source_ids_are_rejected(self):
+        data=planning_data(3,3);data['ideas'][1]['id']=data['ideas'][0]['id'];self.prepare(data)
+        with self.assertRaisesRegex(ValueError,'doublon'):Pipeline(self.project,FakeClient()).run(5,5)
+    def test_exact_duplicate_excluded_but_changed_units_preserved(self):
+        data=planning_data(3,3);data['ideas'][1].update(statement=data['ideas'][0]['statement'],explanation=data['ideas'][0]['explanation'])
+        selected,excluded,_,_=editorial.selection(data,20)
+        self.assertEqual(len(selected),2);self.assertIn('Redite exacte',excluded[0]['reason'])
+        data['ideas'][1]['statement']='Une puissance de 1 mW est utilisée.'
+        data['ideas'][0]['statement']='Une puissance de 1 MW est utilisée.'
+        selected,excluded,_,_=editorial.selection(data,20);self.assertEqual(len(selected),3)
+    def test_duplicate_generated_titles_are_replaced_by_distinct_roles(self):
+        class Same(FakeClient):
             def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan_assignments':
-                    value={'assignments':{'I1':{'chapter':'C999','title':'Fantôme'},'I999':{'chapter':'C1','title':''}}}
-                elif task=='plan_question':value={'central_question':'Comment relier ces notions ?','order':['C999','C1','C1']}
-                else:return super().ask(task,payload,instructions,validate,budget)
-                validate(value);return value
-        Pipeline(self.project,Invalid()).run(5,5)
-        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
-        self.assertTrue(result['warnings']);self.assertFalse(result['exclusions'])
-
-    def test_long_metadata_is_abbreviated_explicitly_without_cutting_audience_or_sources(self):
-        data=planning_data(30,30)
-        for g in data['groups']:g['title']+=' — '+('précision '*600)
-        self.prepare(data);before=(self.project/'etapes/04.json').read_bytes()
-        meta=read(self.project/'projet.json');meta['settings']['audience']='Public : '+('consigne '*248)
-        write(self.project/'projet.json',meta);stub=StubServer()
-        try:
-            config={**meta['settings'],'endpoint':stub.endpoint}
-            client=Ollama(config,self.project/'cache');Pipeline(self.project,client).run(5,5)
-            self.assertEqual((self.project/'etapes/04.json').read_bytes(),before)
-            for task,payload in stub.calls:
-                self.assertEqual(payload['audience'],meta['settings']['audience'])
-                for g in payload.get('groups',[]):
-                    self.assertTrue(g['title_is_excerpt']);self.assertTrue(g['overview_is_excerpt'])
-            self.check_coverage(read(self.project/'etapes/05.json')['data'],data)
-        finally:stub.close()
-
-    def test_invalid_or_truncated_generation_produces_an_explicit_provisional_plan(self):
-        for error in (InvalidResponseError,ResponseLimitError):
-            class Failed(FakeClient):
-                def ask(self,*args,**kwargs):raise error('Réponse non concluante')
-            folder=self.project/error.__name__;folder.mkdir()
-            write(folder/'projet.json',{'settings':defaults(),'pdfs':[]})
-            data=planning_data(4,4);write(folder/'etapes/04.json',{'data':data})
-            Pipeline(folder,Failed()).run(5,5)
-            result=read(folder/'etapes/05.json')['data'];self.check_coverage(result,data)
-            self.assertTrue(result['warnings']);self.assertIn('Plan à relire',(folder/'etapes/05.md').read_text())
-
-    def test_completed_assignment_batches_are_reused_after_a_network_failure(self):
-        data=planning_data(18,18);self.prepare(data)
-        class Interrupted(FakeClient):
-            def ask(self,task,payload,*args,**kwargs):
-                if task=='plan_assignments':
-                    self.seen+=1
-                    if self.seen==2:raise ModelError('HTTP 500')
-                return super().ask(task,payload,*args,**kwargs)
-        client=Interrupted();client.seen=0
-        with self.assertRaisesRegex(ModelError,'Étape 5/9.*500'):Pipeline(self.project,client).run(5,5)
-        path=self.project/'etapes/parties/05-Placement1.md';before=path.read_bytes()
-        self.assertFalse((self.project/'etapes/05.json').exists())
-        client=FakeClient();Pipeline(self.project,client).run(5,5)
-        calls=[p for task,p in client.calls if task=='plan_assignments']
-        self.assertEqual(len(calls),2);self.assertTrue(calls[0]['groups'][0]['title'].startswith('Thème 6'))
-        self.assertEqual(path.read_bytes(),before)
-
-    def test_completed_chapter_survives_a_later_chapter_failure(self):
-        data=planning_data(12,12);self.prepare(data)
-        class Interrupted(FakeClient):
-            def ask(self,task,payload,*args,**kwargs):
-                if task=='plan_chapter':
-                    self.seen+=1
-                    if self.seen==2:raise ModelError('HTTP 404')
-                return super().ask(task,payload,*args,**kwargs)
-        client=Interrupted();client.seen=0
-        with self.assertRaisesRegex(ModelError,'404'):Pipeline(self.project,client).run(5,5)
-        path=self.project/'etapes/parties/05-Chapitre1.md';before=path.read_bytes()
-        client=FakeClient();Pipeline(self.project,client).run(5,5)
-        self.assertEqual(path.read_bytes(),before)
-        self.assertEqual(len([p for t,p in client.calls if t=='plan_chapter']),11)
-
-    def test_source_group_larger_than_one_chapter_is_split_with_exact_coverage(self):
-        data=planning_data(60,1);self.prepare(data);Pipeline(self.project,FakeClient()).run(5,5)
-        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
-        self.assertFalse(result['exclusions'])
-
-    def test_capacity_exclusions_are_explicit_and_all_sources_remain_in_the_dossier(self):
-        data=planning_data(500,500);self.prepare(data)
-        Pipeline(self.project,FakeClient()).run(5,5)
-        result=read(self.project/'etapes/05.json')['data'];self.check_coverage(result,data)
-        self.assertTrue(result['exclusions']);self.assertTrue(result['warnings'])
-        self.assertTrue(all('Capacité du plan' in e['reason'] for e in result['exclusions']))
-        self.assertEqual(len(read(self.project/'etapes/04.json')['data']['ideas']),500)
-
-    def test_wrong_source_coverage_stops_before_any_model_request(self):
-        data=planning_data(3,3);data['groups'][1]['idea_ids']=data['groups'][0]['idea_ids'][:]
-        self.prepare(data);client=FakeClient()
-        with self.assertRaisesRegex(ValueError,'identifiants'):Pipeline(self.project,client).run(5,5)
-        self.assertFalse(client.calls)
-
-    def test_model_connectivity_and_cancellation_are_never_turned_into_a_fallback_plan(self):
-        data=planning_data(3,3);self.prepare(data)
-        for error in (ModelError,Cancelled,OSError):
-            class Failed(FakeClient):
-                def ask(self,*args,**kwargs):raise error('Arrêt')
-            with self.subTest(error=error),self.assertRaises(error):Pipeline(self.project,Failed()).run(5,5)
-        self.assertFalse((self.project/'etapes/05.json').exists())
-
-    def test_plan_warnings_reach_the_final_report(self):
-        (self.project/'sources').mkdir();make_pdf(self.project/'sources/a.pdf')
-        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Essai.pdf'}]})
-        class Missing(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan_question':
-                    value={'central_question':'Comment relier ces notions ?','order':[]};validate(value);return value
+                if task=='editorial_outline':
+                    value={'central_question':'Comment comprendre ces notions ?','titles':{r:'Les notions pour comprendre' for r in payload['roles']}}
+                    validate(value);return value
                 return super().ask(task,payload,instructions,validate,budget)
-        Pipeline(self.project,Missing()).run(1,9)
-        final=read(self.project/'exports/podcast.json')
-        self.assertTrue(final['all_planned_ids_present'])
-        self.assertTrue(any('Chapitres absents' in w for w in final['generation_warnings']))
-
+        self.prepare(planning_data(6,6));Pipeline(self.project,Same()).run(5,5)
+        plan=read(self.project/'etapes/05.json')['data']
+        self.assertEqual(len({c['title'] for c in plan['chapters']}),6);self.assertTrue(plan['warnings'])
+        self.assertEqual([c['role'] for c in plan['chapters']],list(editorial.ROLES))
+    def test_failed_outline_generation_is_explicit_but_network_errors_stop(self):
+        self.prepare(planning_data(6,6))
+        class Failed(FakeClient):
+            def ask(self,*args,**kwargs):raise InvalidResponseError('Format invalide')
+        Pipeline(self.project,Failed()).run(5,5)
+        self.assertTrue(read(self.project/'etapes/05.json')['data']['warnings'])
+        class Offline(FakeClient):
+            def ask(self,*args,**kwargs):raise ModelError('HTTP 404')
+        meta=read(self.project/'projet.json');meta['settings']['minutes']=21;write(self.project/'projet.json',meta)
+        with self.assertRaisesRegex(ModelError,'404'):Pipeline(self.project,Offline()).run(5,5)
+    def test_completed_outline_is_reused_without_reclassifying_sources(self):
+        self.prepare(planning_data(6,6));client=FakeClient();pipe=Pipeline(self.project,client)
+        pipe.run(5,5);count=len(client.calls);pipe.run(5,5);self.assertEqual(len(client.calls),count)
+    def test_old_workflow_cannot_be_silently_reused(self):
+        data=planning_data(6,6);data.pop('workflow_version');self.prepare(data)
+        with self.assertRaisesRegex(ValueError,'Ancien texte commun'):Pipeline(self.project,FakeClient()).run(5,5)
+    def test_document_identifiers_cannot_become_podcast_titles(self):
+        class Meta(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='editorial_outline':
+                    value={'central_question':'Comment utiliser PDF1 pour présenter le document ?',
+                           'titles':{r:'Utilisation de PDF1 pour présenter le document' for r in payload['roles']}}
+                    validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        self.prepare(planning_data(6,6));Pipeline(self.project,Meta()).run(5,5)
+        plan=read(self.project/'etapes/05.json')['data']
+        self.assertNotIn('PDF1',plan['central_question'])
+        self.assertTrue(all('PDF1' not in c['title'] for c in plan['chapters']))
+        self.assertTrue(plan['warnings'])
+    def test_an_outline_cannot_invent_a_causal_premise_or_declarative_title(self):
+        class Relation(FakeClient):
+            def ask(self,task,payload,instructions,validate,budget=4000):
+                if task=='editorial_outline':
+                    value={'central_question':'Quel algorithme de quantification amplifie le signal ?',
+                           'titles':{r:'Quantification introduit une amplification nécessaire' for r in payload['roles']}}
+                    validate(value);return value
+                return super().ask(task,payload,instructions,validate,budget)
+        self.prepare(planning_data(6,6));Pipeline(self.project,Relation()).run(5,5)
+        plan=read(self.project/'etapes/05.json')['data']
+        self.assertNotIn('amplifie',plan['central_question'])
+        self.assertTrue(all('Quantification' not in c['title'] for c in plan['chapters']))
 
 if __name__=='__main__':unittest.main()

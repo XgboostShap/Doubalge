@@ -4,7 +4,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','editorial.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -73,6 +73,6 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF et projets sont conserves. Le programme va rouvrir : verifiez le numero de version en haut, puis cliquez sur Continuer.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF et projets sont conserves. Verifiez la version en haut. Pour un ancien projet, cliquez sur Ameliorer les resumes existants, attendez la fin du reexamen, puis cliquez sur Continuer.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }

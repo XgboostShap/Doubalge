@@ -14,7 +14,7 @@ def main():
                  [p for p in (ROOT/'tests').glob('*.py')]+[ROOT/n for n in ('README.md','LIRE-MOI.txt','README-CORRECTIF.txt','requirements.txt','installer.ps1','Installer-Windows.cmd','Lancer-Podcast.cmd','Mettre-a-jour.cmd','mettre-a-jour.ps1','.gitignore')])
     document=['# Sources complètes — Podcast pédagogique '+APP_VERSION,'',
               'Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.',
-              'Les tests automatisés utilisent un Ollama simulé ; la qualité Mistral et Windows restent à vérifier.', '']
+              'Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.', '']
     manifest={}
     for path in files:
         raw=path.read_bytes();text=raw.decode('utf-8-sig');name=path.relative_to(ROOT).as_posix()
@@ -25,7 +25,7 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
-    payload=['app.py','storage.py','pipeline.py','quality.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+    payload=['app.py','storage.py','pipeline.py','quality.py','editorial.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')

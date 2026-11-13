@@ -24,98 +24,20 @@ class UpdateTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.project=Path(self.temp.name)
         write(self.project/'projet.json',{'settings':defaults(),'pdfs':[]})
     def tearDown(self):self.temp.cleanup()
-    def pipeline(self,client):return Pipeline(self.project,client)
-
-    def prepare3(self,ideas):
-        write(self.project/'etapes/03.json',{'data':{'documents':[{'id':'PDF1','name':'Essai',
-            'parts':[{'number':2,'ideas':ideas}]}]}})
-
-    def test_exact_reported_id_is_preserved_when_the_model_omits_its_paragraph(self):
-        ideas=source_ideas(1)
+    def test_common_text_cannot_be_poisoned_by_a_model(self):
+        class Poison(FakeClient):
+            def ask(self,*args,**kwargs):raise AssertionError('Pas de rédaction scientifique libre.')
+        source=source_ideas();packet=Pipeline(self.project,Poison()).common_text({'id':'G1','title':'Réglages'},source)
+        for idea in source:
+            self.assertIn(idea['statement'],packet['text']);self.assertIn(idea['explanation'],packet['text'])
+        self.assertEqual(re.findall(r'\[(PDF\d+-P\d+-I\d+)\]',packet['text']),[i['id'] for i in source])
+    def test_originally_missing_reported_id_is_restored_with_its_own_text(self):
+        source=source_ideas(1)
         with self.assertRaisesRegex(ValueError,'Attendus : PDF1-P2-I109'):
-            citations({'text':'Une formulation sans référence.'},[ideas[0]['id']])
-        class Missing(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='common_paragraphs':
-                    self.calls.append((task,copy.deepcopy(payload)));value={'paragraphs':{}}
-                    validate(value);return value
-                return super().ask(task,payload,instructions,validate,budget)
-        self.prepare3(ideas);client=Missing();self.pipeline(client).run(4,4)
-        result=read(self.project/'etapes/04.json')['data']
-        self.assertIn('[PDF1-P2-I109]',result['groups'][0]['text'])
-        self.assertIn(ideas[0]['statement'],result['groups'][0]['text']);self.assertTrue(result['text_warnings'])
-        payload=next(p for task,p in client.calls if task=='common_paragraphs')
-        self.assertNotIn('PDF1-P2-I109',json.dumps(payload))
-
-    def test_missing_or_foreign_paragraphs_never_change_source_coverage(self):
-        class Wrong(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                value={'paragraphs':{'I1':'Le premier réglage repose sur une mesure. [PDF9-P9-I999]',
-                    'I2':None,'I999':'Un passage étranger au registre.'}}
-                validate(value);return value
-        ideas=source_ideas();before=copy.deepcopy(ideas)
-        packet=self.pipeline(Wrong()).common_text({'id':'G1','title':'Réglages'},ideas)
-        self.assertEqual(re.findall(r'\[(PDF\d+-P\d+-I\d+)\]',packet['text']),[i['id'] for i in ideas])
-        self.assertEqual(ideas,before);self.assertNotIn('passage étranger',packet['text'])
-        self.assertIn(ideas[1]['statement'],packet['text']);self.assertTrue(packet['warnings'])
-
-    def test_invalid_or_truncated_generation_keeps_sources_and_reports_the_failure(self):
-        for error in (InvalidResponseError,ResponseLimitError):
-            class Failed(FakeClient):
-                def ask(self,*args,**kwargs):raise error('Réponse inutilisable')
-            packet=self.pipeline(Failed()).common_text({'id':error.__name__,'title':'Réglages'},source_ideas())
-            self.assertTrue(packet['warnings'])
-            for idea in source_ideas():self.assertIn(idea['statement'],packet['text'])
-
-    def test_a_generic_model_paragraph_keeps_the_precise_source_statement(self):
-        class Generic(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                value={'paragraphs':{'I1':'Nous allons discuter de ce sujet important.'}};validate(value);return value
-        idea=source_ideas(1)[0];packet=self.pipeline(Generic()).common_text({'id':'G1','title':'Réglages'},[idea])
-        self.assertIn(idea['statement'],packet['text'])
-
-    def test_network_cancel_and_disk_errors_are_not_converted_to_source_fallbacks(self):
-        for error in (ModelError,Cancelled,OSError):
-            class Failed(FakeClient):
-                def ask(self,*args,**kwargs):raise error('Arrêt')
-            with self.subTest(error=error),self.assertRaises(error):
-                self.pipeline(Failed()).common_text({'id':'G1','title':'Réglages'},source_ideas())
-
-    def test_finished_common_text_group_survives_a_later_failure(self):
-        self.prepare3(source_ideas(4))
-        class Interrupted(FakeClient):
-            def ask(self,task,payload,*args,**kwargs):
-                if task=='common_paragraphs' and payload['ideas'][0]['statement'].startswith('Le réglage 2'):
-                    raise ModelError('HTTP 404')
-                return super().ask(task,payload,*args,**kwargs)
-        with self.assertRaisesRegex(ModelError,'Étape 4/9.*404'):self.pipeline(Interrupted()).run(4,4)
-        path=self.project/'etapes/parties/04-G1.md';before=path.read_bytes()
-        client=FakeClient();self.pipeline(client).run(4,4)
-        calls=[p for task,p in client.calls if task=='common_paragraphs']
-        self.assertEqual(len(calls),1);self.assertTrue(calls[0]['ideas'][0]['statement'].startswith('Le réglage 2'))
-        self.assertEqual(path.read_bytes(),before)
-
-    def test_all_summary_blocks_and_source_anchors_reach_the_compilation(self):
-        ideas=source_ideas(31);client=FakeClient()
-        packet=self.pipeline(client).structured_summary('All','Tous les concepts',ideas,{},details=True)
-        self.assertEqual(len([t for t,p in client.calls if t=='part_structure']),4)
-        for idea in ideas:
-            self.assertIn('['+idea['id']+'] '+idea['statement'],packet['text'])
-        self.assertIn(ideas[-1]['statement'],packet['text'])
-
-    def test_nine_stages_report_common_text_and_explanation_fallbacks(self):
-        (self.project/'sources').mkdir();make_pdf(self.project/'sources/a.pdf')
-        write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Essai.pdf'}]})
-        class Missing(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                if task in ('common_paragraphs','explanation_paragraphs'):
-                    value={'paragraphs':{}};validate(value);return value
-                return super().ask(task,payload,instructions,validate,budget)
-        self.pipeline(Missing()).run(1,9)
-        final=read(self.project/'exports/podcast.json')
-        self.assertTrue(final['all_planned_ids_present']);self.assertTrue(final['generation_warnings'])
-        explanations=read(self.project/'etapes/07.json')['data'];self.assertTrue(explanations['warnings'])
-        self.assertTrue(all(ch['transition'] for ch in explanations['chapters']))
+            citations({'text':'Formulation sans référence.'},[source[0]['id']])
+        packet=Pipeline(self.project,FakeClient()).common_text({'id':'G1','title':'Réglages'},source)
+        self.assertIn(source[0]['statement']+' '+source[0]['explanation'],packet['text'])
+        self.assertIn('[PDF1-P2-I109]',packet['text'])
 
 
 class GroundingTests(unittest.TestCase):
@@ -214,15 +136,14 @@ class GroundingTests(unittest.TestCase):
 
 
 class SchemaTests(unittest.TestCase):
+
     def test_common_text_request_uses_short_keys_and_keeps_real_ids_out_of_the_prompt(self):
         with tempfile.TemporaryDirectory() as temp:
             project=Path(temp);write(project/'projet.json',{'settings':defaults(),'pdfs':[]});stub=StubServer()
             try:
                 client=Ollama({**defaults(),'endpoint':stub.endpoint},project/'cache')
                 value=Pipeline(project,client).common_text({'id':'G1','title':'Réglages'},source_ideas(1))
-                request=stub.requests[0]
-                self.assertEqual(request['format']['properties']['paragraphs']['required'],['I1'])
-                self.assertNotIn('PDF1-P2-I109',json.dumps(request));self.assertIn('[PDF1-P2-I109]',value['text'])
+                self.assertFalse(stub.requests);self.assertIn('[PDF1-P2-I109]',value['text'])
             finally:stub.close()
 
 

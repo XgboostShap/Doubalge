@@ -135,7 +135,7 @@ class PartTests(unittest.TestCase):
         dialogue = [p for task,p in client.calls if task=='dialogue']
         self.assertEqual([p['chapter']['id'] for p in dialogue],['C2'])
         self.assertTrue(dialogue[0]['memory']['last_turns'])
-        self.assertIn('C1',dialogue[0]['memory']['definitions'])
+        self.assertTrue(dialogue[0]['memory']['explained_ideas'])
         self.assertEqual((self.parts/'08-C1.md').read_text(),markdown)
         self.assertTrue(read(self.project/'exports/podcast.json')['all_planned_ids_present'])
         # Modification des paramètres : plus de réemploi du contenu périmé.

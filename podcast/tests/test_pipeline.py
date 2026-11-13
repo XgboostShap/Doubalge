@@ -31,22 +31,23 @@ class PipelineTests(unittest.TestCase):
         data=extract(self.project/'sources/a.pdf','PDF1','optique.pdf')
         self.assertEqual(data['page_count'],3);self.assertEqual([p['pages'] for p in data['parts']],[[1],[2],[3]])
 
+
     def test_nine_stages_sources_memory_and_exports(self):
         client=FakeClient();Pipeline(self.project,client).run()
         self.assertEqual(len(list((self.project/'etapes').glob('*.json'))),9)
-        final=read(self.project/'exports/podcast.json');self.assertTrue(final['all_planned_ids_present']);self.assertTrue(final['word_count']>0)
-        self.assertTrue((self.project/'exports/podcast.txt').exists())
+        final=read(self.project/'exports/podcast.json')
+        self.assertTrue(final['all_planned_ids_present']);self.assertTrue(final['source_texts_preserved'])
         summaries=read(self.project/'etapes/02.json')['data']
         self.assertEqual(len(summaries['documents']),2)
         self.assertTrue(all(len(doc['parts'])==3 for doc in summaries['documents']))
         calls=[p for task,p in client.calls if task=='dialogue']
-        self.assertEqual(len(calls),2)
         self.assertFalse(calls[0]['memory']['explained_ideas'])
-        self.assertTrue(calls[1]['memory']['explained_ideas']);self.assertIn('C1',calls[1]['memory']['definitions'])
-        self.assertTrue(calls[1]['memory']['last_turns']);self.assertEqual(len(list((self.project/'memoire').glob('*.json'))),2)
+        chapter2=next(p for p in calls if p['chapter']['id']=='C2')
+        self.assertTrue(chapter2['memory']['explained_ideas']);self.assertTrue(chapter2['memory']['last_turns'])
+        self.assertEqual(len(list((self.project/'memoire').glob('*.json'))),2)
         old=(self.project/'etapes/04.json').read_bytes();invalidate(self.project,5)
         self.assertEqual((self.project/'etapes/04.json').read_bytes(),old)
-        self.assertFalse((self.project/'etapes/05.json').exists());self.assertFalse((self.project/'exports/podcast.txt').exists())
+        self.assertFalse((self.project/'etapes/05.json').exists())
         self.assertTrue(list((self.project/'versions').rglob('export-podcast.txt')))
 
     def test_unknown_duplicate_and_missing_idea_ids_are_rejected(self):
@@ -58,7 +59,7 @@ class PipelineTests(unittest.TestCase):
         client=FakeClient();pipeline=Pipeline(self.project,client);pipeline.run(1,4)
         class BadPlan(FakeClient):
             def ask(self,task,payload,instructions,validate,budget=4000):
-                if task=='plan_chapter':raise ModelError('Ollama répond HTTP 500')
+                if task=='editorial_outline':raise ModelError('Ollama répond HTTP 500')
                 return super().ask(task,payload,instructions,validate,budget)
         with self.assertRaises(ModelError):Pipeline(self.project,BadPlan()).run(5,9)
         self.assertTrue((self.project/'etapes/04.json').exists());self.assertFalse((self.project/'etapes/05.json').exists())

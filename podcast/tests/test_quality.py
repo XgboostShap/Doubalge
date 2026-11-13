@@ -153,43 +153,41 @@ class QualityPipelineTests(unittest.TestCase):
                 return super().ask(task,*args,**kwargs)
         with self.assertRaisesRegex(ModelError,'404'):Pipeline(self.project,Offline()).run(2,2)
         self.assertFalse((self.project/'etapes/02.json').exists())
+
     def test_synthesis_is_structured_and_pdf_compilation_does_not_resend_the_registry(self):
         self.prepare(document(['Le signal perd de la puissance dans la fibre et un amplificateur peut compenser les pertes.']*3))
-        client=FakeClient();Pipeline(self.project,client).run(2,3)
+        client=FakeClient();Pipeline(self.project,client).run(2,4)
         data=read(self.project/'etapes/02.json')['data']
         for part in data['documents'][0]['parts']:
-            self.assertIn('### Problème posé',part['summary'])
+            self.assertIn('### Notions essentielles',part['summary'])
             self.assertTrue(all(i['evidence'] for i in part['ideas']))
-        payload=next(p for task,p in client.calls if task=='pdf_synthesis')
-        self.assertTrue(all(set(p)=={'number','summary'} for p in payload['parts']))
+        self.assertFalse(any(task in ('part_structure','pdf_synthesis','common_paragraphs') for task,p in client.calls))
+        source={i['id']:i for d in data['documents'] for p in d['parts'] for i in p['ideas']}
+        common=read(self.project/'etapes/04.json')['data']
+        self.assertTrue(all(i['statement']==source[i['id']]['statement'] for i in common['ideas']))
+
 
     def test_french_ai_definition_does_not_abort_the_structured_summary(self):
-        class FrenchAI(FakeClient):
-            def ask(inner,task,payload,instructions,validate,budget=4000):
-                if task!='part_structure':return super().ask(task,payload,instructions,validate,budget)
-                inner.calls.append((task,copy.deepcopy(payload)))
-                value={key:'' for key in quality.TITLES}
-                value['problem']='L’intelligence artificielle (AI) aide à analyser les données du réseau.'
-                validate(value);return value
-        client=FrenchAI();terms={'AI':[{'definition':'Artificial intelligence','page':1}]}
+        client=FakeClient();terms={'AI':[{'definition':'Artificial intelligence','page':1}]}
         result=Pipeline(self.project,client).structured_summary('AI','Synthèse AI',
             [{'id':'PDF1-P1-I001','statement':'L’AI analyse les données.'}],terms)
-        self.assertIn('intelligence artificielle (AI)',result)
-        self.assertEqual(len(client.calls),1)
-        self.assertTrue((self.project/'etapes/parties/02-AI-S0B1.md').exists())
+        self.assertIn('L’AI analyse les données.',result)
+        self.assertFalse(client.calls)
+
     def test_long_registry_is_grouped_in_small_batches_with_no_missing_ids(self):
+        import editorial
         ideas=[{'id':f'PDF1-P1-I{n:03}','statement':f'Le phénomène {n} possède une condition différente.',
                 'explanation':'La condition change la réponse physique du système.','pages':[n],'document':'PDF1'} for n in range(1,251)]
-        write(self.project/'etapes/03.json',{'data':{'documents':[{'id':'PDF1','name':'Long.pdf','parts':[{'ideas':ideas}]}]}})
+        for i in ideas:i['source_hash']=editorial.source_hash(i)
+        write(self.project/'etapes/03.json',{'data':{'workflow_version':editorial.VERSION,'documents':[
+            {'id':'PDF1','name':'Long.pdf','parts':[{'number':1,'ideas':ideas}]}]}})
         client=FakeClient();Pipeline(self.project,client).run(4,5)
-        batches=[p for task,p in client.calls if task=='global_groups']
-        self.assertTrue(len(batches)>1);self.assertTrue(all(len(p['ideas'])<=12 for p in batches))
+        batches=[p for task,p in client.calls if task=='editorial_roles']
+        self.assertTrue(len(batches)>1);self.assertTrue(all(len(p['ideas'])<=5 for p in batches))
         plan=read(self.project/'etapes/05.json')['data']
         covered=[i for c in plan['chapters'] for i in c['idea_ids']]+[e['idea_id'] for e in plan['exclusions']]
         self.assertEqual(set(covered),{i['id'] for i in ideas});self.assertEqual(len(covered),250)
-        payload=next(p for task,p in client.calls if task=='plan_assignments')
-        self.assertNotIn('ideas',payload)
-        self.assertTrue(all('idea_ids' not in g for g in payload['groups']))
+        self.assertTrue(plan['exclusions']);self.assertTrue(all(len(c['idea_ids'])<=5 for c in plan['chapters']))
 
 
 if __name__=='__main__':unittest.main()

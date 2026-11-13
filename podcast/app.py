@@ -23,7 +23,7 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.1.10'
+APP_VERSION = '0.2.0'
 
 
 def settings(value):
@@ -68,6 +68,7 @@ class App:
         self.active = None
         self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
                         'summary_quality':getattr(pipeline_module,'SUMMARY_QUALITY_MODE','legacy'),
+                        'editorial_mode':getattr(pipeline_module,'EDITORIAL_MODE','legacy'),
                         'app_dir':str(ROOT),'pid':os.getpid()}
         self.client_factory = client_factory
         for path in self.projects.glob('*/tache.json'):
@@ -103,14 +104,17 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
+        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v3'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
                   'from_previous_version':True}
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
+        if needs_upgrade:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
+                'needs_source_upgrade':needs_upgrade,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
     def state(self):
@@ -123,8 +127,10 @@ class App:
         with self.lock:
             if self.runtime['page_sources']!='pdf-page-v1':
                 raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
-            if self.runtime['summary_quality']!='source-review-v2':
+            if self.runtime['summary_quality']!='source-review-v3':
                 raise ValueError('Mise à jour incomplète : les contrôles de synthèse sont absents. Fermez le programme et utilisez le nouveau correctif.')
+            if self.runtime['editorial_mode']!='grounded-editorial-v1':
+                raise ValueError('Mise à jour incomplète : les réponses reliées aux sources sont absentes. Réappliquer le correctif complet.')
             self.idle(folder)
             meta = read(folder/'projet.json')
             if not meta['pdfs']:
@@ -142,6 +148,8 @@ class App:
                     raise ValueError('L’amélioration réutilise une étape 2 terminée, sans régénération forcée.')
                 # Copie privée de l'extraction AVANT l'archivage des résultats.
                 self.preserve_summaries(folder,meta)
+            elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v3':
+                raise ValueError('Ce projet utilise les anciens contrôles. Cliquer sur Améliorer les résumés existants : les résultats seront archivés et les sources réexaminées avant la reconstruction du plan et du dialogue.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
                     'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel

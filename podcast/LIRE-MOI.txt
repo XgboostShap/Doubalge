@@ -20,5 +20,6 @@ Dans une installation existante, utiliser le ZIP correctif puis Mettre-a-jour.cm
 Pour reprendre un ancien resume, cliquer sur Ameliorer les resumes existants.
 Consultez README.md pour les details et SOURCE-COMPLET.md pour tous les sources.
 
-Les tests techniques utilisent un modele simule. La qualite avec votre modele
-Mistral et l'installation native Windows restent a verifier sur votre PC.
+Les tests techniques utilisent notamment un modele simule. Des essais Mistral
+sont cibles ; la relecture scientifique et Windows natif restent a verifier.
+Pour un ancien projet : Ameliorer les resumes existants, attendre, puis Continuer.

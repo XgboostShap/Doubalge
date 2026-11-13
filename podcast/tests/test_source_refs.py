@@ -73,24 +73,22 @@ class ReferenceTests(unittest.TestCase):
         result=pipeline.classify_batch(other,1)
         self.assertEqual(len(client.calls),2)
         self.assertTrue(all(i.startswith('PDF2') for g in result['groups'] for i in g['idea_ids']))
+
     def test_missing_sentences_use_the_original_statement_and_keep_source_order(self):
-        class Missing(FakeClient):
-            def ask(self,task,payload,instructions,validate,budget=4000):
-                value={'sentences':{'I2':'Une deuxième idée reformulée.','I1':'','I3':7,'I999':'Phrase étrangère.'}}
-                validate(value);return value
+        class Poison(FakeClient):
+            def ask(self,*args,**kwargs):raise AssertionError('Le modèle ne doit plus réaffecter les phrases.')
         source=ideas();chapter={'id':'C1','title':'Essai','idea_ids':REPORTED_IDS}
-        result=self.pipeline(Missing()).chapter_sentences(chapter,source)
+        result=self.pipeline(Poison()).chapter_sentences(chapter,source)
         self.assertEqual([i['idea_id'] for i in result['items']],REPORTED_IDS)
-        self.assertEqual(result['items'][0]['sentence'],source[0]['statement'])
-        self.assertEqual(result['items'][1]['sentence'],'Une deuxième idée reformulée.')
-        self.assertTrue(result['warnings'])
+        self.assertEqual([i['sentence'] for i in result['items']],[i['statement'] for i in source])
+
     def test_invalid_sentence_format_keeps_every_original_statement(self):
         class Invalid(FakeClient):
             def ask(self,*args,**kwargs):raise InvalidResponseError('JSON incomplet')
         source=ideas();chapter={'id':'C1','title':'Essai','idea_ids':REPORTED_IDS}
         result=self.pipeline(Invalid()).chapter_sentences(chapter,source)
         self.assertEqual([i['sentence'] for i in result['items']],[i['statement'] for i in source])
-        self.assertTrue(result['warnings'])
+        self.assertTrue(all(i['source_hash'] for i in result['items']))
     def test_nine_stages_preserve_coverage_and_export_provisional_warnings(self):
         (self.project/'sources').mkdir();make_pdf(self.project/'sources/a.pdf')
         write(self.project/'projet.json',{'settings':defaults(),'pdfs':[{'file':'a.pdf','name':'Essai.pdf'}]})
@@ -104,7 +102,7 @@ class ReferenceTests(unittest.TestCase):
         final=read(self.project/'exports/podcast.json')
         self.assertTrue(final['all_planned_ids_present'])
         self.assertTrue(final['generation_warnings'])
-        self.assertIn('Classements et formulations provisoires',(self.project/'etapes/09.md').read_text())
+        self.assertIn('Points à relire',(self.project/'etapes/09.md').read_text())
 
 
 class ReferenceHTTPTests(unittest.TestCase):
@@ -127,12 +125,12 @@ class ReferenceHTTPTests(unittest.TestCase):
         result=self.pipeline.classify_batch(ideas(),1)
         self.assertEqual(len(self.stub.calls),2)
         self.assertEqual([i for g in result['groups'] for i in g['idea_ids']],REPORTED_IDS)
+
     def test_sentence_schema_uses_local_keys_and_program_restores_the_ids(self):
         result=self.pipeline.chapter_sentences({'id':'C1','title':'Essai','idea_ids':REPORTED_IDS},ideas())
-        fields=self.stub.requests[0]['format']['properties']['sentences']
-        self.assertEqual(fields['required'],[f'I{n}' for n in range(1,13)])
+        self.assertFalse(self.stub.requests)
         self.assertEqual([i['idea_id'] for i in result['items']],REPORTED_IDS)
-        self.assertNotIn('PDF1-P1-I',json.dumps(self.stub.requests[0]))
+        self.assertEqual([i['sentence'] for i in result['items']],[i['statement'] for i in ideas()])
 
 
 if __name__=='__main__':unittest.main()

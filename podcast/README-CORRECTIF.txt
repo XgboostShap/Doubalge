@@ -1,23 +1,27 @@
-PODCAST PEDAGOGIQUE 0.1.10 — PLAN PEDAGOGIQUE PAR LOTS
+PODCAST PEDAGOGIQUE 0.2.0 — SOURCES ET DIALOGUE
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
-3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.1.10 en haut de la page.
-5. Cliquer sur Continuer pour reprendre l'etape 5.
+3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant votre Lancer-Podcast.cmd.
+4. Verifier Version 0.2.0 en haut de la page.
+5. Dans l'ancien projet, cliquer sur Ameliorer les resumes existants.
+6. Attendre la fin du reexamen, puis cliquer sur Continuer jusqu'au script final.
 
-Le plan traite les themes par petits lots et redige chaque chapitre separement.
-Chaque fragment est sauvegarde avant le suivant et peut etre repris apres arret.
-Les references des idees sont ajoutees et controlees par le programme.
-Les apercus envoyes au modele sont abreges explicitement ; le texte complet de
-l'etape 4 reste conserve. Les propositions de secours sont signalees a relire.
+Le reexamen est necessaire : les anciens resultats pouvaient associer un bon
+identifiant a une mauvaise explication. Ils seront archives. Les PDF, projets,
+texte extrait et modeles sont conserves. Pas de reinstallation de Mistral.
 
-Pas besoin d'augmenter le contexte Ollama ni de refaire les quatre premieres
-etapes pour ce correctif. Les PDF, projets et modeles sont conserves.
-Les correctifs precedents sont inclus.
+Le plan choisit les idees selon la duree et indique celles gardees hors podcast.
+Chaque chapitre contient au maximum cinq idees. Les reponses conservent le texte
+source retenu ; le modele propose les questions. Une question manquante est
+reprise localement. La couverture des idees reste controlee.
+Chaque bloc termine est sauvegarde avant le suivant pour permettre la reprise.
 
-La limite de 20 chapitres de 24 idees reste appliquee. Toute idee hors podcast
-est listee avec motif, sans suppression du dossier. Le cas de 181 idees fourni
-est couvert sans exclusion dans le test de regression.
-Les controles techniques ne garantissent pas la qualite scientifique du script.
-Le parcours complet avec Mistral et l'interface native Windows restent a verifier.
+Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
+correctif et lancer :
+powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1
+Choisir ensuite le dossier de votre installation, pas celui du correctif.
+
+Cette version cree le texte du podcast. Relire les sources, les traductions,
+le choix des idees et le dialogue avant d'enregistrer. Les controles automatiques
+ne remplacent pas cette relecture. Voir README.md pour les limites et les essais.
