@@ -14,9 +14,10 @@ from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
 from storage import invalidate,read,write
 from test_audio_export import VoiceServer
+from test_legacy_audio import OLD_SETTINGS
 
 with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
-    temp=Path(temp);stub=StubServer();voices=VoiceServer();app=App(temp/'data');server=Server(('127.0.0.1',0),app)
+    temp=Path(temp);stub=StubServer();voices=VoiceServer();voices.require_auth=True;voices.strict=True;app=App(temp/'data');server=Server(('127.0.0.1',0),app)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         pdf1=make_pdf(temp/'optique.pdf');pdf2=make_pdf(temp/'laser.pdf','Laser')
@@ -39,11 +40,11 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
             page.evaluate('() => refresh()')
             page.wait_for_function('() => Boolean(state.runtime?.version)')
-            page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task.state==="done"')
+            page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task?.state==="done"')
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("pages 1")')
             assert 'pages 1' in page.locator('#preview').inner_text()
             stub.fail_on=('dialogue','C2')
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="error"&&current()?.completed.length===7',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="error"&&current()?.completed.length===7',timeout=60000)
             page.locator('#steps button').nth(7).click()
             page.wait_for_function('() => document.querySelectorAll("#part-links a").length>=2')
             assert page.locator('#download-md').is_hidden()
@@ -52,7 +53,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             partial=temp/'chapitre-1.md';download.value.save_as(partial)
             assert 'Sophie' in partial.read_text()
             before=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             after=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
             assert before==after==1
             assert page.locator('#steps button').count()==9
@@ -70,10 +71,10 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert page.locator('#voice-assignments select').nth(0).input_value()=='ref-sophie'
             assert page.locator('#voice-assignments select').nth(1).input_value()=='ref-emma'
             page.locator('#voice-assignments button').nth(0).click()
-            page.wait_for_function('() => current()?.task.state==="done"&&Boolean(current()?.audio.preview)',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&Boolean(current()?.audio.preview)',timeout=60000)
             assert page.locator('#voice-preview').is_visible()
             page.locator('#render-audio').click()
-            page.wait_for_function('() => current()?.task.state==="done"&&current()?.audio.available',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&current()?.audio.available',timeout=60000)
             page.wait_for_function('() => document.querySelector("#podcast-player").readyState>=1')
             page.locator('#podcast-player').click(position={'x':20,'y':25})
             page.wait_for_function('() => document.querySelector("#podcast-player").currentTime>0.02')
@@ -91,18 +92,18 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.evaluate('() => refresh()');page.wait_for_function('() => current()?.completed.length===2')
             assert page.locator('#quality-upgrade').is_visible()
             before_extract=len([p for task,p in stub.calls if task=='part_summary'])
-            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v4"',timeout=60000)
+            page.locator('#refine').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.summary_quality==="source-review-v4"',timeout=60000)
             assert len([p for task,p in stub.calls if task=='part_summary'])==before_extract
             assert page.locator('#quality-upgrade').is_hidden()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Notions essentielles")')
             assert (folder/'reprises/02.json').exists()
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             page.locator('#steps button').nth(3).click();page.wait_for_function('() => document.querySelector("#preview").textContent.includes("PDF2")')
             page.locator('#steps button').nth(5).click();page.locator('#run-step').click()
-            page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===6',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===6',timeout=60000)
             assert page.locator('#final-exports').is_hidden()
             assert list((folder/'versions').rglob('export-podcast.txt'))
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             page.locator('#steps button').nth(8).click()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Rapport de révision")')
             (ROOT/'dist').mkdir(exist_ok=True);page.screenshot(path=str(ROOT/'dist/interface-verifiee.png'),full_page=True)
@@ -110,12 +111,39 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             stub.stall=True;stub.started.clear()
             page.locator('#steps button').nth(1).click();page.locator('#run-step').click()
             assert stub.started.wait(10)
-            page.wait_for_function('() => current()?.task.state==="running"')
-            page.locator('#cancel').click();page.wait_for_function('() => current()?.task.state==="cancelled"',timeout=10000)
+            page.wait_for_function('() => current()?.task?.state==="running"')
+            page.locator('#cancel').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
             assert read(folder/'etapes/01.json')
+            source_before=(folder/'etapes/01.json').read_bytes()
+            # Parcours indépendant : ancien dialogue et anciens réglages, sans PDF.
+            page.locator('#new-audio').click();page.wait_for_function('() => current()?.audio.source_mode==="provided"&&current()?.pdfs.length===0')
+            audio_id=page.evaluate('selected');audio_folder=app.project(audio_id)
+            assert page.locator('.work').is_hidden()
+            dialogue=temp/'dialogue_revise.txt';dialogue.write_text('AnneSo: Pourquoi préparer une décision ?\nSophie: Le modèle permet de comparer les effets avant une intervention.',encoding='utf-8')
+            page.locator('#audio-text-file').set_input_files(str(dialogue))
+            page.wait_for_function('() => document.querySelector("#audio-text").value.includes("AnneSo")')
+            assert page.locator('#render-audio').is_disabled()
+            page.locator('#save-audio-text').click();page.wait_for_function('() => current()?.audio.script_ready')
+            legacy=temp/'podcast_interface.py';legacy.write_text(OLD_SETTINGS.replace('http://127.0.0.1:3900',voices.endpoint).replace('profile-anne','ref-sophie').replace('profile-sophie','ref-emma'))
+            page.get_by_text('Récupérer mes anciens réglages VoiceStudio',exact=True).click()
+            page.locator('#legacy-audio-file').set_input_files(str(legacy));page.locator('#import-legacy-audio').click()
+            page.wait_for_function('() => current()?.audio.settings.voices.AnneSo==="ref-sophie"&&current()?.audio.settings.voices.Sophie==="ref-emma"')
+            page.locator('#render-audio').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.audio.available',timeout=60000)
+            full=(audio_folder/'exports/podcast.mp3').read_bytes()
+            for scope in (3,5):
+                page.locator('#audio-scope').select_option(str(scope));page.wait_for_function('(scope) => current()?.audio.settings.scope_minutes===scope',arg=scope)
+                page.locator('#render-audio').click();page.wait_for_function('(scope) => current()?.task?.state==="done"&&current()?.audio.available&&current()?.audio.scope_minutes===scope',arg=scope,timeout=60000)
+                assert (audio_folder/'exports'/f'essai-{scope}min.mp3').exists()
+                assert (audio_folder/'exports/podcast.mp3').read_bytes()==full
+                with page.expect_download() as download:page.locator('#download-audio-report').click()
+                report=temp/f'rapport-{scope}.csv';download.value.save_as(report);assert 'Durée (s)' in report.read_text(encoding='utf-8-sig')
+            page.locator('#audio-text').fill(dialogue.read_text()+'\nAnneSo: Un dernier point.')
+            assert page.locator('#render-audio').is_disabled()
+            assert (folder/'etapes/01.json').read_bytes()==source_before
+            assert not (audio_folder/'etapes/01.json').exists()
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : neuf étapes, migration, profils VoiceStudio, aperçu, MP3 chargé et téléchargé, reprise, archives et annulation ; aucune erreur JS ou requête externe.')
+            print('Navigateur OK : neuf étapes, API historique authentifiée, MP3 lu et téléchargé, import ancien réglage/TXT, essais 3/5 min distincts, rapport CSV et protection des brouillons ; aucune erreur JS ou requête externe.')
     finally:
         stub.close();voices.close();server.shutdown();server.server_close();app.close();thread.join()

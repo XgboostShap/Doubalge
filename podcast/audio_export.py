@@ -1,9 +1,12 @@
 """Voix VoiceStudio locales, reprise par réplique et export MP3."""
 import copy
+from array import array
+import csv
 import hashlib
 import http.client
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -20,13 +23,14 @@ from llm import Cancelled
 from storage import fingerprint, read, write, replace
 import quality
 
-VERSION = 'voicestudio-mp3-v1'
+VERSION = 'voicestudio-mp3-v2'
 RATE = 24000
 MAX_CHARS = 900
 
 
 def defaults():
-    return {'endpoint':'http://127.0.0.1:3900','model':'tts-1','voices':{},'speed':1.0,'pause_ms':250}
+    return {'endpoint':'http://127.0.0.1:3900','model':'tts-1','voices':{},'speed':1.0,'pause_ms':350,
+            'normalize_audio':True,'target_dbfs':-20,'scope_minutes':0}
 
 
 def settings(value, speakers=()):
@@ -44,9 +48,13 @@ def settings(value, speakers=()):
     result['model']=result['model'].strip()
     if type(result['speed']) not in (float,int) or not .5<=result['speed']<=2:raise ValueError('Vitesse vocale : entre 0,5 et 2.')
     if type(result['pause_ms']) is not int or not 0<=result['pause_ms']<=2000:raise ValueError('Pause : entre 0 et 2 000 ms.')
+    if type(result['normalize_audio']) is not bool:raise ValueError('Réglage de volume invalide.')
+    if type(result['target_dbfs']) not in (float,int) or not -30<=result['target_dbfs']<=-14:raise ValueError('Volume cible : entre -30 et -14 dBFS.')
+    if type(result['scope_minutes']) is not int or result['scope_minutes'] not in (0,3,5):raise ValueError('Choisissez le podcast complet ou un essai de 3 ou 5 minutes.')
     if not isinstance(result['voices'],dict):raise ValueError('Associez chaque intervenant à une voix VoiceStudio.')
     selected={}
     for name,voice in result['voices'].items():
+        if not isinstance(name,str) or not name.strip() or len(name)>40:raise ValueError('Nom d’intervenant invalide.')
         if speakers and name not in speakers:continue
         if not isinstance(voice,str) or len(voice)>200 or any(ord(c)<32 for c in voice):raise ValueError('Référence de voix invalide.')
         if voice.strip():selected[name]=voice.strip()
@@ -66,11 +74,13 @@ class VoiceStudio:
     def request(self,path,body=None,limit=32*1024**2):
         if self.cancelled.is_set():raise Cancelled()
         parsed=urlsplit(self.config['endpoint']);factory=http.client.HTTPSConnection if parsed.scheme=='https' else http.client.HTTPConnection
-        conn=factory(parsed.hostname,parsed.port or (443 if parsed.scheme=='https' else 80),timeout=300 if body is not None else 10)
+        conn=factory(parsed.hostname,parsed.port or (443 if parsed.scheme=='https' else 80),timeout=900 if body is not None else 15)
         self.active=conn;response=None
         try:
             raw=json.dumps(body,ensure_ascii=False).encode() if body is not None else None
-            conn.request('POST' if body is not None else 'GET',path,raw,{'Content-Type':'application/json'} if raw else {})
+            headers={'Authorization':'Bearer local'}
+            if raw is not None:headers['Content-Type']='application/json'
+            conn.request('POST' if body is not None else 'GET',path,raw,headers)
             self.active_socket=conn.sock
             response=conn.getresponse()
             if response.status!=200:
@@ -103,14 +113,18 @@ class VoiceStudio:
         result=[];seen=set()
         for row in rows:
             if not isinstance(row,dict) or row.get('type')=='openai_alias':continue
-            identifier=row.get('voice_id') or row.get('id');name=row.get('name')
+            identifier=row.get('voice_id') or row.get('id');name=row.get('name') or row.get('voice_name') or identifier
             if not isinstance(identifier,str) or not identifier or not isinstance(name,str) or identifier in seen:continue
             seen.add(identifier);result.append({'id':identifier,'name':name,'language':row.get('language',''),'type':row.get('type','profile')})
         return result
+    def health(self):
+        try:self.request('/health',limit=2*1024**2)
+        except RuntimeError as error:
+            if getattr(error,'status',None)!=404:raise
     def speech(self,text,voice):
         if not text.strip() or len(text)>MAX_CHARS:raise ValueError('Réplique audio vide ou trop longue.')
         raw=self.request('/v1/audio/speech',{'model':self.config['model'],'input':text,'voice':voice,
-            'response_format':'wav','language':'fr','speed':self.config['speed']})
+            'response_format':'wav'})
         if len(raw)<44 or raw[:4]!=b'RIFF' or raw[8:12]!=b'WAVE':raise ValueError('VoiceStudio n’a pas renvoyé un fichier WAV valide.')
         return raw
 
@@ -130,14 +144,47 @@ def split_text(text):
 def script_segments(final,speakers):
     result=[]
     for chapter in final['chapters']:
-        result.append({'speaker':speakers[0],'text':chapter['opening_transition'],'chapter':chapter['id'],'chapter_start':True})
+        if chapter['opening_transition'].strip():result.append({'speaker':speakers[0],'text':chapter['opening_transition'],'chapter':chapter['id'],'chapter_start':True})
         result.extend({'speaker':t['speaker'],'text':t['text'],'chapter':chapter['id'],'chapter_start':False} for t in chapter['turns'])
     if not result or any(r['speaker'] not in speakers or not isinstance(r['text'],str) or not r['text'].strip() for r in result):raise ValueError('Script audio incomplet ou intervenant inconnu.')
     return result
 
+def selected_segments(final,config,speakers):
+    segments=script_segments(final,speakers);minutes=config.get('scope_minutes',0)
+    if not minutes:return segments
+    chosen=[];count=0;budget=round(minutes*125*config.get('speed',1))
+    for segment in segments:
+        chosen.append(segment);count+=len(segment['text'].split())
+        if count>=budget:break
+    return chosen
+
+def output_names(scope):
+    stem='podcast' if scope==0 else 'essai-'+str(scope)+'min'
+    return stem+'.mp3',('audio.json' if scope==0 else stem+'.json'),('rapport_audio.csv' if scope==0 else 'rapport_'+stem+'.csv')
+
+def validate_script(final):
+    if final.get('source_kind')=='provided_text':
+        import voice_legacy
+        fresh=voice_legacy.parse_dialogue(final.get('source_text',''))
+        if fresh['input_hash']!=final.get('input_hash') or fresh['chapters']!=final.get('chapters') or fresh['speakers']!=final.get('speakers'):raise ValueError('Le texte audio a changé : réenregistrer le dialogue avant la lecture.')
+        return
+    if final.get('workflow_version')!='grounded-editorial-v2' or final.get('source_quality')!=quality.VERSION or not final.get('content_checks_passed'):
+        raise ValueError('Ce script utilise les anciens contrôles. Réexaminez les résumés et reconstruisez le dialogue avant de générer le MP3.')
+
+def pcm_stats(path):
+    total=0;squares=0;peak=0
+    with wave.open(str(path),'rb') as wav:
+        while raw:=wav.readframes(64000):
+            samples=array('h');samples.frombytes(raw)
+            if sys.byteorder!='little':samples.byteswap()
+            total+=len(samples);squares+=sum(s*s for s in samples)
+            peak=max(peak,max((abs(s) for s in samples),default=0))
+    if not total or not peak:raise ValueError('VoiceStudio a produit une réplique vide ou silencieuse.')
+    return 20*math.log10(math.sqrt(squares/total)/32768),20*math.log10(peak/32768)
+
 
 def signature(final,config,speakers):
-    return fingerprint({'version':VERSION,'script':script_segments(final,speakers),'settings':settings(config,speakers)})
+    return fingerprint({'version':VERSION,'source_kind':final.get('source_kind','project'),'script':script_segments(final,speakers),'settings':settings(config,speakers)})
 
 
 def encoder():
@@ -189,6 +236,7 @@ class AudioRenderer:
         self.client=VoiceStudio(self.config,self.cancelled)
     def cancel(self):self.client.cancel()
     def validate_voices(self,names):
+        self.client.health()
         available={v['id'] for v in self.client.voices()}
         for name in names:
             voice=self.config['voices'].get(name)
@@ -196,7 +244,8 @@ class AudioRenderer:
             if voice not in available:raise ValueError('La référence de voix de '+name+' est introuvable dans VoiceStudio. Rechargez la liste et choisissez son profil.')
     def chunk(self,text,voice,ffmpeg):
         key=fingerprint({'protocol':VERSION,'endpoint':self.config['endpoint'],'model':self.config['model'],
-            'voice':voice,'speed':self.config['speed'],'text':text,'rate':RATE})
+            'voice':voice,'speed':self.config['speed'],'text':text,'rate':RATE,
+            'normalize_audio':self.config['normalize_audio'],'target_dbfs':self.config['target_dbfs']})
         cache=self.project/'audio_cache';cache.mkdir(exist_ok=True)
         path=cache/(key+'.wav');meta=path.with_suffix('.json')
         if path.exists() and meta.exists():
@@ -210,9 +259,15 @@ class AudioRenderer:
         raw=self.client.speech(text,voice)
         with tempfile.TemporaryDirectory(prefix='replique-',dir=cache) as temporary:
             temporary=Path(temporary);source=temporary/'source.wav';source.write_bytes(raw);normalized=temporary/'normalise.wav'
-            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(source),'-ar',str(RATE),'-ac','1','-c:a','pcm_s16le',str(normalized)],self.cancelled)
+            tempo=['-af','atempo='+str(self.config['speed'])] if self.config['speed']!=1 else []
+            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(source),*tempo,'-ar',str(RATE),'-ac','1','-c:a','pcm_s16le',str(normalized)],self.cancelled)
             with wave.open(str(normalized),'rb') as wav:frames=wav.getnframes()
-            if not frames:raise ValueError('VoiceStudio a produit une réplique silencieuse ou vide.')
+            mean,peak=pcm_stats(normalized)
+            if self.config['normalize_audio']:
+                gain=min(max(-18,min(18,self.config['target_dbfs']-mean)),-1-peak)
+                adjusted=temporary/'volume.wav'
+                run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(normalized),'-af','volume='+str(round(gain,4))+'dB','-c:a','pcm_s16le',str(adjusted)],self.cancelled)
+                replace(adjusted,normalized)
             replace(normalized,path)
         write(meta,{'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'frames':frames})
         return path,frames
@@ -220,7 +275,7 @@ class AudioRenderer:
         ffmpeg=encoder();self.validate_voices({s['speaker'] for s in segments})
         (self.project/'audio_cache').mkdir(exist_ok=True)
         destination.parent.mkdir(exist_ok=True,parents=True)
-        total_frames=0;count=0
+        total_frames=0;count=0;rows=[];warnings=[]
         with tempfile.TemporaryDirectory(prefix='montage-',dir=self.project/'audio_cache') as temporary:
             temporary=Path(temporary);joined=temporary/'podcast.wav'
             with wave.open(str(joined),'wb') as out:
@@ -231,27 +286,40 @@ class AudioRenderer:
                     gap=800 if segment.get('chapter_start') and index>1 else self.config['pause_ms'] if index>1 else 0
                     silence=round(RATE*gap/1000)
                     if silence:out.writeframes(b'\0\0'*silence);total_frames+=silence
+                    reply_frames=0
                     for text in split_text(segment['text']):
                         path,frames=self.chunk(text,self.config['voices'][segment['speaker']],ffmpeg)
                         with wave.open(str(path),'rb') as wav:
                             while raw:=wav.readframes(64*1024):
                                 if self.cancelled.is_set():raise Cancelled()
                                 out.writeframes(raw)
-                        total_frames+=frames;count+=1
+                        total_frames+=frames;reply_frames+=frames;count+=1
+                    seconds=reply_frames/RATE;word_count=len(segment['text'].split())
+                    warning=''
+                    if word_count>=12 and (seconds<word_count/(6.5*self.config['speed']) or seconds>word_count/(.5*self.config['speed'])):
+                        warning='Durée atypique : vérifier à l’écoute que la réplique est complète.'
+                        warnings.append('Réplique '+str(index)+' ('+segment['speaker']+') : '+warning)
+                    rows.append({'reply':index,'speaker':segment['speaker'],'words':word_count,'seconds':round(seconds,2),'warning':warning})
             self.progress('Assemblage du podcast et encodage MP3')
             output=temporary/'podcast.mp3'
-            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(joined),'-c:a','libmp3lame','-b:a','96k','-id3v2_version','3',str(output)],self.cancelled)
+            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(joined),'-c:a','libmp3lame','-b:a','192k','-id3v2_version','3',str(output)],self.cancelled)
             if self.cancelled.is_set():raise Cancelled()
             replace(output,destination)
         return {'seconds':round(total_frames/RATE,2),'chunks':count,'bytes':destination.stat().st_size,
-                'sha256':hashlib.sha256(destination.read_bytes()).hexdigest()}
+                'sha256':hashlib.sha256(destination.read_bytes()).hexdigest(),'rows':rows,'warnings':warnings}
     def render(self,final):
-        if (final.get('workflow_version')!='grounded-editorial-v2' or final.get('source_quality')!=quality.VERSION or not final.get('content_checks_passed')):
-            raise ValueError('Ce script utilise les anciens contrôles. Réexaminez les résumés et reconstruisez le dialogue avant de générer le MP3.')
+        validate_script(final)
         (self.project/'audio_cache').mkdir(exist_ok=True)
-        result=self.compose(script_segments(final,self.speakers),self.project/'exports/podcast.mp3')
-        result.update(signature=signature(final,self.config,self.speakers),voices=copy.deepcopy(self.config['voices']),version=VERSION)
-        write(self.project/'exports/audio.json',result)
+        audio_name,meta_name,csv_name=output_names(self.config['scope_minutes'])
+        result=self.compose(selected_segments(final,self.config,self.speakers),self.project/'exports'/audio_name)
+        result.update(signature=signature(final,self.config,self.speakers),voices=copy.deepcopy(self.config['voices']),version=VERSION,
+            source_kind=final.get('source_kind','project'),scope_minutes=self.config['scope_minutes'],filename=audio_name,report_file=csv_name)
+        from storage import write_text
+        import io
+        buffer=io.StringIO();writer=csv.writer(buffer,delimiter=';');writer.writerow(['Réplique','Voix','Mots','Durée (s)','Alerte'])
+        for row in result['rows']:writer.writerow([row[k] for k in ('reply','speaker','words','seconds','warning')])
+        write_text(self.project/'exports'/csv_name,'\ufeff'+buffer.getvalue())
+        write(self.project/'exports'/meta_name,result)
         return result
     def preview(self,speaker):
         if speaker not in self.speakers:raise ValueError('Intervenant inconnu.')

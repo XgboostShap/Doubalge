@@ -19,11 +19,11 @@ from llm import Cancelled
 from storage import defaults,read,write
 
 
-def wav_bytes(frequency=440,rate=22050):
+def wav_bytes(frequency=440,rate=22050,amplitude=3000):
     buffer=io.BytesIO()
     with wave.open(buffer,'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(rate)
-        out.writeframes(b''.join(struct.pack('<h',int(3000*math.sin(2*math.pi*frequency*n/rate))) for n in range(rate//8)))
+        out.writeframes(b''.join(struct.pack('<h',int(amplitude*math.sin(2*math.pi*frequency*n/rate))) for n in range(rate//8)))
     return buffer.getvalue()
 
 
@@ -33,24 +33,28 @@ class VoiceHandler(BaseHTTPRequestHandler):
         data=json.dumps(value).encode() if mime=='application/json' else value
         self.send_response(status);self.send_header('Content-Type',mime);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_GET(self):
+        if self.server.require_auth and self.headers.get('Authorization')!='Bearer local':self.respond(401,{'error':'auth required'});return
+        if self.path=='/health':self.respond(200,{'status':'ok'});return
         if self.path=='/v1/audio/voices':
             self.respond(200,{'voices':[{'voice_id':'ref-sophie','name':'Sophie','type':'profile'},
                 {'id':'ref-emma','name':'Emma','type':'profile'},{'voice_id':'alloy','name':'Alloy','type':'openai_alias'}]})
         else:self.respond(404,{'detail':'not found'})
     def do_POST(self):
+        if self.server.require_auth and self.headers.get('Authorization')!='Bearer local':self.respond(401,{'error':'auth required'});return
         value=json.loads(self.rfile.read(int(self.headers['Content-Length'])));self.server.calls.append(value)
+        if self.server.strict and set(value)!={'model','input','voice','response_format'}:self.respond(422,{'error':'unexpected fields'});return
         if self.server.fail_at==len(self.server.calls):self.respond(503,{'detail':'interruption simulée'});return
         if self.server.bad_audio:self.respond(200,b'not a wave file','audio/wav');return
         if self.server.stall:
             self.send_response(200);self.send_header('Content-Length','999999');self.end_headers()
             self.wfile.write(wav_bytes()[:44]);self.wfile.flush();self.server.started.set();self.server.release.wait(10);return
-        self.respond(200,wav_bytes(440 if value['voice']=='ref-sophie' else 660,22050 if value['voice']=='ref-sophie' else 48000),'audio/wav')
+        self.respond(200,wav_bytes(0 if self.server.silent else 440 if value['voice']=='ref-sophie' else 660,22050 if value['voice']=='ref-sophie' else 48000,self.server.amplitudes.get(value['voice'],3000)),'audio/wav')
 
 
 class VoiceServer(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self):
-        super().__init__(('127.0.0.1',0),VoiceHandler);self.calls=[];self.fail_at=None;self.bad_audio=False
+        super().__init__(('127.0.0.1',0),VoiceHandler);self.calls=[];self.fail_at=None;self.bad_audio=False;self.require_auth=False;self.strict=False;self.silent=False;self.amplitudes={}
         self.thread=threading.Thread(target=self.serve_forever,daemon=True);self.thread.start()
         self.endpoint=f'http://127.0.0.1:{self.server_port}'
         self.stall=False;self.started=threading.Event();self.release=threading.Event()
@@ -91,7 +95,7 @@ class AudioTests(unittest.TestCase):
         self.server.fail_at=None;result=self.renderer().render(value)
         self.assertEqual(len(self.server.calls),3)
         self.assertEqual([c['voice'] for c in self.server.calls],['ref-sophie','ref-emma','ref-emma'])
-        self.assertTrue(all(c['response_format']=='wav' and c['language']=='fr' for c in self.server.calls))
+        self.assertTrue(all(set(c)=={'model','input','voice','response_format'} and c['response_format']=='wav' for c in self.server.calls))
         self.assertFalse(any('Sophie :' in c['input'] or 'Emma :' in c['input'] for c in self.server.calls))
         self.assertGreater(result['bytes'],1000);self.assertGreater(result['seconds'],.25)
         self.assertEqual(read(self.project/'exports/audio.json')['signature'],audio_export.signature(value,self.config,['Sophie','Emma']))

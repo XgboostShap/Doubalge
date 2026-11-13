@@ -1,9 +1,9 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "files": [
     {
       "path": "app.py",
-      "sha256": "2fb6ea16bbb6070e8329c54d310cff06173bb1a6751ff615b230fa9874395d06"
+      "sha256": "9403b267855298c196c33f190dac8db0db89e9aded10767c6b89d21353ba2a51"
     },
     {
       "path": "storage.py",
@@ -23,7 +23,11 @@
     },
     {
       "path": "audio_export.py",
-      "sha256": "37f75c1c1b1f42c8097a510c9840abdd862b9ff0fcf960edddbe64fb3fe810de"
+      "sha256": "7d65321edf97cd12b144231bd830f25b9a8c6504345c3a310396b627c5e6622b"
+    },
+    {
+      "path": "voice_legacy.py",
+      "sha256": "27b0ad33aa929e7a7132a957cdef5638c0b3f3afb2d6174ba9365815f4893028"
     },
     {
       "path": "llm.py",
@@ -35,15 +39,15 @@
     },
     {
       "path": "web/index.html",
-      "sha256": "9dca0851231dce0cbb03bcf5169a866033e7a128d8b4d0fd313ae90a89f91cab"
+      "sha256": "792df66356b244f25bd2f20088c4b7af85a41c8573c371487500eeb9737cb88e"
     },
     {
       "path": "web/app.js",
-      "sha256": "93b18d51ca9a7642ee3962e6f1ba1d3c81f06fe3cd80fcf27eb001cc06b99444"
+      "sha256": "f6c220a69a29ad004f57cf848d2dfeec3589bd0a66dad39c9bce9a20be6c9585"
     },
     {
       "path": "web/style.css",
-      "sha256": "70af06b267b91f5d3aff16bc0a672ada49c86637a7c50916f86f2e58c3ef609d"
+      "sha256": "1b2a2566b04843c6c8fa23a687cde29543b7399b110f81bdf56ed65e509dbc98"
     },
     {
       "path": "Lancer-Podcast.cmd",
@@ -51,15 +55,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "46168aab9ee1823a5d527bbfa80092cb6349a45dc006c8b1fbf1ac68f68f8c07"
+      "sha256": "261b924b18fb48d726994c17a26e5dcc55eda317c67f68e0c785818f3cae73d0"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "753415538e9fdf3cab0ebf20b028ab4874b06f38c48c430fd5b437d103205b22"
+      "sha256": "bf07421ec8c4d6a6c56c24fd000108d610d27d3a3ce00353606f8b65f0538926"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "5de926c8973a71da4dab74d14416695c6f5dd5d9dc1c8050b5247146a4d42462"
+      "sha256": "d84907436b76f169dca0840829cd0554c534fa415cb16f7a04ef4807619cc51d"
     }
   ]
 }

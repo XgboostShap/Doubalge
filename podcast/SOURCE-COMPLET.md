@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.3.0
+# Sources complètes — Podcast pédagogique 0.4.0
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.
@@ -37,31 +37,35 @@ pause
 ## LIRE-MOI.txt
 
 ```text
-PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.4.0 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
-3. Installer Ollama depuis https://ollama.com/download/windows
-4. Ouvrir un terminal et lancer : ollama pull mistral
-5. Ouvrir Lancer-Podcast.cmd.
-6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
+3. Ouvrir Lancer-Podcast.cmd.
 
-Le programme cree le script du podcast, puis le MP3 avec vos voix VoiceStudio.
-Ouvrir VoiceStudio, puis Charger mes voix dans la section Voix et podcast MP3. Chaque partie est sauvegardee en Markdown avant la suivante.
-En cas d'arret, Continuer reprend les parties manquantes.
-Une courte fiche de continuite relie les chapitres sans accumuler le dialogue.
+POUR LIRE UN DIALOGUE DEJA ECRIT
+Ouvrir VoiceStudio. Dans l’application, cliquer sur Lire un dialogue TXT,
+charger le fichier et Utiliser ce texte pour l’audio. Importer les anciens
+reglages depuis podcast_interface.py pour retrouver les references des voix.
+Essayer les voix, generer un essai court, puis le podcast complet.
+Ollama n’est pas necessaire pour cette lecture TXT.
 
-Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
-Ensuite, le traitement peut fonctionner hors connexion sur votre PC.
+POUR CREER LE DIALOGUE DEPUIS DES PDF
+Installer Ollama depuis https://ollama.com/download/windows
+Telecharger un modele une fois : ollama pull mistral
+Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
+Chaque partie est sauvegardee en Markdown avant la suivante.
+Continuer reprend les parties manquantes apres une interruption.
+Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
 
-Conservez le dossier donnees pour garder vos projets.
-Dans une installation existante, utiliser le ZIP correctif puis Mettre-a-jour.cmd.
-Pour reprendre un ancien resume, cliquer sur Ameliorer les resumes existants.
-Consultez README.md pour les details et SOURCE-COMPLET.md pour tous les sources.
+Conservez le dossier donnees pour garder vos projets et reglages vocaux.
+Pour une installation PodcastPedago existante, utiliser le ZIP correctif.
+Un script deja genere en 0.3.0 ne demande pas de refaire les PDF.
+L’ancienne application Streamlit V7 reste separee : importer seulement ses
+reglages et son texte dans cette nouvelle installation.
 
-Les tests techniques utilisent notamment un modele simule. Des essais Mistral
-sont cibles ; la relecture scientifique et Windows natif restent a verifier.
-Pour un ancien projet : Ameliorer les resumes existants, attendre, puis Continuer.
+Consultez README.md pour les details et SOURCE-COMPLET.md pour les sources.
+La relecture scientifique, vos voix reelles et Windows natif restent a verifier.
 ```
 
 ## Lancer-Podcast.cmd
@@ -105,45 +109,52 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.3.0 — CONTENU ET VOIX VOICESTUDIO
+PODCAST PEDAGOGIQUE 0.4.0 — RETROUVER LES VOIX DE L’ANCIENNE VERSION
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
-3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant votre Lancer-Podcast.cmd.
-4. Verifier Version 0.3.0 en haut de la page.
-5. Ouvrir le dernier projet et cliquer sur Ameliorer les resumes existants.
-6. Attendre la fin du reexamen, puis cliquer sur Continuer jusqu'au script final.
+3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
+4. Verifier Version 0.4.0 en haut de l’application.
 
-Les PDF, projets et modeles sont conserves. Les anciens resultats sont archives.
-Le glossaire, les acronymes, les parametres de reglage et les commentaires
-hors sujet sont controles avant de reconstruire un plan par themes.
+Si votre ancien app.py appelle podcast_interface.run() (Streamlit V7),
+utiliser le ZIP complet dans un nouveau dossier. Ce correctif concerne
+l’application PodcastPedago avec ses neuf etapes et son interface locale.
 
-POUR LES VOIX ET LE MP3
+POUR LIRE LE DIALOGUE CORRIGE AVEC ANNESO ET SOPHIE
 - Ouvrir VoiceStudio sur le PC.
-- Dans Voix et podcast MP3, verifier son adresse API (3900 par defaut).
-- Cliquer sur Charger mes voix VoiceStudio.
-- Associer chaque intervenant a son profil deja cree et Enregistrer les voix.
-- Si propose, cliquer une fois sur Preparer le MP3 (premier telechargement).
-- Essayer Ecouter cette voix, puis Generer le podcast MP3 quand le script est pret.
-- Ecouter le lecteur ou cliquer sur Telecharger le MP3.
+- Dans PodcastPedago, cliquer sur Lire un dialogue TXT.
+- Charger dialogue_revise_20min.txt, puis Utiliser ce texte pour l’audio.
+- Ouvrir Recuperer mes anciens reglages VoiceStudio.
+- Choisir l’ancien podcast_interface.py, puis Importer mes reglages.
+- Si propose, cliquer une fois sur Preparer le MP3 (telechargement initial).
+- Ecouter chaque voix, puis generer un essai d’environ 3 minutes.
+- Apres verification, choisir Podcast complet et generer le MP3.
+- Utiliser le lecteur ou Telecharger le MP3 ; le rapport CSV est disponible.
 
-Les references de voix sont memorisees dans le projet. Aucune nouvelle voix
-n'est creee. Une interruption conserve les repliques audio terminees pour la reprise.
+Les references sont recuperees dans votre fichier, sans executer son code.
+Aucune nouvelle voix n’est creee. Les essais ont des fichiers distincts.
+Les repliques terminees sont conservees pour une reprise apres interruption.
+
+Pour un script PDF deja genere en 0.3.0, inutile de refaire les PDF.
+Pour un projet plus ancien, suivre Ameliorer les resumes existants, puis Continuer.
+Changer les noms des intervenants via l’import ne refait que les etapes 8 et 9.
+Les PDF, projets, modeles et anciens reglages restent dans votre installation.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif et lancer :
 powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1
 Choisir le dossier de votre installation, pas celui du correctif.
 
-Les controles automatiques ne remplacent pas une relecture scientifique.
-Le connecteur et l'export MP3 sont testes avec une API simulee ; essayez vos
-voix reelles dans VoiceStudio sur votre PC. Voir README.md pour les details.
+Le texte fourni pour lecture n’est pas automatiquement valide scientifiquement.
+Le connecteur est teste avec une API simulee et un vrai encodage MP3.
+Les voix reelles et Windows natif restent a essayer sur votre PC.
+Voir README.md pour les details et les limites des controles audio.
 ```
 
 ## README.md
 
 ```text
-# Podcast pédagogique — version 0.3.0
+# Podcast pédagogique — version 0.4.0
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -152,30 +163,46 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.3.0** en haut de la page.
-5. Ouvrir l’ancien projet et cliquer sur **Améliorer les résumés existants**. Attendre la fin du réexamen de l’étape 2.
-6. Cliquer sur **Continuer jusqu’au script final** pour reconstruire les étapes 3 à 9.
+4. Relancer l’application et vérifier **Version 0.4.0** en haut de la page.
 
-Ce réexamen est nécessaire : les anciens contrôles pouvaient conserver un bon identifiant associé au mauvais contenu. L’application empêche de reprendre directement l’ancien plan ou dialogue. Elle archive les résultats remplacés ; le texte extrait, les candidats disponibles, les PDF, les projets et les modèles sont conservés. Il n’est pas nécessaire de réinstaller Mistral ni d’augmenter le contexte pour appliquer cette mise à jour.
+Un projet déjà traité en 0.3.0 peut passer directement à la lecture audio : les contrôles scientifiques de cette version sont conservés, sans refaire les PDF. Pour un projet plus ancien, suivre **Améliorer les résumés existants**, attendre le réexamen puis **Continuer jusqu’au script final**. Les PDF et les projets sont conservés ; les résultats remplacés sont archivés.
 
-L’outil de mise à jour vérifie les empreintes des 15 fichiers applicatifs, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees` ni `.venv`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
+L’outil de mise à jour vérifie les empreintes des 16 fichiers applicatifs, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
 
-## Écouter et exporter le podcast avec VoiceStudio
+L’ancienne application Streamlit V7, dont `app.py` appelle `podcast_interface.run()`, est une autre application. Ce correctif ne s’applique pas à son dossier : utiliser le ZIP complet dans un nouveau dossier, puis importer ses réglages et son dialogue comme indiqué ci-dessous. Ses données restent dans son dossier d’origine.
+
+## Retrouver les voix de l’ancienne version et lire le dialogue révisé
+
+Ce parcours permet de lire un texte déjà écrit, sans relancer Ollama ni analyser de PDF.
 
 1. Ouvrir VoiceStudio sur le PC et garder son API locale en service.
-2. Dans le projet, ouvrir **Voix et podcast MP3**. L’adresse proposée est `http://127.0.0.1:3900`, modifiable selon votre installation.
-3. Cliquer sur **Charger mes voix VoiceStudio**. Choisir le profil existant de Sophie, d’Emma ou de chaque autre intervenant, puis **Enregistrer les voix**.
-4. Si le bouton apparaît, cliquer une fois sur **Préparer le MP3**. Le programme utilise FFmpeg déjà disponible ou télécharge le paquet `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes restent locales.
-5. Utiliser **Écouter cette voix** pour vérifier chaque association.
-6. Une fois le nouveau script terminé et relu, cliquer sur **Générer le podcast MP3**. Le lecteur et **Télécharger le MP3** apparaissent à la fin.
+2. Dans PodcastPedago, cliquer sur **Lire un dialogue TXT**.
+3. Charger `dialogue_revise_20min.txt`, ou un autre dialogue au format `AnneSo: Une question` puis `Sophie: Une réponse`. Cliquer sur **Utiliser ce texte pour l’audio**.
+4. Ouvrir **Récupérer mes anciens réglages VoiceStudio**, choisir l’ancien `podcast_interface.py` et cliquer sur **Importer mes réglages**.
+5. Vérifier les deux associations avec **Écouter cette voix**, puis sélectionner **Essai d’environ 3 minutes** avant de générer.
+6. Après contrôle, sélectionner **Podcast complet**, générer et utiliser le lecteur ou **Télécharger le MP3**.
 
-Les références de profils sont enregistrées dans le projet. L’application appelle les profils par leur identifiant, jamais un alias générique qui sélectionnerait la voix par défaut. Aucun profil n’est recréé dans VoiceStudio. Une référence absente est signalée. Les réglages permettent aussi d’ajuster la vitesse et les pauses.
+L’import lit les valeurs initiales des champs de configuration dans le fichier Python, sans exécuter son code. Il récupère les références AnneSo/Sophie, l’adresse locale, les pauses et le volume. Il ne peut pas retrouver un changement effectué uniquement dans une ancienne session Streamlit : dans ce cas, choisir les profils dans **Charger mes voix VoiceStudio**. Un JSON avec les mêmes clés historiques (`voice_studio_url`, `vs_anneso`, `vs_sophie`, et éventuellement `pause_ms`, `normalize_audio`, `target_dbfs`) est aussi accepté. Aucun profil privé n’est inclus dans l’archive distribuée.
 
-Chaque réplique est générée séparément et conservée avec son empreinte. Une reprise après interruption réutilise les répliques terminées. Les fichiers sont normalisés au même format, assemblés avec les pauses, puis encodés en MP3 à 96 kbit/s. Les noms des intervenants servent à choisir leur voix et ne sont pas lus à haute voix. La durée audio affichée vient des échantillons effectivement assemblés.
+Le texte importé reste un texte fourni pour lecture : il ne reçoit pas une validation scientifique automatique. L’éditeur bloque la génération tant que les modifications du dialogue ne sont pas enregistrées. Les noms servent au choix des voix et ne sont pas prononcés. Les lignes qui continuent une réplique sont rattachées à cet intervenant ; les titres sans intervenant doivent être retirés avant import.
 
-Modifier les voix ou la vitesse archive l’ancien MP3, sans refaire les résumés. Les caches audio restent dans le dossier privé du projet. Le lecteur permet de se déplacer dans le MP3 ; le dossier complet du projet contient également l’export audio.
+## Écouter le script d’un projet PDF
 
-Le connecteur utilise l’API locale documentée de [VoiceStudio](https://github.com/debpalash/VoiceStudio) : `GET /v1/audio/voices`, `POST /v1/audio/speech` et, pour la liste des profils sur certaines versions, `GET /profiles`. Le modèle API `tts-1` est l’alias du moteur actif de VoiceStudio ; un autre identifiant peut être indiqué dans les réglages avancés. Une version de VoiceStudio exposant une API différente doit être adaptée ; le test de connexion affiche l’erreur exacte.
+Dans **Voix et podcast MP3**, conserver **Script du projet (neuf étapes)**, puis importer les anciens réglages ou charger les profils existants. L’option **Reprendre AnneSo pour les questions et Sophie pour les explications** adapte les noms du projet : seules les étapes 8 et 9 sont à reconstruire si les intervenants changent. Les résumés et le plan sont conservés. Décocher cette option pour garder les noms actuels et affecter les références aux mêmes rôles ; un troisième intervenant demande sa propre association.
+
+Pour charger les profils directement, vérifier l’adresse API (`http://127.0.0.1:3900` par défaut), cliquer sur **Charger mes voix VoiceStudio**, choisir une référence pour chaque intervenant et **Enregistrer les voix**. Aucun profil n’est recréé. Une référence absente est signalée.
+
+Si **Préparer le MP3** apparaît, cliquer une fois pour utiliser FFmpeg déjà disponible ou télécharger `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes sont locales. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
+
+## Compatibilité VoiceStudio et contrôles audio
+
+La version 0.4.0 reprend le contrat API présent dans les anciens fichiers fournis : `GET /health`, `GET /v1/audio/voices` et `POST /v1/audio/speech`, avec l’en-tête `Authorization: Bearer local`. Le POST envoie exactement `model`, `input`, `voice` et `response_format`, avec `tts-1` et `wav` par défaut. La synthèse peut prendre jusqu’à 900 secondes par requête, contre 15 secondes pour les lectures de l’API. Le contrôle de santé accepte l’absence de `/health` (HTTP 404) pour les autres versions compatibles. La liste peut aussi provenir de `/profiles`.
+
+Chaque réplique est synthétisée séparément, avec découpage des textes longs, cache et reprise après interruption. La vitesse est ajustée localement par FFmpeg. Les fichiers sont convertis dans un format commun, équilibrés vers le volume cible lorsque l’option est active, puis assemblés avec les pauses et encodés en MP3 à **192 kbit/s**. Le volume reste limité pour éviter la saturation numérique. Une réplique totalement silencieuse arrête la génération ; une durée très atypique produit un avertissement à réécouter, sans supprimer la réplique.
+
+Les essais de 3 ou 5 minutes prennent le début du texte et conservent les répliques entières ; leur durée est approximative. Ils ont leurs propres MP3 et rapports, et ne remplacent pas le podcast complet. Le rapport CSV indique le nom, le nombre de mots, la durée et les avertissements de chaque réplique. Une durée plausible ne prouve pas que la synthèse a prononcé tous les mots.
+
+Les références sont mémorisées dans le projet. Modifier le texte, les voix, les pauses ou le volume archive les anciens exports audio. Changer seulement la durée d’essai conserve les différents exports. Le cache reste dans le dossier privé du projet. La mise à jour du moteur audio renouvelle l’empreinte des exports 0.3.0 pour appliquer les nouveaux réglages.
 
 ## Première installation
 
@@ -225,13 +252,13 @@ La mémoire conserve les idées déjà expliquées et les définitions sources, 
 
 ## Résultats et relecture
 
-Les exports comprennent `podcast.md`, `podcast.txt`, `podcast.json` et, après génération audio, `podcast.mp3` accompagné de son rapport `audio.json`. Le dossier du projet contient aussi les neuf étapes, les fragments, les citations, les motifs d’incertitude et les archives des anciens résultats. Le JSON final indique les idées couvertes, les exclusions, les avertissements et la durée estimée.
+Les exports comprennent `podcast.md`, `podcast.txt`, `podcast.json` et, après génération audio, `podcast.mp3` accompagné de ses rapports `audio.json` et `rapport_audio.csv` ; les essais ont des noms distincts. Le dossier du projet contient aussi les neuf étapes, les fragments, les citations, les motifs d’incertitude et les archives des anciens résultats. Le JSON final indique les idées couvertes, les exclusions, les avertissements et la durée estimée.
 
 **Une relecture humaine reste nécessaire avant l’enregistrement.** Les formulations retenues à l’étape 2 peuvent encore comporter une mauvaise traduction ou une interprétation incomplète ; les conserver ensuite empêche une dérive supplémentaire mais ne les rend pas automatiquement exactes. La sélection éditoriale peut omettre un prérequis important. Les figures, équations, tableaux complexes et PDF scannés ne sont pas interprétés visuellement ; cette version n’intègre pas d’OCR. Les contradictions entre PDF ne sont pas arbitrées automatiquement.
 
 ## Vérification et sources
 
-Les tests couvrent les erreurs relevées dans l’export précédent, les associations de contenu, la couverture des idées, les reprises, les archives et la migration. Le parcours navigateur utilise des API simulées : profils vocaux, aperçu, lecture et téléchargement sont vérifiés avec un **MP3 réellement encodé**. Les tests audio contrôlent l’affectation des références de voix, les pauses, la reprise, les erreurs et l’annulation d’une requête HTTP en cours. Le paquet MP3 est préparé avec le gestionnaire uv de l’installation lorsqu’aucun pip n’est présent.
+Les tests couvrent les erreurs relevées dans l’export précédent, les associations de contenu, la couverture des idées, les reprises, les archives et la migration. Le parcours navigateur utilise des API simulées : profils vocaux, aperçu, lecture et téléchargement sont vérifiés avec un **MP3 réellement encodé**. Les tests audio contrôlent l’authentification historique, les quatre champs du POST, l’import sans exécution, la lecture TXT sans PDF, les essais distincts, le volume, le silence, l’affectation des voix, les pauses, la reprise et l’annulation d’une requête HTTP en cours. Le paquet MP3 est préparé avec le gestionnaire uv de l’installation lorsqu’aucun pip n’est présent.
 
 La vérification sur le podcast fourni porte sur sept erreurs identifiées et sur le glossaire du PDF. Les essais Mistral sont ciblés ; ils ne constituent pas une nouvelle génération scientifique complète des 147 pages. Les voix réelles de votre VoiceStudio, leur qualité sonore et l’interface native Windows doivent être essayées sur votre PC. Le cloud de développement ne peut pas joindre un service installé sur ce PC à travers son adresse `127.0.0.1`.
 
@@ -265,9 +292,10 @@ import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 import audio_export
+import voice_legacy
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.3.0'
+APP_VERSION = '0.4.0'
 
 
 def settings(value):
@@ -342,7 +370,8 @@ class App:
         folder = self.projects/uuid.uuid4().hex
         folder.mkdir();(folder/'sources').mkdir()
         write(folder/'projet.json',{'id':folder.name,'name':body['name'].strip()[:150],
-              'created':time.time(),'settings':settings(body.get('settings',{})),'pdfs':[]})
+              'created':time.time(),'settings':settings(body.get('settings',{})),'pdfs':[],
+              'audio_source_mode':'provided' if body.get('audio_only') is True else 'project'})
         return {'id':folder.name}
 
     def summary(self, folder):
@@ -362,48 +391,105 @@ class App:
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
+    def audio_input(self,folder,meta):
+        mode=meta.get('audio_source_mode','project')
+        path=folder/'lecture/dialogue.json' if mode=='provided' else folder/'exports/podcast.json'
+        value=read(path) if path.exists() else None
+        speakers=value.get('speakers',meta['settings']['speakers']) if value and mode=='provided' else meta['settings']['speakers']
+        return value,speakers,mode
+
     def audio_summary(self,folder,meta,needs_upgrade=False):
-        config=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers'])
+        config=audio_export.settings(meta.get('audio_settings',{}))
+        final,speakers,mode=self.audio_input(folder,meta)
         try:audio_export.encoder();encoder_ready=True
         except ValueError:encoder_ready=False
-        result={'settings':config,'encoder_ready':encoder_ready,'available':False,'preview':None}
-        path=folder/'exports/audio.json';final=folder/'exports/podcast.json'
-        if not needs_upgrade and path.exists() and final.exists() and (folder/'exports/podcast.mp3').exists():
+        result={'settings':config,'speakers':speakers,'source_mode':mode,'script_ready':False,
+                'encoder_ready':encoder_ready,'available':False,'preview':None,'source_error':''}
+        if final:
+            try:
+                audio_export.validate_script(final)
+                result['script_ready']=mode=='provided' or not needs_upgrade
+            except ValueError as error:result['source_error']=str(error)
+        audio_name,meta_name,csv_name=audio_export.output_names(config['scope_minutes'])
+        path=folder/'exports'/meta_name
+        if result['script_ready'] and path.exists() and (folder/'exports'/audio_name).exists():
             record=read(path)
-            if record.get('signature')==audio_export.signature(read(final),config,meta['settings']['speakers']):
-                result.update(available=True,seconds=record['seconds'],signature=record['signature'])
+            if record.get('signature')==audio_export.signature(final,config,speakers):
+                result.update(available=True,seconds=record['seconds'],signature=record['signature'],filename=audio_name,
+                    report_file=csv_name,warnings=record.get('warnings',[]),scope_minutes=config['scope_minutes'])
         preview=folder/'audio_cache/apercu.json'
         if preview.exists() and (folder/'audio_cache/apercu.mp3').exists():
             record=read(preview)
-            if record.get('settings_hash')==fingerprint(config):result['preview']=record
+            if record.get('settings_hash')==fingerprint(audio_export.settings(config,speakers)):result['preview']=record
         return result
+
+    def archive_audio(self,folder):
+        files=[p for p in (folder/'exports').glob('*') if p.name in ('podcast.mp3','audio.json','rapport_audio.csv') or p.name.startswith(('essai-','rapport_essai-'))]
+        if not files and not (folder/'lecture/dialogue.json').exists():return
+        archive=folder/'versions'/('audio-'+uuid.uuid4().hex[:12]);archive.mkdir(parents=True)
+        for path in files:audio_export.replace(path,archive/path.name)
+        source=folder/'lecture/dialogue.json'
+        if source.exists():write(archive/'dialogue_audio.json',read(source))
 
     def save_audio_settings(self,folder,body):
         with self.lock:
             self.idle(folder);meta=read(folder/'projet.json')
-            config=audio_export.settings(body,meta['settings']['speakers'])
-            if config!=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers']):
-                previous=[p for p in [folder/'exports/podcast.mp3',folder/'exports/audio.json'] if p.exists()]
-                if previous:
-                    archive=folder/'versions'/('audio-'+uuid.uuid4().hex[:12]);archive.mkdir(parents=True)
-                    for path in previous:audio_export.replace(path,archive/path.name)
+            config=audio_export.settings(body)
+            previous=audio_export.settings(meta.get('audio_settings',{}))
+            if {k:v for k,v in config.items() if k!='scope_minutes'}!={k:v for k,v in previous.items() if k!='scope_minutes'}:
+                self.archive_audio(folder)
             meta['audio_settings']=config;write(folder/'projet.json',meta)
             return {'saved':True}
+
+    def audio_text(self,folder):
+        path=folder/'lecture/dialogue.json'
+        value=read(path) if path.exists() else {}
+        meta=read(folder/'projet.json')
+        return {'text':value.get('source_text',''),'mode':meta.get('audio_source_mode','project')}
+
+    def save_audio_text(self,folder,body):
+        with self.lock:
+            self.idle(folder);meta=read(folder/'projet.json');mode=body.get('mode')
+            if mode not in ('project','provided'):raise ValueError('Source audio inconnue.')
+            parsed=voice_legacy.parse_dialogue(body.get('text','')) if mode=='provided' else None
+            existing=folder/'lecture/dialogue.json'
+            changed=mode!=meta.get('audio_source_mode','project') or (parsed and (not existing.exists() or parsed['input_hash']!=read(existing).get('input_hash')))
+            if changed:self.archive_audio(folder)
+            if parsed:write(existing,parsed)
+            meta['audio_source_mode']=mode;write(folder/'projet.json',meta)
+            return {'saved':True,'speakers':parsed['speakers'] if parsed else meta['settings']['speakers']}
+
+    def import_audio_settings(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            config=audio_export.settings(voice_legacy.read_settings(body.get('source','')))
+            apply_cast=body.get('apply_cast',True)
+            if type(apply_cast) is not bool:raise ValueError('Option de reprise des intervenantes invalide.')
+            meta=read(folder/'projet.json');first=None
+            if meta.get('audio_source_mode','project')=='project' and apply_cast:
+                first=self.update_settings(folder,{**meta['settings'],'speakers':['AnneSo','Sophie']})['invalidated_from']
+            elif meta.get('audio_source_mode','project')=='project':
+                # La même répartition des rôles, en conservant les noms choisis.
+                config['voices']={name:voice for name,voice in zip(meta['settings']['speakers'],config['voices'].values())}
+            self.save_audio_settings(folder,config)
+            return {'imported':True,'invalidated_from':first,'names':list(config['voices'])}
 
     def enqueue_audio(self,folder,body):
         with self.lock:
             self.idle(folder)
             action=body.get('action','generate')
             if action not in ('generate','preview','prepare'):raise ValueError('Commande audio inconnue.')
-            meta=read(folder/'projet.json')
+            meta=read(folder/'projet.json');value,speakers,mode=self.audio_input(folder,meta)
             if action=='generate':
-                final=folder/'exports/podcast.json'
-                if not final.exists():raise ValueError('Terminez le script avant de générer le MP3.')
-                value=read(final)
-                if value.get('workflow_version')!='grounded-editorial-v2' or value.get('source_quality')!=pipeline_module.SUMMARY_QUALITY_MODE or not value.get('content_checks_passed'):
-                    raise ValueError('Réexaminez les résumés et reconstruisez le dialogue avec les nouveaux contrôles avant de générer le MP3.')
+                if not value:raise ValueError('Terminez le script ou enregistrez un dialogue TXT avant de générer le MP3.')
+                audio_export.validate_script(value)
+                if mode=='project' and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:
+                    raise ValueError('Réexaminez les sources du script avant sa lecture audio.')
+                config=audio_export.settings(meta.get('audio_settings',{}));_,record_name,_=audio_export.output_names(config['scope_minutes'])
+                record=folder/'exports'/record_name
+                if record.exists() and read(record).get('version')!=audio_export.VERSION:self.archive_audio(folder)
             speaker=body.get('speaker')
-            if action=='preview' and speaker not in meta['settings']['speakers']:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
+            if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
                   'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
@@ -473,11 +559,12 @@ class App:
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
                 if task.get('kind')=='audio':
-                    client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),meta['settings']['speakers'],cancel,progress)
+                    audio_input,audio_speakers,_=self.audio_input(folder,meta)
+                    client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),audio_speakers,cancel,progress)
                     self.active=(task['id'],client)
                     if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress)
                     elif task['action']=='preview':client.preview(task['speaker'])
-                    else:client.render(read(folder/'exports/podcast.json'))
+                    else:client.render(audio_input)
                     task.update(state='done',message='Moteur MP3 prêt' if task['action']=='prepare' else 'Aperçu vocal prêt' if task['action']=='preview' else 'Podcast MP3 prêt à écouter et télécharger')
                     continue
                 # Une simple reprise conserve les parties finies dans l'étape en cours.
@@ -605,10 +692,12 @@ class Handler(BaseHTTPRequestHandler):
             if path in static:
                 name,mime=static[path];self.respond(200,(ROOT/'web'/name).read_bytes(),mime);return
             parts=path.split('/')
+            if len(parts)==5 and parts[1:3]==['api','projects'] and parts[4]=='audio-text':
+                self.json(self.app.audio_text(self.app.project(parts[3])));return
             if len(parts)==4 and parts[1]=='media':
                 folder=self.app.project(parts[2]);name=parts[3]
                 state=self.app.summary(folder)['audio']
-                if name=='podcast.mp3' and state['available']:file=folder/'exports/podcast.mp3'
+                if name==state.get('filename') and state['available']:file=folder/'exports'/name
                 elif name=='apercu.mp3' and state['preview']:file=folder/'audio_cache/apercu.mp3'
                 else:raise FileNotFoundError('Audio non disponible pour ce script et ces voix.')
                 self.send_media(file);return
@@ -623,15 +712,16 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'etapes'/'parties'/name.removeprefix('partie-')
                     if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
                 elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
-                elif name=='podcast.mp3':
-                    if not self.app.summary(folder)['audio']['available']:raise FileNotFoundError('Le MP3 correspondant aux voix choisies n’est pas encore prêt.')
-                    file=folder/'exports/podcast.mp3'
+                elif name in ('podcast.mp3','essai-3min.mp3','essai-5min.mp3','rapport_audio.csv','rapport_essai-3min.csv','rapport_essai-5min.csv'):
+                    audio=self.app.summary(folder)['audio']
+                    if not audio['available'] or name not in (audio['filename'],audio['report_file']):raise FileNotFoundError('Ce résultat audio ne correspond pas à la sélection actuelle.')
+                    file=folder/'exports'/name
                 elif name=='dossier.zip':
                     self.app.idle(folder)
                     file=folder/'dossier.zip'
                     with zipfile.ZipFile(file,'w',zipfile.ZIP_DEFLATED) as archive:
                         archive.write(folder/'projet.json','projet.json')
-                        for sub in ('sources','etapes','memoire','exports','reprises'):
+                        for sub in ('sources','etapes','memoire','exports','reprises','lecture'):
                             for f in (folder/sub).rglob('*'):
                                 if f.is_file():archive.write(f,f.relative_to(folder))
                 else:raise FileNotFoundError('Fichier inconnu.')
@@ -643,7 +733,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_file(self,path):
         if not path.is_file():raise FileNotFoundError('Le résultat n’est pas encore disponible.')
-        mime='audio/mpeg' if path.suffix=='.mp3' else 'application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
+        mime='audio/mpeg' if path.suffix=='.mp3' else 'text/csv; charset=utf-8' if path.suffix=='.csv' else 'application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
         self.send_response(200);self.send_header('Content-Type',mime)
         self.send_header('Content-Length',str(path.stat().st_size))
         self.send_header('X-Content-Type-Options','nosniff')
@@ -692,6 +782,8 @@ class Handler(BaseHTTPRequestHandler):
             if action=='run':self.json(self.app.enqueue(folder,body),202)
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
+            elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))
+            elif action=='audio-import':self.json(self.app.import_audio_settings(folder,body))
             elif action=='audio-settings':self.json(self.app.save_audio_settings(folder,body))
             elif action=='audio':self.json(self.app.enqueue_audio(folder,body),202)
             else:raise FileNotFoundError('Commande inconnue.')
@@ -759,10 +851,13 @@ if __name__=='__main__':main()
 ```python
 """Voix VoiceStudio locales, reprise par réplique et export MP3."""
 import copy
+from array import array
+import csv
 import hashlib
 import http.client
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -779,13 +874,14 @@ from llm import Cancelled
 from storage import fingerprint, read, write, replace
 import quality
 
-VERSION = 'voicestudio-mp3-v1'
+VERSION = 'voicestudio-mp3-v2'
 RATE = 24000
 MAX_CHARS = 900
 
 
 def defaults():
-    return {'endpoint':'http://127.0.0.1:3900','model':'tts-1','voices':{},'speed':1.0,'pause_ms':250}
+    return {'endpoint':'http://127.0.0.1:3900','model':'tts-1','voices':{},'speed':1.0,'pause_ms':350,
+            'normalize_audio':True,'target_dbfs':-20,'scope_minutes':0}
 
 
 def settings(value, speakers=()):
@@ -803,9 +899,13 @@ def settings(value, speakers=()):
     result['model']=result['model'].strip()
     if type(result['speed']) not in (float,int) or not .5<=result['speed']<=2:raise ValueError('Vitesse vocale : entre 0,5 et 2.')
     if type(result['pause_ms']) is not int or not 0<=result['pause_ms']<=2000:raise ValueError('Pause : entre 0 et 2 000 ms.')
+    if type(result['normalize_audio']) is not bool:raise ValueError('Réglage de volume invalide.')
+    if type(result['target_dbfs']) not in (float,int) or not -30<=result['target_dbfs']<=-14:raise ValueError('Volume cible : entre -30 et -14 dBFS.')
+    if type(result['scope_minutes']) is not int or result['scope_minutes'] not in (0,3,5):raise ValueError('Choisissez le podcast complet ou un essai de 3 ou 5 minutes.')
     if not isinstance(result['voices'],dict):raise ValueError('Associez chaque intervenant à une voix VoiceStudio.')
     selected={}
     for name,voice in result['voices'].items():
+        if not isinstance(name,str) or not name.strip() or len(name)>40:raise ValueError('Nom d’intervenant invalide.')
         if speakers and name not in speakers:continue
         if not isinstance(voice,str) or len(voice)>200 or any(ord(c)<32 for c in voice):raise ValueError('Référence de voix invalide.')
         if voice.strip():selected[name]=voice.strip()
@@ -825,11 +925,13 @@ class VoiceStudio:
     def request(self,path,body=None,limit=32*1024**2):
         if self.cancelled.is_set():raise Cancelled()
         parsed=urlsplit(self.config['endpoint']);factory=http.client.HTTPSConnection if parsed.scheme=='https' else http.client.HTTPConnection
-        conn=factory(parsed.hostname,parsed.port or (443 if parsed.scheme=='https' else 80),timeout=300 if body is not None else 10)
+        conn=factory(parsed.hostname,parsed.port or (443 if parsed.scheme=='https' else 80),timeout=900 if body is not None else 15)
         self.active=conn;response=None
         try:
             raw=json.dumps(body,ensure_ascii=False).encode() if body is not None else None
-            conn.request('POST' if body is not None else 'GET',path,raw,{'Content-Type':'application/json'} if raw else {})
+            headers={'Authorization':'Bearer local'}
+            if raw is not None:headers['Content-Type']='application/json'
+            conn.request('POST' if body is not None else 'GET',path,raw,headers)
             self.active_socket=conn.sock
             response=conn.getresponse()
             if response.status!=200:
@@ -862,14 +964,18 @@ class VoiceStudio:
         result=[];seen=set()
         for row in rows:
             if not isinstance(row,dict) or row.get('type')=='openai_alias':continue
-            identifier=row.get('voice_id') or row.get('id');name=row.get('name')
+            identifier=row.get('voice_id') or row.get('id');name=row.get('name') or row.get('voice_name') or identifier
             if not isinstance(identifier,str) or not identifier or not isinstance(name,str) or identifier in seen:continue
             seen.add(identifier);result.append({'id':identifier,'name':name,'language':row.get('language',''),'type':row.get('type','profile')})
         return result
+    def health(self):
+        try:self.request('/health',limit=2*1024**2)
+        except RuntimeError as error:
+            if getattr(error,'status',None)!=404:raise
     def speech(self,text,voice):
         if not text.strip() or len(text)>MAX_CHARS:raise ValueError('Réplique audio vide ou trop longue.')
         raw=self.request('/v1/audio/speech',{'model':self.config['model'],'input':text,'voice':voice,
-            'response_format':'wav','language':'fr','speed':self.config['speed']})
+            'response_format':'wav'})
         if len(raw)<44 or raw[:4]!=b'RIFF' or raw[8:12]!=b'WAVE':raise ValueError('VoiceStudio n’a pas renvoyé un fichier WAV valide.')
         return raw
 
@@ -889,14 +995,47 @@ def split_text(text):
 def script_segments(final,speakers):
     result=[]
     for chapter in final['chapters']:
-        result.append({'speaker':speakers[0],'text':chapter['opening_transition'],'chapter':chapter['id'],'chapter_start':True})
+        if chapter['opening_transition'].strip():result.append({'speaker':speakers[0],'text':chapter['opening_transition'],'chapter':chapter['id'],'chapter_start':True})
         result.extend({'speaker':t['speaker'],'text':t['text'],'chapter':chapter['id'],'chapter_start':False} for t in chapter['turns'])
     if not result or any(r['speaker'] not in speakers or not isinstance(r['text'],str) or not r['text'].strip() for r in result):raise ValueError('Script audio incomplet ou intervenant inconnu.')
     return result
 
+def selected_segments(final,config,speakers):
+    segments=script_segments(final,speakers);minutes=config.get('scope_minutes',0)
+    if not minutes:return segments
+    chosen=[];count=0;budget=round(minutes*125*config.get('speed',1))
+    for segment in segments:
+        chosen.append(segment);count+=len(segment['text'].split())
+        if count>=budget:break
+    return chosen
+
+def output_names(scope):
+    stem='podcast' if scope==0 else 'essai-'+str(scope)+'min'
+    return stem+'.mp3',('audio.json' if scope==0 else stem+'.json'),('rapport_audio.csv' if scope==0 else 'rapport_'+stem+'.csv')
+
+def validate_script(final):
+    if final.get('source_kind')=='provided_text':
+        import voice_legacy
+        fresh=voice_legacy.parse_dialogue(final.get('source_text',''))
+        if fresh['input_hash']!=final.get('input_hash') or fresh['chapters']!=final.get('chapters') or fresh['speakers']!=final.get('speakers'):raise ValueError('Le texte audio a changé : réenregistrer le dialogue avant la lecture.')
+        return
+    if final.get('workflow_version')!='grounded-editorial-v2' or final.get('source_quality')!=quality.VERSION or not final.get('content_checks_passed'):
+        raise ValueError('Ce script utilise les anciens contrôles. Réexaminez les résumés et reconstruisez le dialogue avant de générer le MP3.')
+
+def pcm_stats(path):
+    total=0;squares=0;peak=0
+    with wave.open(str(path),'rb') as wav:
+        while raw:=wav.readframes(64000):
+            samples=array('h');samples.frombytes(raw)
+            if sys.byteorder!='little':samples.byteswap()
+            total+=len(samples);squares+=sum(s*s for s in samples)
+            peak=max(peak,max((abs(s) for s in samples),default=0))
+    if not total or not peak:raise ValueError('VoiceStudio a produit une réplique vide ou silencieuse.')
+    return 20*math.log10(math.sqrt(squares/total)/32768),20*math.log10(peak/32768)
+
 
 def signature(final,config,speakers):
-    return fingerprint({'version':VERSION,'script':script_segments(final,speakers),'settings':settings(config,speakers)})
+    return fingerprint({'version':VERSION,'source_kind':final.get('source_kind','project'),'script':script_segments(final,speakers),'settings':settings(config,speakers)})
 
 
 def encoder():
@@ -948,6 +1087,7 @@ class AudioRenderer:
         self.client=VoiceStudio(self.config,self.cancelled)
     def cancel(self):self.client.cancel()
     def validate_voices(self,names):
+        self.client.health()
         available={v['id'] for v in self.client.voices()}
         for name in names:
             voice=self.config['voices'].get(name)
@@ -955,7 +1095,8 @@ class AudioRenderer:
             if voice not in available:raise ValueError('La référence de voix de '+name+' est introuvable dans VoiceStudio. Rechargez la liste et choisissez son profil.')
     def chunk(self,text,voice,ffmpeg):
         key=fingerprint({'protocol':VERSION,'endpoint':self.config['endpoint'],'model':self.config['model'],
-            'voice':voice,'speed':self.config['speed'],'text':text,'rate':RATE})
+            'voice':voice,'speed':self.config['speed'],'text':text,'rate':RATE,
+            'normalize_audio':self.config['normalize_audio'],'target_dbfs':self.config['target_dbfs']})
         cache=self.project/'audio_cache';cache.mkdir(exist_ok=True)
         path=cache/(key+'.wav');meta=path.with_suffix('.json')
         if path.exists() and meta.exists():
@@ -969,9 +1110,15 @@ class AudioRenderer:
         raw=self.client.speech(text,voice)
         with tempfile.TemporaryDirectory(prefix='replique-',dir=cache) as temporary:
             temporary=Path(temporary);source=temporary/'source.wav';source.write_bytes(raw);normalized=temporary/'normalise.wav'
-            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(source),'-ar',str(RATE),'-ac','1','-c:a','pcm_s16le',str(normalized)],self.cancelled)
+            tempo=['-af','atempo='+str(self.config['speed'])] if self.config['speed']!=1 else []
+            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(source),*tempo,'-ar',str(RATE),'-ac','1','-c:a','pcm_s16le',str(normalized)],self.cancelled)
             with wave.open(str(normalized),'rb') as wav:frames=wav.getnframes()
-            if not frames:raise ValueError('VoiceStudio a produit une réplique silencieuse ou vide.')
+            mean,peak=pcm_stats(normalized)
+            if self.config['normalize_audio']:
+                gain=min(max(-18,min(18,self.config['target_dbfs']-mean)),-1-peak)
+                adjusted=temporary/'volume.wav'
+                run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(normalized),'-af','volume='+str(round(gain,4))+'dB','-c:a','pcm_s16le',str(adjusted)],self.cancelled)
+                replace(adjusted,normalized)
             replace(normalized,path)
         write(meta,{'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'frames':frames})
         return path,frames
@@ -979,7 +1126,7 @@ class AudioRenderer:
         ffmpeg=encoder();self.validate_voices({s['speaker'] for s in segments})
         (self.project/'audio_cache').mkdir(exist_ok=True)
         destination.parent.mkdir(exist_ok=True,parents=True)
-        total_frames=0;count=0
+        total_frames=0;count=0;rows=[];warnings=[]
         with tempfile.TemporaryDirectory(prefix='montage-',dir=self.project/'audio_cache') as temporary:
             temporary=Path(temporary);joined=temporary/'podcast.wav'
             with wave.open(str(joined),'wb') as out:
@@ -990,27 +1137,40 @@ class AudioRenderer:
                     gap=800 if segment.get('chapter_start') and index>1 else self.config['pause_ms'] if index>1 else 0
                     silence=round(RATE*gap/1000)
                     if silence:out.writeframes(b'\0\0'*silence);total_frames+=silence
+                    reply_frames=0
                     for text in split_text(segment['text']):
                         path,frames=self.chunk(text,self.config['voices'][segment['speaker']],ffmpeg)
                         with wave.open(str(path),'rb') as wav:
                             while raw:=wav.readframes(64*1024):
                                 if self.cancelled.is_set():raise Cancelled()
                                 out.writeframes(raw)
-                        total_frames+=frames;count+=1
+                        total_frames+=frames;reply_frames+=frames;count+=1
+                    seconds=reply_frames/RATE;word_count=len(segment['text'].split())
+                    warning=''
+                    if word_count>=12 and (seconds<word_count/(6.5*self.config['speed']) or seconds>word_count/(.5*self.config['speed'])):
+                        warning='Durée atypique : vérifier à l’écoute que la réplique est complète.'
+                        warnings.append('Réplique '+str(index)+' ('+segment['speaker']+') : '+warning)
+                    rows.append({'reply':index,'speaker':segment['speaker'],'words':word_count,'seconds':round(seconds,2),'warning':warning})
             self.progress('Assemblage du podcast et encodage MP3')
             output=temporary/'podcast.mp3'
-            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(joined),'-c:a','libmp3lame','-b:a','96k','-id3v2_version','3',str(output)],self.cancelled)
+            run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(joined),'-c:a','libmp3lame','-b:a','192k','-id3v2_version','3',str(output)],self.cancelled)
             if self.cancelled.is_set():raise Cancelled()
             replace(output,destination)
         return {'seconds':round(total_frames/RATE,2),'chunks':count,'bytes':destination.stat().st_size,
-                'sha256':hashlib.sha256(destination.read_bytes()).hexdigest()}
+                'sha256':hashlib.sha256(destination.read_bytes()).hexdigest(),'rows':rows,'warnings':warnings}
     def render(self,final):
-        if (final.get('workflow_version')!='grounded-editorial-v2' or final.get('source_quality')!=quality.VERSION or not final.get('content_checks_passed')):
-            raise ValueError('Ce script utilise les anciens contrôles. Réexaminez les résumés et reconstruisez le dialogue avant de générer le MP3.')
+        validate_script(final)
         (self.project/'audio_cache').mkdir(exist_ok=True)
-        result=self.compose(script_segments(final,self.speakers),self.project/'exports/podcast.mp3')
-        result.update(signature=signature(final,self.config,self.speakers),voices=copy.deepcopy(self.config['voices']),version=VERSION)
-        write(self.project/'exports/audio.json',result)
+        audio_name,meta_name,csv_name=output_names(self.config['scope_minutes'])
+        result=self.compose(selected_segments(final,self.config,self.speakers),self.project/'exports'/audio_name)
+        result.update(signature=signature(final,self.config,self.speakers),voices=copy.deepcopy(self.config['voices']),version=VERSION,
+            source_kind=final.get('source_kind','project'),scope_minutes=self.config['scope_minutes'],filename=audio_name,report_file=csv_name)
+        from storage import write_text
+        import io
+        buffer=io.StringIO();writer=csv.writer(buffer,delimiter=';');writer.writerow(['Réplique','Voix','Mots','Durée (s)','Alerte'])
+        for row in result['rows']:writer.writerow([row[k] for k in ('reply','speaker','words','seconds','warning')])
+        write_text(self.project/'exports'/csv_name,'\ufeff'+buffer.getvalue())
+        write(self.project/'exports'/meta_name,result)
         return result
     def preview(self,speaker):
         if speaker not in self.speakers:raise ValueError('Intervenant inconnu.')
@@ -1050,7 +1210,7 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
-    payload=['app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+    payload=['app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
@@ -2005,7 +2165,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -2074,7 +2234,7 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF et projets sont conserves. Verifiez la version en haut. Pour un ancien projet, cliquez sur Ameliorer les resumes existants, attendez la fin du reexamen, puis cliquez sur Continuer.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF et projets sont conserves. Verifiez la version en haut. Pour lire un dialogue corrige, cliquez sur Lire un dialogue TXT, puis importez vos anciens reglages VoiceStudio. Un projet deja traite en 0.3.0 ne demande pas de refaire les PDF ; pour les versions plus anciennes, suivre le bouton d amelioration propose dans le projet.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }
 ```
@@ -3454,9 +3614,10 @@ from app import APP_VERSION,App,Server
 from fixtures import StubServer,make_pdf
 from storage import invalidate,read,write
 from test_audio_export import VoiceServer
+from test_legacy_audio import OLD_SETTINGS
 
 with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
-    temp=Path(temp);stub=StubServer();voices=VoiceServer();app=App(temp/'data');server=Server(('127.0.0.1',0),app)
+    temp=Path(temp);stub=StubServer();voices=VoiceServer();voices.require_auth=True;voices.strict=True;app=App(temp/'data');server=Server(('127.0.0.1',0),app)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         pdf1=make_pdf(temp/'optique.pdf');pdf2=make_pdf(temp/'laser.pdf','Laser')
@@ -3479,11 +3640,11 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
             page.evaluate('() => refresh()')
             page.wait_for_function('() => Boolean(state.runtime?.version)')
-            page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task.state==="done"')
+            page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task?.state==="done"')
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("pages 1")')
             assert 'pages 1' in page.locator('#preview').inner_text()
             stub.fail_on=('dialogue','C2')
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="error"&&current()?.completed.length===7',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="error"&&current()?.completed.length===7',timeout=60000)
             page.locator('#steps button').nth(7).click()
             page.wait_for_function('() => document.querySelectorAll("#part-links a").length>=2')
             assert page.locator('#download-md').is_hidden()
@@ -3492,7 +3653,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             partial=temp/'chapitre-1.md';download.value.save_as(partial)
             assert 'Sophie' in partial.read_text()
             before=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             after=len([p for task,p in stub.calls if task=='dialogue' and p['chapter']['id']=='C1'])
             assert before==after==1
             assert page.locator('#steps button').count()==9
@@ -3510,10 +3671,10 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert page.locator('#voice-assignments select').nth(0).input_value()=='ref-sophie'
             assert page.locator('#voice-assignments select').nth(1).input_value()=='ref-emma'
             page.locator('#voice-assignments button').nth(0).click()
-            page.wait_for_function('() => current()?.task.state==="done"&&Boolean(current()?.audio.preview)',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&Boolean(current()?.audio.preview)',timeout=60000)
             assert page.locator('#voice-preview').is_visible()
             page.locator('#render-audio').click()
-            page.wait_for_function('() => current()?.task.state==="done"&&current()?.audio.available',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&current()?.audio.available',timeout=60000)
             page.wait_for_function('() => document.querySelector("#podcast-player").readyState>=1')
             page.locator('#podcast-player').click(position={'x':20,'y':25})
             page.wait_for_function('() => document.querySelector("#podcast-player").currentTime>0.02')
@@ -3531,18 +3692,18 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.evaluate('() => refresh()');page.wait_for_function('() => current()?.completed.length===2')
             assert page.locator('#quality-upgrade').is_visible()
             before_extract=len([p for task,p in stub.calls if task=='part_summary'])
-            page.locator('#refine').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.summary_quality==="source-review-v4"',timeout=60000)
+            page.locator('#refine').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.summary_quality==="source-review-v4"',timeout=60000)
             assert len([p for task,p in stub.calls if task=='part_summary'])==before_extract
             assert page.locator('#quality-upgrade').is_hidden()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Notions essentielles")')
             assert (folder/'reprises/02.json').exists()
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             page.locator('#steps button').nth(3).click();page.wait_for_function('() => document.querySelector("#preview").textContent.includes("PDF2")')
             page.locator('#steps button').nth(5).click();page.locator('#run-step').click()
-            page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===6',timeout=60000)
+            page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===6',timeout=60000)
             assert page.locator('#final-exports').is_hidden()
             assert list((folder/'versions').rglob('export-podcast.txt'))
-            page.locator('#continue').click();page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            page.locator('#continue').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.completed.length===9',timeout=60000)
             page.locator('#steps button').nth(8).click()
             page.wait_for_function('() => document.querySelector("#preview").textContent.includes("Rapport de révision")')
             (ROOT/'dist').mkdir(exist_ok=True);page.screenshot(path=str(ROOT/'dist/interface-verifiee.png'),full_page=True)
@@ -3550,13 +3711,40 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             stub.stall=True;stub.started.clear()
             page.locator('#steps button').nth(1).click();page.locator('#run-step').click()
             assert stub.started.wait(10)
-            page.wait_for_function('() => current()?.task.state==="running"')
-            page.locator('#cancel').click();page.wait_for_function('() => current()?.task.state==="cancelled"',timeout=10000)
+            page.wait_for_function('() => current()?.task?.state==="running"')
+            page.locator('#cancel').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
             assert read(folder/'etapes/01.json')
+            source_before=(folder/'etapes/01.json').read_bytes()
+            # Parcours indépendant : ancien dialogue et anciens réglages, sans PDF.
+            page.locator('#new-audio').click();page.wait_for_function('() => current()?.audio.source_mode==="provided"&&current()?.pdfs.length===0')
+            audio_id=page.evaluate('selected');audio_folder=app.project(audio_id)
+            assert page.locator('.work').is_hidden()
+            dialogue=temp/'dialogue_revise.txt';dialogue.write_text('AnneSo: Pourquoi préparer une décision ?\nSophie: Le modèle permet de comparer les effets avant une intervention.',encoding='utf-8')
+            page.locator('#audio-text-file').set_input_files(str(dialogue))
+            page.wait_for_function('() => document.querySelector("#audio-text").value.includes("AnneSo")')
+            assert page.locator('#render-audio').is_disabled()
+            page.locator('#save-audio-text').click();page.wait_for_function('() => current()?.audio.script_ready')
+            legacy=temp/'podcast_interface.py';legacy.write_text(OLD_SETTINGS.replace('http://127.0.0.1:3900',voices.endpoint).replace('profile-anne','ref-sophie').replace('profile-sophie','ref-emma'))
+            page.get_by_text('Récupérer mes anciens réglages VoiceStudio',exact=True).click()
+            page.locator('#legacy-audio-file').set_input_files(str(legacy));page.locator('#import-legacy-audio').click()
+            page.wait_for_function('() => current()?.audio.settings.voices.AnneSo==="ref-sophie"&&current()?.audio.settings.voices.Sophie==="ref-emma"')
+            page.locator('#render-audio').click();page.wait_for_function('() => current()?.task?.state==="done"&&current()?.audio.available',timeout=60000)
+            full=(audio_folder/'exports/podcast.mp3').read_bytes()
+            for scope in (3,5):
+                page.locator('#audio-scope').select_option(str(scope));page.wait_for_function('(scope) => current()?.audio.settings.scope_minutes===scope',arg=scope)
+                page.locator('#render-audio').click();page.wait_for_function('(scope) => current()?.task?.state==="done"&&current()?.audio.available&&current()?.audio.scope_minutes===scope',arg=scope,timeout=60000)
+                assert (audio_folder/'exports'/f'essai-{scope}min.mp3').exists()
+                assert (audio_folder/'exports/podcast.mp3').read_bytes()==full
+                with page.expect_download() as download:page.locator('#download-audio-report').click()
+                report=temp/f'rapport-{scope}.csv';download.value.save_as(report);assert 'Durée (s)' in report.read_text(encoding='utf-8-sig')
+            page.locator('#audio-text').fill(dialogue.read_text()+'\nAnneSo: Un dernier point.')
+            assert page.locator('#render-audio').is_disabled()
+            assert (folder/'etapes/01.json').read_bytes()==source_before
+            assert not (audio_folder/'etapes/01.json').exists()
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : neuf étapes, migration, profils VoiceStudio, aperçu, MP3 chargé et téléchargé, reprise, archives et annulation ; aucune erreur JS ou requête externe.')
+            print('Navigateur OK : neuf étapes, API historique authentifiée, MP3 lu et téléchargé, import ancien réglage/TXT, essais 3/5 min distincts, rapport CSV et protection des brouillons ; aucune erreur JS ou requête externe.')
     finally:
         stub.close();voices.close();server.shutdown();server.server_close();app.close();thread.join()
 ```
@@ -3728,11 +3916,11 @@ from llm import Cancelled
 from storage import defaults,read,write
 
 
-def wav_bytes(frequency=440,rate=22050):
+def wav_bytes(frequency=440,rate=22050,amplitude=3000):
     buffer=io.BytesIO()
     with wave.open(buffer,'wb') as out:
         out.setnchannels(1);out.setsampwidth(2);out.setframerate(rate)
-        out.writeframes(b''.join(struct.pack('<h',int(3000*math.sin(2*math.pi*frequency*n/rate))) for n in range(rate//8)))
+        out.writeframes(b''.join(struct.pack('<h',int(amplitude*math.sin(2*math.pi*frequency*n/rate))) for n in range(rate//8)))
     return buffer.getvalue()
 
 
@@ -3742,24 +3930,28 @@ class VoiceHandler(BaseHTTPRequestHandler):
         data=json.dumps(value).encode() if mime=='application/json' else value
         self.send_response(status);self.send_header('Content-Type',mime);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_GET(self):
+        if self.server.require_auth and self.headers.get('Authorization')!='Bearer local':self.respond(401,{'error':'auth required'});return
+        if self.path=='/health':self.respond(200,{'status':'ok'});return
         if self.path=='/v1/audio/voices':
             self.respond(200,{'voices':[{'voice_id':'ref-sophie','name':'Sophie','type':'profile'},
                 {'id':'ref-emma','name':'Emma','type':'profile'},{'voice_id':'alloy','name':'Alloy','type':'openai_alias'}]})
         else:self.respond(404,{'detail':'not found'})
     def do_POST(self):
+        if self.server.require_auth and self.headers.get('Authorization')!='Bearer local':self.respond(401,{'error':'auth required'});return
         value=json.loads(self.rfile.read(int(self.headers['Content-Length'])));self.server.calls.append(value)
+        if self.server.strict and set(value)!={'model','input','voice','response_format'}:self.respond(422,{'error':'unexpected fields'});return
         if self.server.fail_at==len(self.server.calls):self.respond(503,{'detail':'interruption simulée'});return
         if self.server.bad_audio:self.respond(200,b'not a wave file','audio/wav');return
         if self.server.stall:
             self.send_response(200);self.send_header('Content-Length','999999');self.end_headers()
             self.wfile.write(wav_bytes()[:44]);self.wfile.flush();self.server.started.set();self.server.release.wait(10);return
-        self.respond(200,wav_bytes(440 if value['voice']=='ref-sophie' else 660,22050 if value['voice']=='ref-sophie' else 48000),'audio/wav')
+        self.respond(200,wav_bytes(0 if self.server.silent else 440 if value['voice']=='ref-sophie' else 660,22050 if value['voice']=='ref-sophie' else 48000,self.server.amplitudes.get(value['voice'],3000)),'audio/wav')
 
 
 class VoiceServer(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self):
-        super().__init__(('127.0.0.1',0),VoiceHandler);self.calls=[];self.fail_at=None;self.bad_audio=False
+        super().__init__(('127.0.0.1',0),VoiceHandler);self.calls=[];self.fail_at=None;self.bad_audio=False;self.require_auth=False;self.strict=False;self.silent=False;self.amplitudes={}
         self.thread=threading.Thread(target=self.serve_forever,daemon=True);self.thread.start()
         self.endpoint=f'http://127.0.0.1:{self.server_port}'
         self.stall=False;self.started=threading.Event();self.release=threading.Event()
@@ -3800,7 +3992,7 @@ class AudioTests(unittest.TestCase):
         self.server.fail_at=None;result=self.renderer().render(value)
         self.assertEqual(len(self.server.calls),3)
         self.assertEqual([c['voice'] for c in self.server.calls],['ref-sophie','ref-emma','ref-emma'])
-        self.assertTrue(all(c['response_format']=='wav' and c['language']=='fr' for c in self.server.calls))
+        self.assertTrue(all(set(c)=={'model','input','voice','response_format'} and c['response_format']=='wav' for c in self.server.calls))
         self.assertFalse(any('Sophie :' in c['input'] or 'Emma :' in c['input'] for c in self.server.calls))
         self.assertGreater(result['bytes'],1000);self.assertGreater(result['seconds'],.25)
         self.assertEqual(read(self.project/'exports/audio.json')['signature'],audio_export.signature(value,self.config,['Sophie','Emma']))
@@ -4216,6 +4408,129 @@ class MigrationTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'anciens contrôles'):app.enqueue(project,{'first':8,'until':9})
                 self.assertEqual((project/'exports/podcast.txt').read_text(),'Ancien script conservé.')
             finally:app.close()
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_legacy_audio.py
+
+```python
+"""Compatibilité de l'ancienne IHM, imports sans exécution et lecture TXT."""
+import copy
+import json
+from pathlib import Path
+import shutil
+import tempfile
+import unittest
+
+import audio_export,voice_legacy
+from app import App
+from fixtures import FakeClient
+from storage import defaults,read,write
+from test_audio_export import VoiceServer,final_script
+
+OLD_SETTINGS="""
+voice_studio_url = st.text_input('API', 'http://127.0.0.1:3900')
+vs_anneso = st.text_input('AnneSo', 'profile-anne')
+vs_sophie = st.text_input('Sophie', 'profile-sophie')
+normalize_audio = st.checkbox('Volume', value=True)
+target_dbfs = st.slider('dBFS', -26, -14, -20)
+pause_ms = st.slider('Pause', 100, 1000, 350, 50)
+"""
+
+class ImportTests(unittest.TestCase):
+    def test_legacy_widget_defaults_are_read_without_executing_python(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker=Path(directory)/'unsafe'
+            source=OLD_SETTINGS+'\nopen('+repr(str(marker))+', "w").write("executed")\n'
+            result=voice_legacy.read_settings(source)
+            self.assertFalse(marker.exists());self.assertEqual(result['pause_ms'],350)
+            self.assertEqual(result['target_dbfs'],-20)
+            self.assertEqual(result['voices'],{'AnneSo':'profile-anne','Sophie':'profile-sophie'})
+    def test_missing_and_identical_references_are_rejected(self):
+        for values in [{'vs_anneso':'x'},{'vs_anneso':'x','vs_sophie':'x'}]:
+            with self.subTest(values=values),self.assertRaises(ValueError):voice_legacy.read_settings(json.dumps(values))
+    def test_dialogue_is_kept_word_for_word_and_is_not_marked_scientifically_valid(self):
+        text='AnneSo: Pourquoi ?\nSophie: Voici une réponse.\nElle continue ici.'
+        value=voice_legacy.parse_dialogue(text)
+        self.assertEqual(value['speakers'],['AnneSo','Sophie'])
+        self.assertEqual([t['text'] for t in value['chapters'][0]['turns']],['Pourquoi ?','Voici une réponse. Elle continue ici.'])
+        self.assertNotIn('content_checks_passed',value);self.assertEqual(value['source_kind'],'provided_text')
+        audio_export.validate_script(value)
+        changed=copy.deepcopy(value);changed['chapters'][0]['turns'][1]['text']='Un autre résultat.'
+        with self.assertRaises(ValueError):audio_export.validate_script(changed)
+    def test_replies_without_speakers_are_not_silently_ignored(self):
+        with self.assertRaises(ValueError):voice_legacy.parse_dialogue('Un titre sans interlocuteur.\nSophie: Une réponse.')
+    def test_trial_keeps_whole_replies_and_never_modifies_the_complete_script(self):
+        value=voice_legacy.parse_dialogue('\n'.join(('AnneSo' if n%2==0 else 'Sophie')+': '+('mot '*100)+'.' for n in range(12)))
+        before=copy.deepcopy(value)
+        selected=audio_export.selected_segments(value,{**audio_export.defaults(),'scope_minutes':3},value['speakers'])
+        self.assertEqual(len(selected),4);self.assertEqual(value,before)
+
+class LocalApiTests(unittest.TestCase):
+    def setUp(self):self.server=VoiceServer()
+    def tearDown(self):self.server.close()
+    def test_api_requiring_bearer_local_and_exact_legacy_fields_works(self):
+        self.server.require_auth=True;self.server.strict=True
+        client=audio_export.VoiceStudio({'endpoint':self.server.endpoint})
+        client.health();self.assertEqual(len(client.voices()),2)
+        raw=client.speech('Bonjour, voici la voix.','ref-sophie')
+        self.assertTrue(raw.startswith(b'RIFF'));self.assertEqual(set(self.server.calls[0]),{'model','input','voice','response_format'})
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg requis pour ce test média')
+    def test_silent_synthesis_is_rejected_before_mp3_export(self):
+        self.server.silent=True
+        with tempfile.TemporaryDirectory() as directory:
+            render=audio_export.AudioRenderer(Path(directory),{'endpoint':self.server.endpoint,'voices':{'Sophie':'ref-sophie','Emma':'ref-emma'}},['Sophie','Emma'])
+            with self.assertRaisesRegex(ValueError,'silencieuse'):render.render(final_script())
+            self.assertFalse((Path(directory)/'exports/podcast.mp3').exists())
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg requis pour ce test média')
+    def test_voice_levels_are_balanced_without_clipping(self):
+        self.server.amplitudes={'ref-sophie':800,'ref-emma':8000}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);render=audio_export.AudioRenderer(root,{'endpoint':self.server.endpoint,'voices':{'Sophie':'ref-sophie','Emma':'ref-emma'}},['Sophie','Emma'])
+            render.render(final_script());stats=[audio_export.pcm_stats(p) for p in (root/'audio_cache').glob('*.wav')]
+            self.assertEqual(len(stats),2);self.assertLess(abs(stats[0][0]-stats[1][0]),1)
+            self.assertTrue(all(p<=-1 for _,p in stats))
+
+class AppImportTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.app=App(Path(self.temp.name),FakeClient)
+        identity=self.app.create({'name':'Essai','settings':defaults()})['id'];self.folder=self.app.project(identity)
+    def tearDown(self):self.app.close();self.temp.cleanup()
+    def test_cast_import_preserves_pdf_steps_and_rebuilds_only_dialogue(self):
+        for n in range(1,10):write(self.folder/'etapes'/f'{n:02}.json',{'data':{'quality_version':'source-review-v4'}})
+        write(self.folder/'exports/podcast.json',final_script())
+        first=(self.folder/'etapes/02.json').read_bytes()
+        result=self.app.import_audio_settings(self.folder,{'source':OLD_SETTINGS,'apply_cast':True})
+        self.assertEqual(result['invalidated_from'],8);self.assertEqual((self.folder/'etapes/02.json').read_bytes(),first)
+        self.assertFalse((self.folder/'etapes/08.json').exists());self.assertTrue((self.folder/'etapes/07.json').exists())
+        self.assertEqual(read(self.folder/'projet.json')['settings']['speakers'],['AnneSo','Sophie'])
+    def test_import_for_provided_text_keeps_the_pdf_project_and_its_cast(self):
+        self.app.save_audio_text(self.folder,{'mode':'provided','text':'AnneSo: Pourquoi ?\nSophie: Une explication.'})
+        write(self.folder/'etapes/08.json',{'data':{}});before=(self.folder/'etapes/08.json').read_bytes()
+        result=self.app.import_audio_settings(self.folder,{'source':OLD_SETTINGS,'apply_cast':True})
+        self.assertIsNone(result['invalidated_from']);self.assertEqual((self.folder/'etapes/08.json').read_bytes(),before)
+        self.assertEqual(self.app.summary(self.folder)['audio']['speakers'],['AnneSo','Sophie'])
+    @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg requis pour ce test média')
+    def test_provided_text_renders_without_pdf_and_trial_preserves_full_mp3(self):
+        server=VoiceServer()
+        try:
+            self.app.save_audio_text(self.folder,{'mode':'provided','text':'AnneSo: Pourquoi ?\nSophie: Voici la réponse.'})
+            config={'endpoint':server.endpoint,'voices':{'AnneSo':'ref-sophie','Sophie':'ref-emma'}}
+            self.app.save_audio_settings(self.folder,config);self.app.enqueue_audio(self.folder,{'action':'generate'});self.app.pending.join()
+            state=self.app.summary(self.folder);self.assertEqual(state['task']['state'],'done',state['task'])
+            self.assertTrue(state['audio']['available']);full=(self.folder/'exports/podcast.mp3').read_bytes()
+            self.app.save_audio_settings(self.folder,{**config,'scope_minutes':3});self.app.enqueue_audio(self.folder,{'action':'generate'});self.app.pending.join()
+            state=self.app.summary(self.folder);self.assertEqual(state['task']['state'],'done',state['task']);self.assertEqual(state['audio']['filename'],'essai-3min.mp3')
+            self.assertEqual((self.folder/'exports/podcast.mp3').read_bytes(),full)
+            self.assertTrue((self.folder/'exports/rapport_essai-3min.csv').exists())
+            self.assertFalse((self.folder/'etapes/01.json').exists());self.assertNotIn('content_checks_passed',read(self.folder/'lecture/dialogue.json'))
+        finally:server.close()
+    def test_invalid_text_does_not_replace_the_existing_source(self):
+        self.app.save_audio_text(self.folder,{'mode':'provided','text':'AnneSo: Pourquoi ?\nSophie: Une réponse.'})
+        before=(self.folder/'lecture/dialogue.json').read_bytes()
+        with self.assertRaises(ValueError):self.app.save_audio_text(self.folder,{'mode':'provided','text':'Un texte sans noms.'})
+        self.assertEqual((self.folder/'lecture/dialogue.json').read_bytes(),before)
 
 if __name__=='__main__':unittest.main()
 ```
@@ -5544,6 +5859,68 @@ class PedagogyTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## voice_legacy.py
+
+```python
+"""Réglages de l'ancienne IHM et dialogues fournis, sans exécuter leur code."""
+import ast
+import json
+import re
+from storage import fingerprint
+
+
+def read_settings(source):
+    if not isinstance(source,str) or len(source)>500000:raise ValueError('Fichier de réglages vide ou trop volumineux.')
+    values={}
+    if source.lstrip().startswith('{'):
+        try:values=json.loads(source)
+        except ValueError:raise ValueError('Le fichier de réglages JSON est invalide.') from None
+        if not isinstance(values,dict):raise ValueError('Un objet de réglages JSON est requis.')
+    else:
+        try:tree=ast.parse(source)
+        except (SyntaxError,RecursionError):raise ValueError('Le fichier Python de réglages est invalide.') from None
+        names={'voice_studio_url','vs_anneso','vs_sophie','pause_ms','normalize_audio','target_dbfs'}
+        for node in ast.walk(tree):
+            if not isinstance(node,ast.Assign) or not isinstance(node.value,ast.Call):continue
+            name=next((t.id for t in node.targets if isinstance(t,ast.Name) and t.id in names),None)
+            if not name:continue
+            call=node.value;kind=getattr(call.func,'attr','')
+            value_node=next((k.value for k in call.keywords if k.arg=='value'),None)
+            if value_node is None:
+                position=3 if kind=='slider' else 1
+                if len(call.args)>position:value_node=call.args[position]
+            try:values[name]=ast.literal_eval(value_node)
+            except (ValueError,TypeError,RecursionError):continue
+    if not all(isinstance(values.get(k),str) and values[k].strip() for k in ('vs_anneso','vs_sophie')):
+        raise ValueError('Les réglages doivent contenir vs_anneso et vs_sophie. Choisissez l’ancien podcast_interface.py ou son export JSON.')
+    if values['vs_anneso'].strip()==values['vs_sophie'].strip():raise ValueError('Les deux profils doivent être distincts.')
+    return {'endpoint':values.get('voice_studio_url','http://127.0.0.1:3900'),'model':'tts-1',
+        'voices':{'AnneSo':values['vs_anneso'].strip(),'Sophie':values['vs_sophie'].strip()},
+        'pause_ms':values.get('pause_ms',350),'normalize_audio':values.get('normalize_audio',True),
+        'target_dbfs':values.get('target_dbfs',-20),'speed':1.0}
+
+
+def parse_dialogue(text):
+    if not isinstance(text,str) or not text.strip() or len(text)>300000:raise ValueError('Choisissez un dialogue TXT non vide, de 300 000 caractères maximum.')
+    turns=[];names={}
+    for number,line in enumerate(text.replace('\ufeff','').splitlines(),1):
+        if not line.strip():continue
+        match=re.match(r"^\s*([^\W\d_][\wÀ-ÿ .'’-]{0,39})\s*[:：]\s*(.*)$",line)
+        if match:
+            name=match[1].strip()
+            if name.casefold()=='annso':name='AnneSo'
+            key=name.casefold();names.setdefault(key,name)
+            turns.append({'speaker':names[key],'text':match[2].strip(),'idea_ids':[],'kind':'provided'})
+        elif turns:turns[-1]['text']+=' '+line.strip()
+        else:raise ValueError('Ligne '+str(number)+' : commencer par le nom de l’intervenant suivi de deux-points.')
+    if not 2<=len(names)<=3:raise ValueError('Le dialogue doit comporter deux ou trois intervenants nommés.')
+    if any(not t['text'].strip() for t in turns):raise ValueError('Une réplique du dialogue est vide.')
+    if not turns:raise ValueError('Aucune réplique à lire.')
+    return {'source_kind':'provided_text','source_text':text,'input_hash':fingerprint(text),
+        'speakers':list(names.values()),'chapters':[{'id':'LECTURE','title':'Dialogue fourni','opening_transition':'','turns':turns}],
+        'note':'Texte fourni pour lecture audio ; il n’a pas été validé par les neuf étapes de contrôle des sources.'}
+```
+
 ## web/app.js
 
 ```javascript
@@ -5560,7 +5937,7 @@ const descriptions=[
  'Les questions sont proposées par petits blocs. Les réponses conservent les formulations sources, leurs références et une courte mémoire de continuité.',
  'Le programme vérifie les idées prévues, les réponses et les définitions, puis indique la durée estimée et les points à relire. Le script est exporté en texte et en JSON.'
 ];
-let audioFormKey='',voiceCatalog=[];
+let audioFormKey='',audioTextKey='',audioSourceKey='',audioTextDirty=false,voiceCatalog=[];
 let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
 const current=()=>state?.projects.find(p=>p.id===selected);
 const busy=p=>['queued','running'].includes(p?.task?.state);
@@ -5579,7 +5956,7 @@ function render(){
  const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
- $('project-name').textContent=p.name;$('source-info').textContent=`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`;
+ $('project-name').textContent=p.name;$('source-info').textContent=p.pdfs.length?`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`:'Lecture audio d’un dialogue fourni';document.querySelector('.work').hidden=!p.pdfs.length;$('continue').hidden=!p.pdfs.length;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
  $('continue').disabled=outdated||busy(p)||p.next_step>9||p.needs_source_upgrade;$('save-settings').disabled=busy(p);$('continue').textContent=p.needs_source_upgrade?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
  $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);
@@ -5608,19 +5985,28 @@ $('cancel').onclick=async()=>{try{await api(`/api/projects/${selected}/cancel`,{
 $('save-settings').onclick=async()=>{try{const value=await api(`/api/projects/${selected}/settings`,formSettings());showSetup=false;await refresh();notice(value.invalidated_from?`Paramètres enregistrés. Les anciens résultats à partir de l’étape ${value.invalidated_from} ont été archivés.`:'Paramètres inchangés.');}catch(e){notice(e.message,true);}};
 refresh();setInterval(refresh,1500);
 
-function audioSettings(){return {endpoint:$('voice-endpoint').value.trim(),model:$('voice-model').value.trim(),speed:Number($('voice-speed').value),pause_ms:Number($('voice-pause').value),voices:Object.fromEntries([...document.querySelectorAll('#voice-assignments select')].map(select=>[select.dataset.speaker,select.value]))};}
-function voiceRows(p,values){const holder=$('voice-assignments');holder.replaceChildren();for(const speaker of p.settings.speakers){const row=node('div');row.className='row voice-row';const label=node('label',speaker),select=node('select');select.dataset.speaker=speaker;const empty=node('option','Choisir une voix existante');empty.value='';select.append(empty);for(const voice of voiceCatalog){const option=node('option',voice.name+' — '+voice.id);option.value=voice.id;select.append(option);}if(values[speaker]&&!voiceCatalog.some(v=>v.id===values[speaker])){const option=node('option','Référence enregistrée : '+values[speaker]);option.value=values[speaker];select.append(option);}select.value=values[speaker]||'';label.append(select);const preview=node('button','Écouter cette voix');preview.type='button';preview.disabled=busy(p)||!p.audio.encoder_ready;preview.onclick=()=>audioAction('preview',speaker);row.append(label,preview);holder.append(row);}}
-function renderAudio(p){const audio=p.audio;if(!audio)return;const key=p.id+JSON.stringify(audio.settings);if(key!==audioFormKey){audioFormKey=key;const s=audio.settings;$('voice-endpoint').value=s.endpoint;$('voice-model').value=s.model;$('voice-speed').value=s.speed;$('voice-pause').value=s.pause_ms;voiceRows(p,s.voices);}for(const button of document.querySelectorAll('#voice-assignments button'))button.disabled=busy(p)||!audio.encoder_ready;
- $('load-voices').disabled=busy(p);$('save-voices').disabled=busy(p);$('prepare-audio').hidden=audio.encoder_ready;$('prepare-audio').disabled=busy(p);$('render-audio').disabled=busy(p)||!audio.encoder_ready||!p.exports.includes('podcast.json');
- $('audio-help').textContent=!audio.encoder_ready?'Première préparation : cliquez sur « Préparer le MP3 ». Un téléchargement est nécessaire si le moteur audio est absent.':p.needs_source_upgrade?'Réexaminez les résumés, puis reconstruisez le dialogue avant sa lecture audio.':'Le texte est lu avec les références vocales enregistrées. Les répliques terminées sont conservées si vous devez reprendre la génération.';
+function audioSettings(){return {endpoint:$('voice-endpoint').value.trim(),model:$('voice-model').value.trim(),speed:Number($('voice-speed').value),pause_ms:Number($('voice-pause').value),normalize_audio:$('normalize-audio').checked,target_dbfs:Number($('target-dbfs').value),scope_minutes:Number($('audio-scope').value),voices:{...(current()?.audio.settings.voices||{}),...Object.fromEntries([...document.querySelectorAll('#voice-assignments select')].map(select=>[select.dataset.speaker,select.value]))}};}
+function voiceRows(p,values){const holder=$('voice-assignments');holder.replaceChildren();for(const [index,speaker] of p.audio.speakers.entries()){const row=node('div');row.className='row voice-row';const role=p.audio.source_mode==='project'?' — '+(['questions','explications','relances'][index]):'';const label=node('label',speaker+role),select=node('select');select.dataset.speaker=speaker;const empty=node('option','Choisir une voix existante');empty.value='';select.append(empty);for(const voice of voiceCatalog){const option=node('option',voice.name+' — '+voice.id);option.value=voice.id;select.append(option);}if(values[speaker]&&!voiceCatalog.some(v=>v.id===values[speaker])){const option=node('option','Référence enregistrée : '+values[speaker]);option.value=values[speaker];select.append(option);}select.value=values[speaker]||'';label.append(select);const preview=node('button','Écouter cette voix');preview.type='button';preview.disabled=busy(p)||!p.audio.encoder_ready;preview.onclick=()=>audioAction('preview',speaker);row.append(label,preview);holder.append(row);}}
+async function loadAudioText(p){const id=p.id;try{const value=await api(`/api/projects/${id}/audio-text`);if(selected===id&&!audioTextDirty)$('audio-text').value=value.text;}catch(e){if(selected===id)notice(e.message,true);}}
+function renderAudio(p){const audio=p.audio;if(!audio)return;const key=p.id+JSON.stringify([audio.settings,audio.source_mode,audio.speakers]);if(key!==audioFormKey){audioFormKey=key;const s=audio.settings;$('voice-endpoint').value=s.endpoint;$('voice-model').value=s.model;$('voice-speed').value=s.speed;$('voice-pause').value=s.pause_ms;$('normalize-audio').checked=s.normalize_audio;$('target-dbfs').value=s.target_dbfs;$('audio-scope').value=String(s.scope_minutes);voiceRows(p,s.voices);}const sourceKey=p.id+audio.source_mode;if(sourceKey!==audioSourceKey){audioSourceKey=sourceKey;$('audio-source').value=audio.source_mode;$('provided-audio').hidden=audio.source_mode!=='provided';$('legacy-cast-row').hidden=audio.source_mode==='provided';}if(audioTextKey!==p.id){audioTextKey=p.id;audioTextDirty=false;$('audio-text').value='';loadAudioText(p);}for(const button of document.querySelectorAll('#voice-assignments button'))button.disabled=busy(p)||!audio.encoder_ready;
+ for(const id of ['load-voices','save-voices','prepare-audio','import-legacy-audio','save-audio-text'])$(id).disabled=busy(p);$('prepare-audio').hidden=audio.encoder_ready;$('render-audio').disabled=busy(p)||!audio.encoder_ready||!audio.script_ready||audioDraftPending();
+ $('audio-help').textContent=!audio.encoder_ready?'Première préparation : cliquez sur « Préparer le MP3 ». Un téléchargement est nécessaire si le moteur audio est absent.':audio.source_error||(!audio.script_ready?'Terminez le script du projet ou enregistrez votre dialogue TXT pour la lecture audio.':'Les répliques terminées sont conservées en cas d’interruption. Les essais de 3 ou 5 minutes portent sur le début du dialogue et gardent les répliques entières.');
  const preview=$('voice-preview');preview.hidden=!audio.preview;if(audio.preview){const src=`/media/${p.id}/apercu.mp3?v=${audio.preview.sha256}`;if(preview.getAttribute('src')!==src)preview.src=src;}
- $('podcast-audio').hidden=!audio.available;const player=$('podcast-player');if(audio.available){const src=`/media/${p.id}/podcast.mp3?v=${audio.signature}`;if(player.getAttribute('src')!==src)player.src=src;$('download-mp3').href=`/files/${p.id}/podcast.mp3`;$('audio-duration').textContent='Durée audio : '+Math.floor(audio.seconds/60)+' min '+Math.round(audio.seconds%60)+' s';}else if(player.getAttribute('src')){player.pause();player.removeAttribute('src');player.load();}}
+ $('podcast-audio').hidden=!audio.available;const player=$('podcast-player');if(audio.available){const src=`/media/${p.id}/${audio.filename}?v=${audio.signature}`;if(player.getAttribute('src')!==src)player.src=src;$('download-mp3').href=`/files/${p.id}/${audio.filename}`;$('download-audio-report').href=`/files/${p.id}/${audio.report_file}`;$('audio-duration').textContent=(audio.scope_minutes?'Essai':'Podcast complet')+' — durée audio : '+Math.floor(audio.seconds/60)+' min '+Math.round(audio.seconds%60)+' s';$('audio-warnings').textContent=audio.warnings?.length?audio.warnings.length+' réplique(s) ont une durée atypique : consultez le rapport et réécoutez ces passages.':'Le rapport indique la durée de chaque réplique. Une durée plausible ne garantit pas que tous les mots ont été prononcés.';}else if(player.getAttribute('src')){player.pause();player.removeAttribute('src');player.load();}}
+function audioDraftPending(){return $('audio-source').value!==current()?.audio.source_mode||($('audio-source').value==='provided'&&audioTextDirty);}
 async function saveVoices(){await api(`/api/projects/${selected}/audio-settings`,audioSettings());}
-async function audioAction(action,speaker){try{notice('');if(action!=='prepare')await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker});await refresh();}catch(e){notice(e.message,true);}}
-$('load-voices').onclick=async()=>{const button=$('load-voices');button.disabled=true;$('voices-status').textContent='Connexion à VoiceStudio…';try{const currentValues=audioSettings().voices;const value=await api('/api/voices',audioSettings());voiceCatalog=value.voices;for(const speaker of current().settings.speakers){if(!currentValues[speaker]){const matches=voiceCatalog.filter(v=>v.name.toLowerCase()===speaker.toLowerCase());if(matches.length===1)currentValues[speaker]=matches[0].id;}}voiceRows(current(),currentValues);$('voices-status').textContent=voiceCatalog.length?voiceCatalog.length+' voix créée(s) disponible(s). Les références sont affichées à côté de leurs noms.':'VoiceStudio répond, mais aucun profil vocal créé n’a été trouvé.';}catch(e){$('voices-status').textContent=e.message;}finally{button.disabled=false;}};
+async function audioAction(action,speaker){try{notice('');if(action==='generate'&&audioDraftPending())throw Error('Cliquez sur Utiliser ce texte pour l’audio avant de générer le MP3.');if(action!=='prepare')await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker});await refresh();}catch(e){notice(e.message,true);}}
+$('load-voices').onclick=async()=>{const button=$('load-voices');button.disabled=true;$('voices-status').textContent='Connexion à VoiceStudio…';try{const currentValues=audioSettings().voices;const value=await api('/api/voices',audioSettings());voiceCatalog=value.voices;for(const speaker of current().audio.speakers){if(!currentValues[speaker]){const matches=voiceCatalog.filter(v=>v.name.toLowerCase()===speaker.toLowerCase());if(matches.length===1)currentValues[speaker]=matches[0].id;}}voiceRows(current(),currentValues);$('voices-status').textContent=voiceCatalog.length?voiceCatalog.length+' voix créée(s) disponible(s). Les références sont affichées à côté de leurs noms.':'VoiceStudio répond, mais aucun profil vocal créé n’a été trouvé.';}catch(e){$('voices-status').textContent=e.message;}finally{button.disabled=false;}};
 $('save-voices').onclick=async()=>{try{await saveVoices();await refresh();notice('Voix enregistrées pour ce projet.');}catch(e){notice(e.message,true);}};
 $('prepare-audio').onclick=()=>audioAction('prepare');$('render-audio').onclick=()=>audioAction('generate');
 $('podcast-player').onerror=()=>notice('La lecture audio a échoué. Vérifiez le résultat de génération et le téléchargement MP3.',true);
+$('audio-scope').onchange=async()=>{try{await saveVoices();await refresh();}catch(e){notice(e.message,true);}};
+$('audio-source').onchange=async()=>{const mode=$('audio-source').value;$('provided-audio').hidden=mode!=='provided';$('legacy-cast-row').hidden=mode==='provided';$('render-audio').disabled=true;if(mode==='project'){try{await api(`/api/projects/${selected}/audio-text`,{mode});await refresh();}catch(e){notice(e.message,true);}}};
+$('audio-text').oninput=()=>{audioTextDirty=true;$('render-audio').disabled=true;};
+$('audio-text-file').onchange=async()=>{const file=$('audio-text-file').files[0];if(!file)return;if(file.size>1200000){notice('Le dialogue TXT est trop volumineux.',true);return;}$('audio-text').value=await file.text();audioTextDirty=true;$('render-audio').disabled=true;$('audio-source').value='provided';$('provided-audio').hidden=false;$('audio-text-status').textContent='Fichier chargé. Cliquez sur « Utiliser ce texte pour l’audio ».';};
+$('save-audio-text').onclick=async()=>{try{const value=await api(`/api/projects/${selected}/audio-text`,{mode:'provided',text:$('audio-text').value});audioTextDirty=false;await refresh();$('audio-text-status').textContent='Texte enregistré. Intervenants : '+value.speakers.join(', ')+'.';}catch(e){notice(e.message,true);}};
+$('import-legacy-audio').onclick=async()=>{if($('audio-source').value!==current().audio.source_mode){notice('Enregistrez d’abord le dialogue avec Utiliser ce texte pour l’audio.',true);return;}const file=$('legacy-audio-file').files[0];if(!file){notice('Choisissez votre ancien podcast_interface.py ou un export JSON.',true);return;}if(file.size>500000){notice('Le fichier de réglages est trop volumineux.',true);return;}try{const value=await api(`/api/projects/${selected}/audio-import`,{source:await file.text(),apply_cast:$('legacy-cast').checked});audioFormKey='';await refresh();$('legacy-audio-status').textContent='Réglages récupérés : '+value.names.join(', ')+'.'+(value.invalidated_from?' Les résumés sont conservés ; cliquez sur Continuer pour adapter les intervenants du dialogue.':' Vous pouvez essayer les voix et générer le MP3.');}catch(e){notice(e.message,true);}};
+$('new-audio').onclick=async()=>{try{const created=await api('/api/projects',{name:'Lecture d’un dialogue',settings:{...state.defaults,speakers:['AnneSo','Sophie']},audio_only:true});selected=created.id;showSetup=false;step=1;previewKey='';audioFormKey='';await refresh();notice('Chargez votre dialogue TXT, puis vos réglages VoiceStudio.');}catch(e){notice(e.message,true);}};
 ```
 
 ## web/index.html
@@ -5629,7 +6015,7 @@ $('podcast-player').onerror=()=>notice('La lecture audio a échoué. Vérifiez l
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Podcast pédagogique</title><link rel="stylesheet" href="/style.css"></head>
 <body><header><div><strong>Podcast pédagogique</strong><span>Vos documents, un fil conducteur.</span></div><span class="badge">Traitement local · Ollama</span></header>
-<div class="layout"><aside><button id="new" class="primary wide">＋ Nouveau projet</button><h2>Mes projets</h2><nav id="projects"></nav><p class="small muted">Les PDF et les résultats restent sur ce PC. Gardez la fenêtre de lancement ouverte.</p></aside>
+<div class="layout"><aside><button id="new" class="primary wide">＋ Nouveau projet</button><button id="new-audio" class="wide">Lire un dialogue TXT</button><h2>Mes projets</h2><nav id="projects"></nav><p class="small muted">Les PDF et les résultats restent sur ce PC. Gardez la fenêtre de lancement ouverte.</p></aside>
 <main><div id="notice" role="status" hidden></div>
 <section id="welcome"><p class="eyebrow">DU PDF AU DIALOGUE</p><h1>Construire un podcast qui suit un raisonnement.</h1><p class="intro">Trois parties par document, une synthèse commune, puis un dialogue écrit avec la mémoire des chapitres précédents.</p></section>
 <section id="setup" class="card"><h2 id="setup-title">Préparer le projet</h2><form id="create-form"><div id="new-fields"><label>Nom du projet<input id="name" placeholder="Mon prochain podcast" maxlength="150"></label><label>PDF à analyser<input id="pdfs" type="file" accept=".pdf,application/pdf" multiple></label><small>Vous pouvez sélectionner plusieurs PDF. Les documents scannés nécessitent une reconnaissance de texte préalable.</small></div>
@@ -5644,12 +6030,15 @@ $('podcast-player').onerror=()=>notice('La lecture audio a échoué. Vérifiez l
 <div class="work"><nav id="steps" aria-label="Étapes du podcast"></nav><section class="card result"><div class="row"><h2 id="step-title">Choisissez une étape</h2><button id="run-step">Exécuter cette étape</button></div><p id="step-description" class="muted"></p><div class="row"><a id="download-md" hidden>Télécharger le texte</a><a id="download-json" hidden>Télécharger les données</a></div><details id="saved-parts" hidden><summary>Parties déjà enregistrées en Markdown</summary><p class="small muted">Ces fichiers sont disponibles même si la suite du traitement s’arrête. Continuer reprend les parties manquantes.</p><div id="part-links" class="row"></div></details><article id="preview"><p class="muted">Les résultats apparaîtront ici.</p></article></section></div>
 <section id="final-exports" class="card" hidden><h2>Le script du podcast</h2><p>Relisez le dialogue, puis générez sa version audio avec vos voix VoiceStudio.</p><div id="export-links" class="row"></div><small>La durée du texte reste une estimation. Les passages incertains sont signalés dans les rapports.</small></section>
 <section id="audio-panel" class="card"><h2>Voix et podcast MP3</h2><p>Ouvrez VoiceStudio sur ce PC. Chargez vos voix, associez-en une à chaque intervenant, puis écoutez un aperçu.</p>
+<div class="row"><label>Texte à lire<select id="audio-source"><option value="project">Script du projet (neuf étapes)</option><option value="provided">Dialogue TXT révisé</option></select></label></div>
+<div id="provided-audio" hidden><p class="small">Le dialogue fourni est lu tel quel. Son import ne constitue pas une validation scientifique.</p><label>Charger un dialogue<input id="audio-text-file" type="file" accept=".txt,text/plain"></label><label>Dialogue à lire<textarea id="audio-text" rows="10" placeholder="AnneSo: Une question…&#10;Sophie: Une explication…"></textarea></label><button id="save-audio-text" type="button">Utiliser ce texte pour l’audio</button><p id="audio-text-status" class="muted"></p></div>
+<details><summary>Récupérer mes anciens réglages VoiceStudio</summary><p class="small">Choisissez votre ancien podcast_interface.py ou un export JSON. Les valeurs initiales du fichier sont reprises ; le code Python n’est pas exécuté.</p><input id="legacy-audio-file" type="file" accept=".py,.json"><label id="legacy-cast-row"><input id="legacy-cast" type="checkbox" checked> Reprendre AnneSo pour les questions et Sophie pour les explications du script du projet</label><button id="import-legacy-audio" type="button">Importer mes réglages</button><p id="legacy-audio-status" class="muted"></p></details>
 <div class="row"><label>Adresse API de VoiceStudio<input id="voice-endpoint" value="http://127.0.0.1:3900"></label><button id="load-voices" type="button">Charger mes voix VoiceStudio</button></div>
 <p id="voices-status" class="muted"></p><div id="voice-assignments"></div>
-<details><summary>Réglages de lecture</summary><div class="row"><label>Vitesse<input id="voice-speed" type="number" min="0.5" max="2" step="0.05" value="1"></label><label>Pause entre répliques, en millisecondes<input id="voice-pause" type="number" min="0" max="2000" step="50" value="250"></label><label>Modèle API<input id="voice-model" value="tts-1"><small>tts-1 utilise le moteur actif de VoiceStudio.</small></label></div></details>
+<div class="row"><label>Audio à générer<select id="audio-scope"><option value="0">Podcast complet</option><option value="3">Essai d’environ 3 minutes</option><option value="5">Essai d’environ 5 minutes</option></select></label></div><details><summary>Réglages de lecture</summary><div class="row"><label>Vitesse<input id="voice-speed" type="number" min="0.5" max="2" step="0.05" value="1"></label><label>Pause entre répliques, en millisecondes<input id="voice-pause" type="number" min="0" max="2000" step="50" value="250"></label><label>Modèle API<input id="voice-model" value="tts-1"><small>tts-1 utilise le moteur actif de VoiceStudio.</small></label></div><label><input id="normalize-audio" type="checkbox" checked> Équilibrer le volume des voix</label><label>Volume moyen cible (dBFS)<input id="target-dbfs" type="number" min="-30" max="-14" value="-20"></label></details>
 <div class="row"><button id="save-voices" type="button">Enregistrer les voix</button><button id="prepare-audio" type="button" hidden>Préparer le MP3</button><button id="render-audio" type="button" class="primary">Générer le podcast MP3</button></div>
 <p id="audio-help" class="small muted"></p><audio id="voice-preview" controls preload="none" hidden></audio>
-<div id="podcast-audio" hidden><h3>Écouter le podcast</h3><p id="audio-duration" class="muted"></p><audio id="podcast-player" controls preload="metadata"></audio><p><a id="download-mp3">Télécharger le MP3</a></p></div>
+<div id="podcast-audio" hidden><h3>Écouter le podcast</h3><p id="audio-duration" class="muted"></p><audio id="podcast-player" controls preload="metadata"></audio><p><a id="download-mp3">Télécharger le MP3</a></p><p><a id="download-audio-report">Télécharger le rapport des répliques (CSV)</a></p><p id="audio-warnings" class="muted"></p></div>
 </section></section>
 </main></div><script src="/app.js"></script></body></html>
 ```
@@ -5664,4 +6053,7 @@ $('podcast-player').onerror=()=>notice('La lecture audio a échoué. Vérifiez l
 .voice-row label { flex: 1; }
 audio { width: 100%; margin-top: 12px; }
 #audio-panel { margin-top: 24px; }
+#new-audio { margin-top: 10px; }
+textarea { width: 100%; border: 1px solid #b8c6bd; border-radius: 7px; padding: 12px; font: 14px/1.6 system-ui; color: var(--ink); background: white; margin: 8px 0 14px; resize: vertical; }
+input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }
 ```

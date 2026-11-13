@@ -1,25 +1,29 @@
-PODCAST PEDAGOGIQUE — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.4.0 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
-3. Installer Ollama depuis https://ollama.com/download/windows
-4. Ouvrir un terminal et lancer : ollama pull mistral
-5. Ouvrir Lancer-Podcast.cmd.
-6. Creer un projet avec vos PDF, verifier le modele, puis lancer les etapes.
+3. Ouvrir Lancer-Podcast.cmd.
 
-Le programme cree le script du podcast, puis le MP3 avec vos voix VoiceStudio.
-Ouvrir VoiceStudio, puis Charger mes voix dans la section Voix et podcast MP3. Chaque partie est sauvegardee en Markdown avant la suivante.
-En cas d'arret, Continuer reprend les parties manquantes.
-Une courte fiche de continuite relie les chapitres sans accumuler le dialogue.
+POUR LIRE UN DIALOGUE DEJA ECRIT
+Ouvrir VoiceStudio. Dans l’application, cliquer sur Lire un dialogue TXT,
+charger le fichier et Utiliser ce texte pour l’audio. Importer les anciens
+reglages depuis podcast_interface.py pour retrouver les references des voix.
+Essayer les voix, generer un essai court, puis le podcast complet.
+Ollama n’est pas necessaire pour cette lecture TXT.
 
-Le modele Mistral se telecharge une fois et peut occuper plusieurs Go.
-Ensuite, le traitement peut fonctionner hors connexion sur votre PC.
+POUR CREER LE DIALOGUE DEPUIS DES PDF
+Installer Ollama depuis https://ollama.com/download/windows
+Telecharger un modele une fois : ollama pull mistral
+Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
+Chaque partie est sauvegardee en Markdown avant la suivante.
+Continuer reprend les parties manquantes apres une interruption.
+Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
 
-Conservez le dossier donnees pour garder vos projets.
-Dans une installation existante, utiliser le ZIP correctif puis Mettre-a-jour.cmd.
-Pour reprendre un ancien resume, cliquer sur Ameliorer les resumes existants.
-Consultez README.md pour les details et SOURCE-COMPLET.md pour tous les sources.
+Conservez le dossier donnees pour garder vos projets et reglages vocaux.
+Pour une installation PodcastPedago existante, utiliser le ZIP correctif.
+Un script deja genere en 0.3.0 ne demande pas de refaire les PDF.
+L’ancienne application Streamlit V7 reste separee : importer seulement ses
+reglages et son texte dans cette nouvelle installation.
 
-Les tests techniques utilisent notamment un modele simule. Des essais Mistral
-sont cibles ; la relecture scientifique et Windows natif restent a verifier.
-Pour un ancien projet : Ameliorer les resumes existants, attendre, puis Continuer.
+Consultez README.md pour les details et SOURCE-COMPLET.md pour les sources.
+La relecture scientifique, vos voix reelles et Windows natif restent a verifier.

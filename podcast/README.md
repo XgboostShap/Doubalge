@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.3.0
+# Podcast pédagogique — version 0.4.0
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,30 +7,46 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.3.0** en haut de la page.
-5. Ouvrir l’ancien projet et cliquer sur **Améliorer les résumés existants**. Attendre la fin du réexamen de l’étape 2.
-6. Cliquer sur **Continuer jusqu’au script final** pour reconstruire les étapes 3 à 9.
+4. Relancer l’application et vérifier **Version 0.4.0** en haut de la page.
 
-Ce réexamen est nécessaire : les anciens contrôles pouvaient conserver un bon identifiant associé au mauvais contenu. L’application empêche de reprendre directement l’ancien plan ou dialogue. Elle archive les résultats remplacés ; le texte extrait, les candidats disponibles, les PDF, les projets et les modèles sont conservés. Il n’est pas nécessaire de réinstaller Mistral ni d’augmenter le contexte pour appliquer cette mise à jour.
+Un projet déjà traité en 0.3.0 peut passer directement à la lecture audio : les contrôles scientifiques de cette version sont conservés, sans refaire les PDF. Pour un projet plus ancien, suivre **Améliorer les résumés existants**, attendre le réexamen puis **Continuer jusqu’au script final**. Les PDF et les projets sont conservés ; les résultats remplacés sont archivés.
 
-L’outil de mise à jour vérifie les empreintes des 15 fichiers applicatifs, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees` ni `.venv`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
+L’outil de mise à jour vérifie les empreintes des 16 fichiers applicatifs, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
 
-## Écouter et exporter le podcast avec VoiceStudio
+L’ancienne application Streamlit V7, dont `app.py` appelle `podcast_interface.run()`, est une autre application. Ce correctif ne s’applique pas à son dossier : utiliser le ZIP complet dans un nouveau dossier, puis importer ses réglages et son dialogue comme indiqué ci-dessous. Ses données restent dans son dossier d’origine.
+
+## Retrouver les voix de l’ancienne version et lire le dialogue révisé
+
+Ce parcours permet de lire un texte déjà écrit, sans relancer Ollama ni analyser de PDF.
 
 1. Ouvrir VoiceStudio sur le PC et garder son API locale en service.
-2. Dans le projet, ouvrir **Voix et podcast MP3**. L’adresse proposée est `http://127.0.0.1:3900`, modifiable selon votre installation.
-3. Cliquer sur **Charger mes voix VoiceStudio**. Choisir le profil existant de Sophie, d’Emma ou de chaque autre intervenant, puis **Enregistrer les voix**.
-4. Si le bouton apparaît, cliquer une fois sur **Préparer le MP3**. Le programme utilise FFmpeg déjà disponible ou télécharge le paquet `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes restent locales.
-5. Utiliser **Écouter cette voix** pour vérifier chaque association.
-6. Une fois le nouveau script terminé et relu, cliquer sur **Générer le podcast MP3**. Le lecteur et **Télécharger le MP3** apparaissent à la fin.
+2. Dans PodcastPedago, cliquer sur **Lire un dialogue TXT**.
+3. Charger `dialogue_revise_20min.txt`, ou un autre dialogue au format `AnneSo: Une question` puis `Sophie: Une réponse`. Cliquer sur **Utiliser ce texte pour l’audio**.
+4. Ouvrir **Récupérer mes anciens réglages VoiceStudio**, choisir l’ancien `podcast_interface.py` et cliquer sur **Importer mes réglages**.
+5. Vérifier les deux associations avec **Écouter cette voix**, puis sélectionner **Essai d’environ 3 minutes** avant de générer.
+6. Après contrôle, sélectionner **Podcast complet**, générer et utiliser le lecteur ou **Télécharger le MP3**.
 
-Les références de profils sont enregistrées dans le projet. L’application appelle les profils par leur identifiant, jamais un alias générique qui sélectionnerait la voix par défaut. Aucun profil n’est recréé dans VoiceStudio. Une référence absente est signalée. Les réglages permettent aussi d’ajuster la vitesse et les pauses.
+L’import lit les valeurs initiales des champs de configuration dans le fichier Python, sans exécuter son code. Il récupère les références AnneSo/Sophie, l’adresse locale, les pauses et le volume. Il ne peut pas retrouver un changement effectué uniquement dans une ancienne session Streamlit : dans ce cas, choisir les profils dans **Charger mes voix VoiceStudio**. Un JSON avec les mêmes clés historiques (`voice_studio_url`, `vs_anneso`, `vs_sophie`, et éventuellement `pause_ms`, `normalize_audio`, `target_dbfs`) est aussi accepté. Aucun profil privé n’est inclus dans l’archive distribuée.
 
-Chaque réplique est générée séparément et conservée avec son empreinte. Une reprise après interruption réutilise les répliques terminées. Les fichiers sont normalisés au même format, assemblés avec les pauses, puis encodés en MP3 à 96 kbit/s. Les noms des intervenants servent à choisir leur voix et ne sont pas lus à haute voix. La durée audio affichée vient des échantillons effectivement assemblés.
+Le texte importé reste un texte fourni pour lecture : il ne reçoit pas une validation scientifique automatique. L’éditeur bloque la génération tant que les modifications du dialogue ne sont pas enregistrées. Les noms servent au choix des voix et ne sont pas prononcés. Les lignes qui continuent une réplique sont rattachées à cet intervenant ; les titres sans intervenant doivent être retirés avant import.
 
-Modifier les voix ou la vitesse archive l’ancien MP3, sans refaire les résumés. Les caches audio restent dans le dossier privé du projet. Le lecteur permet de se déplacer dans le MP3 ; le dossier complet du projet contient également l’export audio.
+## Écouter le script d’un projet PDF
 
-Le connecteur utilise l’API locale documentée de [VoiceStudio](https://github.com/debpalash/VoiceStudio) : `GET /v1/audio/voices`, `POST /v1/audio/speech` et, pour la liste des profils sur certaines versions, `GET /profiles`. Le modèle API `tts-1` est l’alias du moteur actif de VoiceStudio ; un autre identifiant peut être indiqué dans les réglages avancés. Une version de VoiceStudio exposant une API différente doit être adaptée ; le test de connexion affiche l’erreur exacte.
+Dans **Voix et podcast MP3**, conserver **Script du projet (neuf étapes)**, puis importer les anciens réglages ou charger les profils existants. L’option **Reprendre AnneSo pour les questions et Sophie pour les explications** adapte les noms du projet : seules les étapes 8 et 9 sont à reconstruire si les intervenants changent. Les résumés et le plan sont conservés. Décocher cette option pour garder les noms actuels et affecter les références aux mêmes rôles ; un troisième intervenant demande sa propre association.
+
+Pour charger les profils directement, vérifier l’adresse API (`http://127.0.0.1:3900` par défaut), cliquer sur **Charger mes voix VoiceStudio**, choisir une référence pour chaque intervenant et **Enregistrer les voix**. Aucun profil n’est recréé. Une référence absente est signalée.
+
+Si **Préparer le MP3** apparaît, cliquer une fois pour utiliser FFmpeg déjà disponible ou télécharger `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes sont locales. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
+
+## Compatibilité VoiceStudio et contrôles audio
+
+La version 0.4.0 reprend le contrat API présent dans les anciens fichiers fournis : `GET /health`, `GET /v1/audio/voices` et `POST /v1/audio/speech`, avec l’en-tête `Authorization: Bearer local`. Le POST envoie exactement `model`, `input`, `voice` et `response_format`, avec `tts-1` et `wav` par défaut. La synthèse peut prendre jusqu’à 900 secondes par requête, contre 15 secondes pour les lectures de l’API. Le contrôle de santé accepte l’absence de `/health` (HTTP 404) pour les autres versions compatibles. La liste peut aussi provenir de `/profiles`.
+
+Chaque réplique est synthétisée séparément, avec découpage des textes longs, cache et reprise après interruption. La vitesse est ajustée localement par FFmpeg. Les fichiers sont convertis dans un format commun, équilibrés vers le volume cible lorsque l’option est active, puis assemblés avec les pauses et encodés en MP3 à **192 kbit/s**. Le volume reste limité pour éviter la saturation numérique. Une réplique totalement silencieuse arrête la génération ; une durée très atypique produit un avertissement à réécouter, sans supprimer la réplique.
+
+Les essais de 3 ou 5 minutes prennent le début du texte et conservent les répliques entières ; leur durée est approximative. Ils ont leurs propres MP3 et rapports, et ne remplacent pas le podcast complet. Le rapport CSV indique le nom, le nombre de mots, la durée et les avertissements de chaque réplique. Une durée plausible ne prouve pas que la synthèse a prononcé tous les mots.
+
+Les références sont mémorisées dans le projet. Modifier le texte, les voix, les pauses ou le volume archive les anciens exports audio. Changer seulement la durée d’essai conserve les différents exports. Le cache reste dans le dossier privé du projet. La mise à jour du moteur audio renouvelle l’empreinte des exports 0.3.0 pour appliquer les nouveaux réglages.
 
 ## Première installation
 
@@ -80,13 +96,13 @@ La mémoire conserve les idées déjà expliquées et les définitions sources, 
 
 ## Résultats et relecture
 
-Les exports comprennent `podcast.md`, `podcast.txt`, `podcast.json` et, après génération audio, `podcast.mp3` accompagné de son rapport `audio.json`. Le dossier du projet contient aussi les neuf étapes, les fragments, les citations, les motifs d’incertitude et les archives des anciens résultats. Le JSON final indique les idées couvertes, les exclusions, les avertissements et la durée estimée.
+Les exports comprennent `podcast.md`, `podcast.txt`, `podcast.json` et, après génération audio, `podcast.mp3` accompagné de ses rapports `audio.json` et `rapport_audio.csv` ; les essais ont des noms distincts. Le dossier du projet contient aussi les neuf étapes, les fragments, les citations, les motifs d’incertitude et les archives des anciens résultats. Le JSON final indique les idées couvertes, les exclusions, les avertissements et la durée estimée.
 
 **Une relecture humaine reste nécessaire avant l’enregistrement.** Les formulations retenues à l’étape 2 peuvent encore comporter une mauvaise traduction ou une interprétation incomplète ; les conserver ensuite empêche une dérive supplémentaire mais ne les rend pas automatiquement exactes. La sélection éditoriale peut omettre un prérequis important. Les figures, équations, tableaux complexes et PDF scannés ne sont pas interprétés visuellement ; cette version n’intègre pas d’OCR. Les contradictions entre PDF ne sont pas arbitrées automatiquement.
 
 ## Vérification et sources
 
-Les tests couvrent les erreurs relevées dans l’export précédent, les associations de contenu, la couverture des idées, les reprises, les archives et la migration. Le parcours navigateur utilise des API simulées : profils vocaux, aperçu, lecture et téléchargement sont vérifiés avec un **MP3 réellement encodé**. Les tests audio contrôlent l’affectation des références de voix, les pauses, la reprise, les erreurs et l’annulation d’une requête HTTP en cours. Le paquet MP3 est préparé avec le gestionnaire uv de l’installation lorsqu’aucun pip n’est présent.
+Les tests couvrent les erreurs relevées dans l’export précédent, les associations de contenu, la couverture des idées, les reprises, les archives et la migration. Le parcours navigateur utilise des API simulées : profils vocaux, aperçu, lecture et téléchargement sont vérifiés avec un **MP3 réellement encodé**. Les tests audio contrôlent l’authentification historique, les quatre champs du POST, l’import sans exécution, la lecture TXT sans PDF, les essais distincts, le volume, le silence, l’affectation des voix, les pauses, la reprise et l’annulation d’une requête HTTP en cours. Le paquet MP3 est préparé avec le gestionnaire uv de l’installation lorsqu’aucun pip n’est présent.
 
 La vérification sur le podcast fourni porte sur sept erreurs identifiées et sur le glossaire du PDF. Les essais Mistral sont ciblés ; ils ne constituent pas une nouvelle génération scientifique complète des 147 pages. Les voix réelles de votre VoiceStudio, leur qualité sonore et l’interface native Windows doivent être essayées sur votre PC. Le cloud de développement ne peut pas joindre un service installé sur ce PC à travers son adresse `127.0.0.1`.
 

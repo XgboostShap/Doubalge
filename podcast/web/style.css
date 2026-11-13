@@ -5,3 +5,6 @@
 .voice-row label { flex: 1; }
 audio { width: 100%; margin-top: 12px; }
 #audio-panel { margin-top: 24px; }
+#new-audio { margin-top: 10px; }
+textarea { width: 100%; border: 1px solid #b8c6bd; border-radius: 7px; padding: 12px; font: 14px/1.6 system-ui; color: var(--ink); background: white; margin: 8px 0 14px; resize: vertical; }
+input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }

@@ -22,9 +22,10 @@ import pipeline as pipeline_module
 from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 import audio_export
+import voice_legacy
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.3.0'
+APP_VERSION = '0.4.0'
 
 
 def settings(value):
@@ -99,7 +100,8 @@ class App:
         folder = self.projects/uuid.uuid4().hex
         folder.mkdir();(folder/'sources').mkdir()
         write(folder/'projet.json',{'id':folder.name,'name':body['name'].strip()[:150],
-              'created':time.time(),'settings':settings(body.get('settings',{})),'pdfs':[]})
+              'created':time.time(),'settings':settings(body.get('settings',{})),'pdfs':[],
+              'audio_source_mode':'provided' if body.get('audio_only') is True else 'project'})
         return {'id':folder.name}
 
     def summary(self, folder):
@@ -119,48 +121,105 @@ class App:
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
+    def audio_input(self,folder,meta):
+        mode=meta.get('audio_source_mode','project')
+        path=folder/'lecture/dialogue.json' if mode=='provided' else folder/'exports/podcast.json'
+        value=read(path) if path.exists() else None
+        speakers=value.get('speakers',meta['settings']['speakers']) if value and mode=='provided' else meta['settings']['speakers']
+        return value,speakers,mode
+
     def audio_summary(self,folder,meta,needs_upgrade=False):
-        config=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers'])
+        config=audio_export.settings(meta.get('audio_settings',{}))
+        final,speakers,mode=self.audio_input(folder,meta)
         try:audio_export.encoder();encoder_ready=True
         except ValueError:encoder_ready=False
-        result={'settings':config,'encoder_ready':encoder_ready,'available':False,'preview':None}
-        path=folder/'exports/audio.json';final=folder/'exports/podcast.json'
-        if not needs_upgrade and path.exists() and final.exists() and (folder/'exports/podcast.mp3').exists():
+        result={'settings':config,'speakers':speakers,'source_mode':mode,'script_ready':False,
+                'encoder_ready':encoder_ready,'available':False,'preview':None,'source_error':''}
+        if final:
+            try:
+                audio_export.validate_script(final)
+                result['script_ready']=mode=='provided' or not needs_upgrade
+            except ValueError as error:result['source_error']=str(error)
+        audio_name,meta_name,csv_name=audio_export.output_names(config['scope_minutes'])
+        path=folder/'exports'/meta_name
+        if result['script_ready'] and path.exists() and (folder/'exports'/audio_name).exists():
             record=read(path)
-            if record.get('signature')==audio_export.signature(read(final),config,meta['settings']['speakers']):
-                result.update(available=True,seconds=record['seconds'],signature=record['signature'])
+            if record.get('signature')==audio_export.signature(final,config,speakers):
+                result.update(available=True,seconds=record['seconds'],signature=record['signature'],filename=audio_name,
+                    report_file=csv_name,warnings=record.get('warnings',[]),scope_minutes=config['scope_minutes'])
         preview=folder/'audio_cache/apercu.json'
         if preview.exists() and (folder/'audio_cache/apercu.mp3').exists():
             record=read(preview)
-            if record.get('settings_hash')==fingerprint(config):result['preview']=record
+            if record.get('settings_hash')==fingerprint(audio_export.settings(config,speakers)):result['preview']=record
         return result
+
+    def archive_audio(self,folder):
+        files=[p for p in (folder/'exports').glob('*') if p.name in ('podcast.mp3','audio.json','rapport_audio.csv') or p.name.startswith(('essai-','rapport_essai-'))]
+        if not files and not (folder/'lecture/dialogue.json').exists():return
+        archive=folder/'versions'/('audio-'+uuid.uuid4().hex[:12]);archive.mkdir(parents=True)
+        for path in files:audio_export.replace(path,archive/path.name)
+        source=folder/'lecture/dialogue.json'
+        if source.exists():write(archive/'dialogue_audio.json',read(source))
 
     def save_audio_settings(self,folder,body):
         with self.lock:
             self.idle(folder);meta=read(folder/'projet.json')
-            config=audio_export.settings(body,meta['settings']['speakers'])
-            if config!=audio_export.settings(meta.get('audio_settings',{}),meta['settings']['speakers']):
-                previous=[p for p in [folder/'exports/podcast.mp3',folder/'exports/audio.json'] if p.exists()]
-                if previous:
-                    archive=folder/'versions'/('audio-'+uuid.uuid4().hex[:12]);archive.mkdir(parents=True)
-                    for path in previous:audio_export.replace(path,archive/path.name)
+            config=audio_export.settings(body)
+            previous=audio_export.settings(meta.get('audio_settings',{}))
+            if {k:v for k,v in config.items() if k!='scope_minutes'}!={k:v for k,v in previous.items() if k!='scope_minutes'}:
+                self.archive_audio(folder)
             meta['audio_settings']=config;write(folder/'projet.json',meta)
             return {'saved':True}
+
+    def audio_text(self,folder):
+        path=folder/'lecture/dialogue.json'
+        value=read(path) if path.exists() else {}
+        meta=read(folder/'projet.json')
+        return {'text':value.get('source_text',''),'mode':meta.get('audio_source_mode','project')}
+
+    def save_audio_text(self,folder,body):
+        with self.lock:
+            self.idle(folder);meta=read(folder/'projet.json');mode=body.get('mode')
+            if mode not in ('project','provided'):raise ValueError('Source audio inconnue.')
+            parsed=voice_legacy.parse_dialogue(body.get('text','')) if mode=='provided' else None
+            existing=folder/'lecture/dialogue.json'
+            changed=mode!=meta.get('audio_source_mode','project') or (parsed and (not existing.exists() or parsed['input_hash']!=read(existing).get('input_hash')))
+            if changed:self.archive_audio(folder)
+            if parsed:write(existing,parsed)
+            meta['audio_source_mode']=mode;write(folder/'projet.json',meta)
+            return {'saved':True,'speakers':parsed['speakers'] if parsed else meta['settings']['speakers']}
+
+    def import_audio_settings(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            config=audio_export.settings(voice_legacy.read_settings(body.get('source','')))
+            apply_cast=body.get('apply_cast',True)
+            if type(apply_cast) is not bool:raise ValueError('Option de reprise des intervenantes invalide.')
+            meta=read(folder/'projet.json');first=None
+            if meta.get('audio_source_mode','project')=='project' and apply_cast:
+                first=self.update_settings(folder,{**meta['settings'],'speakers':['AnneSo','Sophie']})['invalidated_from']
+            elif meta.get('audio_source_mode','project')=='project':
+                # La même répartition des rôles, en conservant les noms choisis.
+                config['voices']={name:voice for name,voice in zip(meta['settings']['speakers'],config['voices'].values())}
+            self.save_audio_settings(folder,config)
+            return {'imported':True,'invalidated_from':first,'names':list(config['voices'])}
 
     def enqueue_audio(self,folder,body):
         with self.lock:
             self.idle(folder)
             action=body.get('action','generate')
             if action not in ('generate','preview','prepare'):raise ValueError('Commande audio inconnue.')
-            meta=read(folder/'projet.json')
+            meta=read(folder/'projet.json');value,speakers,mode=self.audio_input(folder,meta)
             if action=='generate':
-                final=folder/'exports/podcast.json'
-                if not final.exists():raise ValueError('Terminez le script avant de générer le MP3.')
-                value=read(final)
-                if value.get('workflow_version')!='grounded-editorial-v2' or value.get('source_quality')!=pipeline_module.SUMMARY_QUALITY_MODE or not value.get('content_checks_passed'):
-                    raise ValueError('Réexaminez les résumés et reconstruisez le dialogue avec les nouveaux contrôles avant de générer le MP3.')
+                if not value:raise ValueError('Terminez le script ou enregistrez un dialogue TXT avant de générer le MP3.')
+                audio_export.validate_script(value)
+                if mode=='project' and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:
+                    raise ValueError('Réexaminez les sources du script avant sa lecture audio.')
+                config=audio_export.settings(meta.get('audio_settings',{}));_,record_name,_=audio_export.output_names(config['scope_minutes'])
+                record=folder/'exports'/record_name
+                if record.exists() and read(record).get('version')!=audio_export.VERSION:self.archive_audio(folder)
             speaker=body.get('speaker')
-            if action=='preview' and speaker not in meta['settings']['speakers']:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
+            if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
                   'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
@@ -230,11 +289,12 @@ class App:
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
                 if task.get('kind')=='audio':
-                    client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),meta['settings']['speakers'],cancel,progress)
+                    audio_input,audio_speakers,_=self.audio_input(folder,meta)
+                    client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),audio_speakers,cancel,progress)
                     self.active=(task['id'],client)
                     if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress)
                     elif task['action']=='preview':client.preview(task['speaker'])
-                    else:client.render(read(folder/'exports/podcast.json'))
+                    else:client.render(audio_input)
                     task.update(state='done',message='Moteur MP3 prêt' if task['action']=='prepare' else 'Aperçu vocal prêt' if task['action']=='preview' else 'Podcast MP3 prêt à écouter et télécharger')
                     continue
                 # Une simple reprise conserve les parties finies dans l'étape en cours.
@@ -362,10 +422,12 @@ class Handler(BaseHTTPRequestHandler):
             if path in static:
                 name,mime=static[path];self.respond(200,(ROOT/'web'/name).read_bytes(),mime);return
             parts=path.split('/')
+            if len(parts)==5 and parts[1:3]==['api','projects'] and parts[4]=='audio-text':
+                self.json(self.app.audio_text(self.app.project(parts[3])));return
             if len(parts)==4 and parts[1]=='media':
                 folder=self.app.project(parts[2]);name=parts[3]
                 state=self.app.summary(folder)['audio']
-                if name=='podcast.mp3' and state['available']:file=folder/'exports/podcast.mp3'
+                if name==state.get('filename') and state['available']:file=folder/'exports'/name
                 elif name=='apercu.mp3' and state['preview']:file=folder/'audio_cache/apercu.mp3'
                 else:raise FileNotFoundError('Audio non disponible pour ce script et ces voix.')
                 self.send_media(file);return
@@ -380,15 +442,16 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'etapes'/'parties'/name.removeprefix('partie-')
                     if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
                 elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
-                elif name=='podcast.mp3':
-                    if not self.app.summary(folder)['audio']['available']:raise FileNotFoundError('Le MP3 correspondant aux voix choisies n’est pas encore prêt.')
-                    file=folder/'exports/podcast.mp3'
+                elif name in ('podcast.mp3','essai-3min.mp3','essai-5min.mp3','rapport_audio.csv','rapport_essai-3min.csv','rapport_essai-5min.csv'):
+                    audio=self.app.summary(folder)['audio']
+                    if not audio['available'] or name not in (audio['filename'],audio['report_file']):raise FileNotFoundError('Ce résultat audio ne correspond pas à la sélection actuelle.')
+                    file=folder/'exports'/name
                 elif name=='dossier.zip':
                     self.app.idle(folder)
                     file=folder/'dossier.zip'
                     with zipfile.ZipFile(file,'w',zipfile.ZIP_DEFLATED) as archive:
                         archive.write(folder/'projet.json','projet.json')
-                        for sub in ('sources','etapes','memoire','exports','reprises'):
+                        for sub in ('sources','etapes','memoire','exports','reprises','lecture'):
                             for f in (folder/sub).rglob('*'):
                                 if f.is_file():archive.write(f,f.relative_to(folder))
                 else:raise FileNotFoundError('Fichier inconnu.')
@@ -400,7 +463,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_file(self,path):
         if not path.is_file():raise FileNotFoundError('Le résultat n’est pas encore disponible.')
-        mime='audio/mpeg' if path.suffix=='.mp3' else 'application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
+        mime='audio/mpeg' if path.suffix=='.mp3' else 'text/csv; charset=utf-8' if path.suffix=='.csv' else 'application/zip' if path.suffix=='.zip' else 'application/json' if path.suffix=='.json' else 'text/plain; charset=utf-8'
         self.send_response(200);self.send_header('Content-Type',mime)
         self.send_header('Content-Length',str(path.stat().st_size))
         self.send_header('X-Content-Type-Options','nosniff')
@@ -449,6 +512,8 @@ class Handler(BaseHTTPRequestHandler):
             if action=='run':self.json(self.app.enqueue(folder,body),202)
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
+            elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))
+            elif action=='audio-import':self.json(self.app.import_audio_settings(folder,body))
             elif action=='audio-settings':self.json(self.app.save_audio_settings(folder,body))
             elif action=='audio':self.json(self.app.enqueue_audio(folder,body),202)
             else:raise FileNotFoundError('Commande inconnue.')

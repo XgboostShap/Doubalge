@@ -25,7 +25,7 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
-    payload=['app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+    payload=['app.py','storage.py','pipeline.py','quality.py','editorial.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
