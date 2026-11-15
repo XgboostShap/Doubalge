@@ -62,7 +62,7 @@ class VoiceServer(ThreadingHTTPServer):
 
 
 def final_script():
-    return {'workflow_version':'grounded-editorial-v2','source_quality':'source-review-v4','content_checks_passed':True,'chapters':[
+    return {'workflow_version':'grounded-editorial-v3','source_quality':'source-review-v5','content_checks_passed':True,'independent_final_review':True,'chapters':[
         {'id':'C1','title':'Les bases','opening_transition':'Bienvenue. Découvrons le réseau.',
          'turns':[{'speaker':'Emma','text':'La lumière transporte les données dans la fibre.','idea_ids':['I1']}]}]}
 

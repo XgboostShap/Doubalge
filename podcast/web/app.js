@@ -3,13 +3,13 @@ const $=id=>document.getElementById(id);
 const descriptions=[
  'Extraction du texte et découpage équilibré en trois parties. Les numéros de page sont conservés. Cette étape fonctionne sans modèle.',
  'Les pages secondaires sont classées à part. Les idées sont confrontées au PDF avec citations exactes, puis chaque partie reçoit une synthèse : problème, notions, méthodes, résultats et limites. Le registre et les motifs d’exclusion restent consultables.',
- 'Une sélection de phrases retenues dans les trois parties forme une synthèse par PDF. Le registre complet et les citations restent disponibles.',
- 'Les passages retenus de tous les PDF sont rassemblés par rôle : notions, problème, méthode, résultats, applications et limites. Chaque passage conserve sa source.',
+ 'Les idées importantes des trois parties sont rédigées en synthèses puis relues contre les citations. Le registre complet reste disponible.',
+ 'Les idées de tous les PDF sont reformulées en un texte commun : notions, problème, méthodes, résultats, applications et limites. Chaque passage est relié à sa source et relu.',
  'Les idées essentielles sont sélectionnées selon la durée, puis organisées des notions aux méthodes, résultats et limites. Les idées hors dialogue restent au dossier avec leur motif.',
- 'Chaque phrase reprend exactement l’énoncé source de l’idée sélectionnée. Sa référence reste associée au même texte.',
- 'Chaque énoncé est accompagné de son explication retenue lors de la lecture des sources. Une phrase prépare le raccord entre chapitres.',
- 'Les questions sont proposées par petits blocs. Les réponses conservent les formulations sources, leurs références et une courte mémoire de continuité.',
- 'Le programme vérifie les idées prévues, les réponses et les définitions, puis indique la durée estimée et les points à relire. Le script est exporté en texte et en JSON.'
+ 'Chaque idée reçoit une phrase centrale réécrite, claire et courte. Une seconde lecture vérifie son sens contre les citations ; le registre original est conservé.',
+ 'Chaque idée devient une explication orale de quelques phrases, relue contre la source. Le contexte reste court et les passages terminés sont enregistrés.',
+ 'Les questions suivent les explications réécrites et vérifiées, par petits blocs. Les définitions sont intégrées aux réponses et une mémoire courte relie les échanges.',
+ 'Le dialogue est relu avec correction locale si nécessaire. Les passages non confirmés restent bloqués ; corrections, durée et points à relire figurent dans le rapport.'
 ];
 let audioFormKey='',audioTextKey='',audioSourceKey='',audioTextDirty=false,voiceCatalog=[];
 let state=null,selected=null,step=1,polling=false,creating=false,showSetup=true,previewKey='',loadSerial=0,runtimeWarning=false;
@@ -22,7 +22,7 @@ function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('mod
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
- const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v4'||runtime.editorial_mode!=='grounded-editorial-v2';
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v5'||runtime.editorial_mode!=='grounded-editorial-v3';
  document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';

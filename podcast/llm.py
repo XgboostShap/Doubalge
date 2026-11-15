@@ -96,6 +96,8 @@ class Ollama:
             raise Cancelled()
         schema=response_schema(task,payload)
         cache_inputs={'version':1,'config':self.config,'task':task,'payload':payload,'instructions':instructions,'budget':budget}
+        review_temperature=0 if task in ('writing_check','fact_support','review_facts') else self.config['temperature']
+        cache_inputs['request_temperature']=review_temperature
         if schema:cache_inputs['schema']=schema
         key = fingerprint(cache_inputs)
         path = self.cache / (key+'.json')
@@ -115,7 +117,7 @@ class Ollama:
             if self.cancelled.is_set():
                 raise Cancelled()
             try:
-                text = self._request(messages,budget,recovery=bool(repeat_retries),schema=schema)
+                text = self._request(messages,budget,recovery=bool(repeat_retries),schema=schema,temperature=review_temperature)
                 value = json.loads(text)
                 validate(value)
                 write(path,value)
@@ -140,12 +142,12 @@ class Ollama:
                 self.progress('Correction du format de réponse du modèle : '+str(error)[:250])
                 messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
 
-    def _request(self, messages, budget, recovery=False, schema=None):
+    def _request(self, messages, budget, recovery=False, schema=None,temperature=None):
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
             body = {'model':self.config['model'], 'messages':messages, 'format':schema or 'json', 'stream':True,
-                    'options':{'temperature':self.config['temperature'],'num_ctx':self.config['num_ctx'],
+                    'options':{'temperature':self.config['temperature'] if temperature is None else temperature,'num_ctx':self.config['num_ctx'],
                                'num_predict':budget,'repeat_penalty':1.15 if recovery else 1.1,
                                'repeat_last_n':256 if recovery else 64}}
             conn.request('POST','/api/chat',json.dumps(body).encode(),{'Content-Type':'application/json'})

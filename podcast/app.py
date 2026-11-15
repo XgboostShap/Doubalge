@@ -25,7 +25,7 @@ import audio_export
 import voice_legacy
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.4.0'
+APP_VERSION = '0.5.0'
 
 
 def settings(value):
@@ -107,7 +107,7 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
-        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v4'
+        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
@@ -236,9 +236,9 @@ class App:
         with self.lock:
             if self.runtime['page_sources']!='pdf-page-v1':
                 raise ValueError('Mise à jour incomplète : pipeline.py est encore ancien. Fermez le programme et utilisez Mettre-a-jour.cmd dans le correctif.')
-            if self.runtime['summary_quality']!='source-review-v4':
+            if self.runtime['summary_quality']!='source-review-v5':
                 raise ValueError('Mise à jour incomplète : les contrôles de synthèse sont absents. Fermez le programme et utilisez le nouveau correctif.')
-            if self.runtime['editorial_mode']!='grounded-editorial-v2':
+            if self.runtime['editorial_mode']!='grounded-editorial-v3':
                 raise ValueError('Mise à jour incomplète : les réponses reliées aux sources sont absentes. Réappliquer le correctif complet.')
             self.idle(folder)
             meta = read(folder/'projet.json')
@@ -257,7 +257,7 @@ class App:
                     raise ValueError('L’amélioration réutilise une étape 2 terminée, sans régénération forcée.')
                 # Copie privée de l'extraction AVANT l'archivage des résultats.
                 self.preserve_summaries(folder,meta)
-            elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v4':
+            elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v5':
                 raise ValueError('Ce projet utilise les anciens contrôles. Cliquer sur Améliorer les résumés existants : les résultats seront archivés et les sources réexaminées avant la reconstruction du plan et du dialogue.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
                     'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}

@@ -1,9 +1,9 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "files": [
     {
       "path": "app.py",
-      "sha256": "9403b267855298c196c33f190dac8db0db89e9aded10767c6b89d21353ba2a51"
+      "sha256": "327f070377ec16a55690f69f539238738ccca70858458cee97a9a6761ce5d604"
     },
     {
       "path": "storage.py",
@@ -11,19 +11,27 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "f3966ee01bec60342190a4748760838949b51c5828f0274e452251d082dd238a"
+      "sha256": "88211cfb383611a4ddc6ea25943ecaff118c11ea837dc827a381c73d589882b1"
     },
     {
       "path": "quality.py",
-      "sha256": "a5fb38a5131f8a028d5ef852a4991363efd5df51c80d6f83943093fee6970147"
+      "sha256": "43c935aa163239052fa7679a54e5544f83f0b1673c2af3c4cf1a9beded6015f9"
     },
     {
       "path": "editorial.py",
-      "sha256": "7d23d6e9418b210ba00712b206e101c5aedb5096e49717b0fb50143839ab93b9"
+      "sha256": "3a5b1b8ec07696411849dac4ec238be6e134f1ed48459c185f231f1a9f77e783"
+    },
+    {
+      "path": "writing.py",
+      "sha256": "ebebfc0282c39ee96084bb7f289cc20e8b7c41b33ce0a6206f2b9bab6ba1f01c"
+    },
+    {
+      "path": "spoken.py",
+      "sha256": "a6e8ec8663a08dbc603b06f15031f52de3cb186d6742c3373f37002d8b1f0578"
     },
     {
       "path": "audio_export.py",
-      "sha256": "7d65321edf97cd12b144231bd830f25b9a8c6504345c3a310396b627c5e6622b"
+      "sha256": "a5acca93297ee2de3f82cabde5f534f96d04d3bece330d999c4e77251c5bbf4e"
     },
     {
       "path": "voice_legacy.py",
@@ -31,7 +39,7 @@
     },
     {
       "path": "llm.py",
-      "sha256": "5c0dbf7160df421ea9981ea30f8a0d5b58e0d5623874694dbac31e9c4a1b22db"
+      "sha256": "a1c3cb28e0b02bb5a3831a3879dd58c3b81b7d97be4e4ac87761cfc1411863f1"
     },
     {
       "path": "pdfs.py",
@@ -39,11 +47,11 @@
     },
     {
       "path": "web/index.html",
-      "sha256": "792df66356b244f25bd2f20088c4b7af85a41c8573c371487500eeb9737cb88e"
+      "sha256": "79afb997b79acab2f197a3f34aeb3082ed25dc617717b3dbf3667ec5d1d04e7e"
     },
     {
       "path": "web/app.js",
-      "sha256": "f6c220a69a29ad004f57cf848d2dfeec3589bd0a66dad39c9bce9a20be6c9585"
+      "sha256": "48b3a1a5cad698643196e81b2247e3ebaa6cc75cb4010835207032f8554f7600"
     },
     {
       "path": "web/style.css",
@@ -51,19 +59,19 @@
     },
     {
       "path": "Lancer-Podcast.cmd",
-      "sha256": "ba9ffbac865fcc8cdec916a64cc1f746fbbfab5284f56e7d0d521223a51f2db3"
+      "sha256": "004d3153506d9a0d5da2a7417a982d294e4c19d059e02b2b51b306ac750097d1"
     },
     {
       "path": "README.md",
-      "sha256": "261b924b18fb48d726994c17a26e5dcc55eda317c67f68e0c785818f3cae73d0"
+      "sha256": "59718351ecfee7e141ba0a6e6283878f075703fbe50c1a2ccfc1bcda079b9c49"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "bf07421ec8c4d6a6c56c24fd000108d610d27d3a3ce00353606f8b65f0538926"
+      "sha256": "f056f0393277b4a7fcefb04d9e62a3fff93c6b25e5f0c4a5a61222b5c9831487"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "d84907436b76f169dca0840829cd0554c534fa415cb16f7a04ef4807619cc51d"
+      "sha256": "c7553e6229912577a7f4aedd8b135ef91b917ec479d27101ee476bc0dc445521"
     }
   ]
 }

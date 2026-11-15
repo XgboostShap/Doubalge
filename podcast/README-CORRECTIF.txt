@@ -1,9 +1,9 @@
-PODCAST PEDAGOGIQUE 0.4.0 — RETROUVER LES VOIX DE L’ANCIENNE VERSION
+PODCAST PEDAGOGIQUE 0.5.0 — RETROUVER LES VOIX DE L’ANCIENNE VERSION
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire tout le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier contenant Lancer-Podcast.cmd.
-4. Verifier Version 0.4.0 en haut de l’application.
+4. Verifier Version 0.5.0 en haut de l’application.
 
 Si votre ancien app.py appelle podcast_interface.run() (Streamlit V7),
 utiliser le ZIP complet dans un nouveau dossier. Ce correctif concerne
@@ -24,10 +24,20 @@ Les references sont recuperees dans votre fichier, sans executer son code.
 Aucune nouvelle voix n’est creee. Les essais ont des fichiers distincts.
 Les repliques terminees sont conservees pour une reprise apres interruption.
 
-Pour un script PDF deja genere en 0.3.0, inutile de refaire les PDF.
-Pour un projet plus ancien, suivre Ameliorer les resumes existants, puis Continuer.
-Changer les noms des intervenants via l’import ne refait que les etapes 8 et 9.
-Les PDF, projets, modeles et anciens reglages restent dans votre installation.
+POUR REPRENDRE VOTRE DERNIER PROJET PDF
+- Ouvrir le dernier projet, sans reimporter le PDF.
+- Cliquer sur Ameliorer les resumes existants et attendre la fin.
+- Cliquer sur Continuer jusqu’au script final.
+- Relire le nouveau dialogue, puis essayer environ 3 minutes avec vos voix.
+
+Cette reprise est necessaire meme pour un projet 0.4.0. Les anciennes phrases
+pouvaient contenir des contresens et des commentaires repris dans la conclusion.
+Les sources sont reexaminees, les phrases sont reecrites et relues, et la revision
+finale peut corriger un passage ou signaler un refus. Les PDF, voix et anciens
+resultats restent conserves. Le rapport CSV contient le texte prononce.
+
+Apres mise a jour, ouvrir Lancer-Podcast.cmd dans votre ancien dossier installe.
+Le bouton Extraire tout indique que vous etes encore dans le ZIP.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif et lancer :

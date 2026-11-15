@@ -81,7 +81,7 @@ class AppImportTests(unittest.TestCase):
         identity=self.app.create({'name':'Essai','settings':defaults()})['id'];self.folder=self.app.project(identity)
     def tearDown(self):self.app.close();self.temp.cleanup()
     def test_cast_import_preserves_pdf_steps_and_rebuilds_only_dialogue(self):
-        for n in range(1,10):write(self.folder/'etapes'/f'{n:02}.json',{'data':{'quality_version':'source-review-v4'}})
+        for n in range(1,10):write(self.folder/'etapes'/f'{n:02}.json',{'data':{'quality_version':'source-review-v5'}})
         write(self.folder/'exports/podcast.json',final_script())
         first=(self.folder/'etapes/02.json').read_bytes()
         result=self.app.import_audio_settings(self.folder,{'source':OLD_SETTINGS,'apply_cast':True})

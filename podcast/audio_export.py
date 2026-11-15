@@ -22,8 +22,9 @@ from urllib.parse import urlsplit
 from llm import Cancelled
 from storage import fingerprint, read, write, replace
 import quality
+import spoken
 
-VERSION = 'voicestudio-mp3-v2'
+VERSION = 'voicestudio-mp3-v3'
 RATE = 24000
 MAX_CHARS = 900
 
@@ -147,6 +148,8 @@ def script_segments(final,speakers):
         if chapter['opening_transition'].strip():result.append({'speaker':speakers[0],'text':chapter['opening_transition'],'chapter':chapter['id'],'chapter_start':True})
         result.extend({'speaker':t['speaker'],'text':t['text'],'chapter':chapter['id'],'chapter_start':False} for t in chapter['turns'])
     if not result or any(r['speaker'] not in speakers or not isinstance(r['text'],str) or not r['text'].strip() for r in result):raise ValueError('Script audio incomplet ou intervenant inconnu.')
+    for segment in result:
+        segment['written_text']=segment['text'];segment['text']=spoken.prepare(segment['text'],strip_references=final.get('source_kind')!='provided_text')
     return result
 
 def selected_segments(final,config,speakers):
@@ -168,7 +171,8 @@ def validate_script(final):
         fresh=voice_legacy.parse_dialogue(final.get('source_text',''))
         if fresh['input_hash']!=final.get('input_hash') or fresh['chapters']!=final.get('chapters') or fresh['speakers']!=final.get('speakers'):raise ValueError('Le texte audio a changé : réenregistrer le dialogue avant la lecture.')
         return
-    if final.get('workflow_version')!='grounded-editorial-v2' or final.get('source_quality')!=quality.VERSION or not final.get('content_checks_passed'):
+    if (final.get('workflow_version')!='grounded-editorial-v3' or final.get('source_quality')!=quality.VERSION or
+        not final.get('content_checks_passed') or not final.get('independent_final_review')):
         raise ValueError('Ce script utilise les anciens contrôles. Réexaminez les résumés et reconstruisez le dialogue avant de générer le MP3.')
 
 def pcm_stats(path):
@@ -299,7 +303,7 @@ class AudioRenderer:
                     if word_count>=12 and (seconds<word_count/(6.5*self.config['speed']) or seconds>word_count/(.5*self.config['speed'])):
                         warning='Durée atypique : vérifier à l’écoute que la réplique est complète.'
                         warnings.append('Réplique '+str(index)+' ('+segment['speaker']+') : '+warning)
-                    rows.append({'reply':index,'speaker':segment['speaker'],'words':word_count,'seconds':round(seconds,2),'warning':warning})
+                    rows.append({'reply':index,'speaker':segment['speaker'],'words':word_count,'seconds':round(seconds,2),'warning':warning,'text':segment['text'],'written_text':segment.get('written_text',segment['text'])})
             self.progress('Assemblage du podcast et encodage MP3')
             output=temporary/'podcast.mp3'
             run_process([ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-y','-i',str(joined),'-c:a','libmp3lame','-b:a','192k','-id3v2_version','3',str(output)],self.cancelled)
@@ -316,8 +320,8 @@ class AudioRenderer:
             source_kind=final.get('source_kind','project'),scope_minutes=self.config['scope_minutes'],filename=audio_name,report_file=csv_name)
         from storage import write_text
         import io
-        buffer=io.StringIO();writer=csv.writer(buffer,delimiter=';');writer.writerow(['Réplique','Voix','Mots','Durée (s)','Alerte'])
-        for row in result['rows']:writer.writerow([row[k] for k in ('reply','speaker','words','seconds','warning')])
+        buffer=io.StringIO();writer=csv.writer(buffer,delimiter=';');writer.writerow(['Réplique','Voix','Mots','Durée (s)','Alerte','Texte prononcé'])
+        for row in result['rows']:writer.writerow([row[k] for k in ('reply','speaker','words','seconds','warning','text')])
         write_text(self.project/'exports'/csv_name,'\ufeff'+buffer.getvalue())
         write(self.project/'exports'/meta_name,result)
         return result

@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.4.0
+# Podcast pédagogique — version 0.5.0
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,11 +7,13 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.4.0** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.0** en haut de la page.
 
-Un projet déjà traité en 0.3.0 peut passer directement à la lecture audio : les contrôles scientifiques de cette version sont conservés, sans refaire les PDF. Pour un projet plus ancien, suivre **Améliorer les résumés existants**, attendre le réexamen puis **Continuer jusqu’au script final**. Les PDF et les projets sont conservés ; les résultats remplacés sont archivés.
+Pour **tous les anciens projets**, y compris ceux de la version 0.4.0 : ouvrir le dernier projet, cliquer sur **Améliorer les résumés existants**, attendre la fin du réexamen puis **Continuer jusqu’au script final**. Cette reprise est nécessaire : des résumés mal traduits ou mal appuyés pouvaient arriver jusqu’au dialogue. Les PDF et l’extraction de l’étape 1 sont conservés ; aucune réimportation n’est nécessaire. Les anciens textes et MP3 sont archivés, et les références des voix restent dans le projet.
 
-L’outil de mise à jour vérifie les empreintes des 16 fichiers applicatifs, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
+L’outil de mise à jour vérifie les empreintes des **18 fichiers applicatifs**, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
+
+Pour lancer après mise à jour, utiliser **Lancer-Podcast.cmd dans l’ancien dossier installé**, pas dans le ZIP téléchargé. Le bouton Windows « Extraire tout » et la colonne « Taille compressée » indiquent que l’on se trouve encore dans une archive.
 
 L’ancienne application Streamlit V7, dont `app.py` appelle `podcast_interface.run()`, est une autre application. Ce correctif ne s’applique pas à son dossier : utiliser le ZIP complet dans un nouveau dossier, puis importer ses réglages et son dialogue comme indiqué ci-dessous. Ses données restent dans son dossier d’origine.
 
@@ -40,7 +42,7 @@ Si **Préparer le MP3** apparaît, cliquer une fois pour utiliser FFmpeg déjà 
 
 ## Compatibilité VoiceStudio et contrôles audio
 
-La version 0.4.0 reprend le contrat API présent dans les anciens fichiers fournis : `GET /health`, `GET /v1/audio/voices` et `POST /v1/audio/speech`, avec l’en-tête `Authorization: Bearer local`. Le POST envoie exactement `model`, `input`, `voice` et `response_format`, avec `tts-1` et `wav` par défaut. La synthèse peut prendre jusqu’à 900 secondes par requête, contre 15 secondes pour les lectures de l’API. Le contrôle de santé accepte l’absence de `/health` (HTTP 404) pour les autres versions compatibles. La liste peut aussi provenir de `/profiles`.
+La connexion reprend le contrat API présent dans les anciens fichiers fournis : `GET /health`, `GET /v1/audio/voices` et `POST /v1/audio/speech`, avec l’en-tête `Authorization: Bearer local`. Le POST envoie exactement `model`, `input`, `voice` et `response_format`, avec `tts-1` et `wav` par défaut. La synthèse peut prendre jusqu’à 900 secondes par requête, contre 15 secondes pour les lectures de l’API. Le contrôle de santé accepte l’absence de `/health` (HTTP 404) pour les autres versions compatibles. La liste peut aussi provenir de `/profiles`.
 
 Chaque réplique est synthétisée séparément, avec découpage des textes longs, cache et reprise après interruption. La vitesse est ajustée localement par FFmpeg. Les fichiers sont convertis dans un format commun, équilibrés vers le volume cible lorsque l’option est active, puis assemblés avec les pauses et encodés en MP3 à **192 kbit/s**. Le volume reste limité pour éviter la saturation numérique. Une réplique totalement silencieuse arrête la génération ; une durée très atypique produit un avertissement à réécouter, sans supprimer la réplique.
 
@@ -64,46 +66,48 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 | --- | --- |
 | 1 | Extraction du texte et découpage de chaque PDF en trois parties, avec pages conservées. Les pages sans texte extractible sont signalées. |
 | 2 | Idées confrontées à leurs citations, seconde lecture de leur appui, classement éditorial et résumé extractif de chaque partie. Les passages incertains restent à vérifier. |
-| 3 | Compilation extractive des trois parties pour chaque PDF, avec registre intégral des idées retenues. |
-| 4 | Texte commun regroupant les passages de tous les PDF par rôle pédagogique, sans nouvelle reformulation des faits. |
-| 5 | Thèmes cohérents, notions fondatrices avant les méthodes, et sélection selon la durée. Paramètres spécialisés et idées hors podcast restent au dossier avec leur motif. |
-| 6 | Une phrase essentielle par idée sélectionnée, copiée depuis son énoncé source. |
-| 7 | Énoncé et explication sources rassemblés, avec raccord entre chapitres. |
-| 8 | Questions courtes proposées par le modèle ; réponses insérées depuis les sources, définitions issues du glossaire, mémoire de continuité bornée. |
-| 9 | Contrôle de couverture et d’identité des réponses, durée estimée, rapport et exports. |
+| 3 | Synthèses rédigées des parties de chaque PDF, avec réécriture et relecture contre les citations. Le registre intégral reste séparé. |
+| 4 | Texte commun réunissant les idées sous forme de phrases réécrites et vérifiées, classées par rôle pédagogique ; registre complet conservé. |
+| 5 | Notions et problème avant méthodes, résultats, applications et limites. Question directrice et titres proposés à partir des sources. Détails et idées hors durée restent au dossier avec leur motif. |
+| 6 | Une phrase centrale réécrite par idée, 35 mots maximum, puis vérification du sens contre la source. |
+| 7 | Une explication orale de 85 mots maximum par idée, relue séparément ; contexte court pour éviter les redites. |
+| 8 | Questions courtes et réponses issues de la rédaction vérifiée ; définitions intégrées à la même réplique, mémoire bornée et rappels entre chapitres. |
+| 9 | Vérification des sources et empreintes, vraie seconde relecture du dialogue, correction locale si possible, puis rapport et exports. Un passage non confirmé arrête explicitement la révision. |
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
 
-## Corrections de contenu de la version 0.3.0
+## Corrections de rédaction de la version 0.5.0
 
-Le glossaire sépare les acronymes à casse mixte comme QoT : QAM et QoT ne sont plus fusionnés. Les développements sont contrôlés avant **et après** les sigles ; les sens inventés de DT, SDN et OMS observés dans l’export précédent sont refusés. Les traductions de `step-size` et de l’anticipation à deux actions, le périmètre d’une grille de fréquences et la distinction entre `colorless` et `contentionless` ont des contrôles ciblés. Les commentaires sur une diffusion restreinte ou sur la seule présence d’un tableau sont écartés du récit scientifique.
+Cette version répond à l’audit des étapes 01 à 09 fourni le 15 novembre. Les traductions « pouvoir » dans une égalisation de puissance, le mélange émetteur/récepteur, les fautes techniques observées et les commentaires de production ont des contrôles ciblés. Les notices de diffusion, même présentées comme des propriétés du réseau, et les remarques sur les publications de doctorat sont écartées du contenu explicatif. Une citation composée d’un titre et de « Proprietary – Restricted Distribution » est refusée comme preuve.
 
-Le classement distingue thèmes, notions fondatrices, raisonnement principal et détails. Le plan regroupe les idées d’un même thème et place les bases avant les méthodes. Les scénarios numérotés restent des détails dans le dossier. Chaque raccord reprend un fait du chapitre précédent. Une introduction et une conclusion avec points à retenir sont ajoutées à partir des formulations sources, avec leurs références conservées.
+La seconde lecture de l’étape 2 doit désormais fournir des citations exactes distinctes pour l’énoncé et l’explication. Elle travaille sur deux idées maximum à la fois. L’absence de preuve garde le passage parmi les éléments à vérifier. Une correction terminologique limitée peut préparer la demande du modèle pour éviter la recopie d’un mauvais résumé ; elle ne change ni les nombres, ni les unités, ni le rôle des équipements.
 
-Les répétitions exactes et certaines explications qui ne font que reformuler le constat sont détectées. La révision finale vérifie à nouveau les acronymes et les formulations techniques ; elle conserve aussi le registre des sources et le glossaire dans le JSON exporté pour faciliter une relecture indépendante.
+Le registre de faits reste inchangé pendant la rédaction, mais les phrases du podcast peuvent être reformulées. Chaque réécriture reçoit son empreinte, les sources de l’idée et un verdict de relecture avec citation. Les contrôles vérifient notamment les acronymes, les dispositifs, les nombres et leurs unités. Il n’y a pas de retour silencieux à un ancien texte non validé.
 
-## Conservation des sources
+La révision finale prend aussi en compte les deux réponses précédentes pour repérer les redites. Elle peut demander une correction locale, vérifier cette correction à nouveau et enregistrer les versions avant/après. Une correction refusée ne produit pas un script automatiquement déclaré prêt pour le MP3. Les questions restent produites par petits blocs et les réponses viennent des explications réécrites et vérifiées ; il ne s’agit pas d’un dialogue libre sans contraintes factuelles.
 
-Les références sont désormais liées au texte, à l’explication, aux citations et aux pages par une empreinte. Le modèle ne réécrit plus librement le fait aux étapes 3 à 9 : une idée de modulation ne peut pas devenir une idée d’amplification sous le même identifiant. Une modification des sources ou du glossaire impose de reconstruire le plan.
+Les définitions du lexique sont intégrées à la réplique de réponse ; les 14 prises de parole isolées « Dans ce document… » de l’exemple ne sont plus nécessaires. Les rappels utilisent les nouvelles phrases courtes, sans modifier la casse des unités. Le texte destiné à VoiceStudio est préparé séparément : retrait des références numériques de publications, lecture française d’unités courantes et de certaines lettres grecques, conservation des valeurs. Le rapport CSV contient le **texte réellement envoyé à la synthèse**. Ce préparateur n’est pas un lecteur universel de LaTeX ou de formules mathématiques.
 
-Les contrôles de source distinguent notamment le dispositif cité du dispositif affirmé, les valeurs et unités (`mW` et `MW`), et un résultat expérimental d’une garantie générale. Ils restent des contrôles partiels, complétés par une seconde lecture du modèle. Une citation exacte ne prouve pas à elle seule que toute l’explication est juste.
+## Petites requêtes et reprise
 
-Le plan ne force plus toutes les idées dans la durée demandée. Il compte les passages sources, questions, définitions, raccords et conclusion, conserve les exclusions motivées et limite chaque chapitre à cinq idées. La durée finale est calculée à 145 mots par minute, sans compter les noms des intervenants ; un écart important est signalé. L’application ne remplit pas artificiellement un podcast trop court.
+Chaque passage est enregistré en Markdown et JSON avant la suite. Les réécritures portent sur une idée, la seconde lecture des faits sur deux idées, et les questions sur deux idées. Les appels utilisent de nouvelles conversations, avec seulement un contexte court ; l’historique complet reste dans les fichiers. La révision et les corrections ont également leurs points de reprise.
 
-À l’étape 8, le modèle propose uniquement les questions. Une question absente ou manifestement mal associée est reprise pour l’idée concernée, puis remplacée si nécessaire par une relance neutre signalée. Les questions identiques récentes sont variées. Le programme insère lui-même chaque réponse avec la bonne source. Le contrôle « toutes les idées affectées à ce chapitre » reste actif, y compris à la révision finale.
+Le contexte 8 192 tokens reste pris en charge pour les petits passages. Une page ou une citation démesurée peut demander un découpage supplémentaire ; aucune entrée n’est coupée silencieusement pour contourner le budget. Le nombre d’idées d’un long PDF peut entraîner de nombreux appels. La vitesse dépend du modèle et du PC ; la mise à jour n’exige pas une nouvelle carte graphique.
 
-La mémoire conserve les idées déjà expliquées et les définitions sources, avec un aperçu limité pour le prochain appel. Les acronymes sont définis au premier emploi à partir du glossaire du document, avec une traduction reconnue lorsqu’elle est disponible. Les appels ne cumulent pas un historique complet de conversation.
+La durée est une cible, pas du remplissage obligatoire : le programme indique la durée estimée et les écarts, puis la durée réelle du MP3. Une source insuffisante ne justifie pas l’invention de contenu pour atteindre 20 minutes.
 
-## Résultats et relecture
+## Conservation des sources et limites
 
-Les exports comprennent `podcast.md`, `podcast.txt`, `podcast.json` et, après génération audio, `podcast.mp3` accompagné de ses rapports `audio.json` et `rapport_audio.csv` ; les essais ont des noms distincts. Le dossier du projet contient aussi les neuf étapes, les fragments, les citations, les motifs d’incertitude et les archives des anciens résultats. Le JSON final indique les idées couvertes, les exclusions, les avertissements et la durée estimée.
+Le registre, les citations, les pages, les décisions incertaines et les anciens résultats restent au dossier du projet. Modifier une source ou un glossaire invalide les résultats qui en dépendent. Les champs de l’export distinguent le registre conservé, les réponses réécrites et les corrections de la révision.
 
-**Une relecture humaine reste nécessaire avant l’enregistrement.** Les formulations retenues à l’étape 2 peuvent encore comporter une mauvaise traduction ou une interprétation incomplète ; les conserver ensuite empêche une dérive supplémentaire mais ne les rend pas automatiquement exactes. La sélection éditoriale peut omettre un prérequis important. Les figures, équations, tableaux complexes et PDF scannés ne sont pas interprétés visuellement ; cette version n’intègre pas d’OCR. Les contradictions entre PDF ne sont pas arbitrées automatiquement.
+**Les relectures du modèle restent faillibles.** Une citation exacte ne suffit pas à prouver une interprétation correcte, et deux appels au même modèle ne sont pas deux experts indépendants. Un petit modèle peut encore refuser une correction ou confirmer une mauvaise lecture. Les nouveaux contrôles corrigent des défaillances observées et rendent les refus visibles ; ils ne constituent pas une certification scientifique. Relire le nouveau dialogue et essayer un court audio avec les voix réelles avant de produire le podcast complet.
 
-## Vérification et sources
+Les figures, équations et tableaux complexes ne sont pas interprétés visuellement. Les pages scannées nécessitent un OCR externe. Les contradictions ou ambiguïtés du PDF peuvent demander une vérification humaine ; la simple copie d’une phrase du PDF ne les résout pas.
 
-Les tests couvrent les erreurs relevées dans l’export précédent, les associations de contenu, la couverture des idées, les reprises, les archives et la migration. Le parcours navigateur utilise des API simulées : profils vocaux, aperçu, lecture et téléchargement sont vérifiés avec un **MP3 réellement encodé**. Les tests audio contrôlent l’authentification historique, les quatre champs du POST, l’import sans exécution, la lecture TXT sans PDF, les essais distincts, le volume, le silence, l’affectation des voix, les pauses, la reprise et l’annulation d’une requête HTTP en cours. Le paquet MP3 est préparé avec le gestionnaire uv de l’installation lorsqu’aucun pip n’est présent.
+## Vérification et distribution
 
-La vérification sur le podcast fourni porte sur sept erreurs identifiées et sur le glossaire du PDF. Les essais Mistral sont ciblés ; ils ne constituent pas une nouvelle génération scientifique complète des 147 pages. Les voix réelles de votre VoiceStudio, leur qualité sonore et l’interface native Windows doivent être essayées sur votre PC. Le cloud de développement ne peut pas joindre un service installé sur ce PC à travers son adresse `127.0.0.1`.
+Les tests couvrent les exemples de l’audit, les reformulations liées à leurs sources, le refus d’un texte non confirmé, une correction effective à l’étape 9, les empreintes, les unités sensibles à la casse, la reprise et la migration. Le parcours Chromium utilise des API simulées et un MP3 réellement encodé : neuf étapes, ancien projet, import VoiceStudio/TXT, aperçu, lecture, téléchargement, essais séparés et rapport CSV. Les vérifications PowerShell portent sur les fichiers de mise à jour et la conservation des données, pas sur l’interface native Windows.
 
-Pour les tests : `python -m unittest discover -s tests -q`. Pour construire les ZIP : `python build_release.py`. Le fichier `SOURCE-COMPLET.md` rassemble tous les sources de la version ; les archives de distribution excluent les PDF, projets, modèles, caches et secrets.
+Les essais avec le vrai Mistral sont ciblés sur des extraits ; ils ne constituent pas une nouvelle validation complète des 147 pages. Les voix réelles et leur prosodie restent à essayer dans VoiceStudio sur le PC : le cloud ne peut pas joindre ce service via l’adresse locale de ce PC.
+
+Pour les tests : `python -m unittest discover -s tests -q`. Pour construire les ZIP : `python build_release.py`. `SOURCE-COMPLET.md` rassemble les sources de la version. Les archives distribuées ne contiennent ni PDF utilisateur, ni dialogue, ni voix privées, ni modèle, ni cache, ni secret.

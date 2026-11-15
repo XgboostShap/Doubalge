@@ -251,15 +251,18 @@ class Pipeline:
         return result if details else text
 
     def review_candidates(self, payload, batch, raw):
-        ambiguous=[i for i in batch if quality.ambiguous_subject(i['statement'])]
+        notices=[i for i in batch if quality.unusable_fact_text(i['statement']+' '+i.get('explanation',''))]
+        ambiguous=[i for i in batch if i not in notices and quality.ambiguous_subject(i['statement'])]
         uncertain=[{'id':i['id'],'reason':'À vérifier : le sujet de l’énoncé initial est indéterminé. '
                     'Une correction automatique pourrait attribuer l’effet au mauvais mécanisme.'} for i in ambiguous]
-        candidates=[i for i in batch if i not in ambiguous]
+        uncertain.extend({'id':i['id'],'reason':'Commentaire de document, notice de diffusion ou consigne de rédaction ; hors contenu explicatif.'} for i in notices)
+        candidates=[i for i in batch if i not in ambiguous and i not in notices]
         if not candidates:return {'kept':[],'excluded':uncertain}
-        payload={**payload,'candidates':[i for i in payload['candidates'] if i['id'] in {c['id'] for c in candidates}]}
+        normalized={i['id']:quality.normalize_terminology(i,raw) for i in candidates}
+        payload={**payload,'candidates':[{k:normalized[i['id']][k] for k in ('id','statement','explanation')} for i in candidates]}
         failure=None
         try:
-            response=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,quality.validate_review_envelope,budget=3000)
+            response=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,quality.validate_review_envelope,budget=min(3000,900*len(candidates)+300))
             decisions=response['decisions']
         except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
             decisions={};failure=error
@@ -271,6 +274,7 @@ class Pipeline:
                 problem=failure
                 try:
                     result={'decisions':{identity:initial}}
+                    quality.prepare_decisions(result,raw,payload.get('glossary'))
                     quality.validate_review(result,[candidate],raw,payload.get('glossary'))
                     return quality.review_result(result)
                 except (ValueError,KeyError,TypeError) as error:problem=problem or error
@@ -279,9 +283,12 @@ class Pipeline:
                 if failure is None or len(candidates)>1:
                     self.progress('Relecture individuelle — '+identity)
                     try:
+                        def validate_one(v):
+                            quality.prepare_decisions(v,raw,payload.get('glossary'))
+                            quality.validate_review(v,[candidate],raw,payload.get('glossary'))
                         result=self.client.ask('review_facts',one,quality.REVIEW_PROMPT+
                             '\nCorrige uniquement cette idée. Le contrôle a relevé : '+str(problem)[:500],
-                            lambda v:quality.validate_review(v,[candidate],raw,payload.get('glossary')),budget=1500)
+                            validate_one,budget=1500)
                         return quality.review_result(result)
                     except (InvalidResponseError,RepetitionError,ResponseLimitError,ValueError) as error:problem=error
                 return {'kept':[],'excluded':[{'id':identity,'reason':'À vérifier : contrôle individuel non concluant. '+str(problem)[:500]}]}
@@ -295,6 +302,12 @@ class Pipeline:
 
     def check_support(self, facts, page):
         """Deuxième lecture : les citations appuient-elles le sens de chaque idée ?"""
+        if len(facts)>2:
+            result={'kept':[],'excluded':[]}
+            for start in range(0,len(facts),2):
+                part=self.check_support(facts[start:start+2],page)
+                for field in result:result[field].extend(part[field])
+            return result
         local={f'I{n}':fact for n,fact in enumerate(facts,1)}
         entries=[{'ref':ref,'statement':f['statement'],'explanation':f['explanation'],
                   'evidence':f['evidence']} for ref,f in local.items()]
@@ -318,6 +331,9 @@ class Pipeline:
                         verdict={'status':'uncertain','reason':'Seconde lecture non concluante. '+str(error)[:300]}
                 if verdict['status']=='supported' and quality.copied_support_reason(verdict,fact):
                     verdict={'status':'uncertain','reason':'Le motif de seconde lecture recopie l’affirmation sans justifier son appui dans les citations.'}
+                if verdict['status']=='supported':
+                    try:quality.support_quotes(verdict,fact)
+                    except ValueError as error:verdict={'status':'uncertain','reason':str(error)}
                 if verdict['status']=='supported':kept.append({**fact,'support_reason':verdict['reason']})
                 else:
                     label='citations en contradiction avec l’idée' if verdict['status']=='contradicted' else 'citations insuffisantes pour confirmer l’idée'
@@ -372,6 +388,7 @@ class Pipeline:
                     fact=quality.normalize_terminology(fact,raw)
                     ideas.append({'id':fact['id'],'statement':fact['statement'],'explanation':fact['explanation'],
                                   'pages':[page],'document':doc['id'],'status':fact['status'],'review_reason':fact['reason'],
+                                  'automatic_corrections':fact.get('automatic_corrections',[]),
                                   'support_reason':fact.get('support_reason',''),
                                   'evidence':[{'page':page,'quote':quality.source_quote(q)} for q in fact['evidence']]})
                 excluded.extend({**originals[i['id']],'reason':i['reason']} for i in reviewed['excluded'])

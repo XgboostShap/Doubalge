@@ -3,6 +3,8 @@ setlocal
 cd /d "%~dp0"
 if not exist "%~dp0.venv\Scripts\python.exe" (
   echo Lancez d'abord Installer-Windows.cmd.
+  echo Si vous etes dans un ZIP, cliquez d'abord sur Extraire tout.
+  echo Apres une mise a jour, ouvrez Lancer-Podcast.cmd dans votre ancien dossier installe.
   pause
   exit /b 1
 )

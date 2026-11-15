@@ -6,8 +6,9 @@ import re
 from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 from storage import fingerprint, read
 import quality
+import writing
 
-VERSION = 'grounded-editorial-v2'
+VERSION = 'grounded-editorial-v3'
 MAX_QUESTION_WORDS = 20
 EXPECTED_QUESTION_WORDS = 12
 CHAPTER_OVERHEAD_WORDS = 60
@@ -116,6 +117,9 @@ def annotated(pipe, ideas, step=4, key='Roles'):
                 decision['level']=row.get('level') if row.get('level') in ('foundation','core','detail') else ('foundation' if decision['role']=='concept' else 'core')
                 if re.match(r'^Case[- ]?\d\b',idea['statement'],re.I):
                     decision.update(level='detail',importance='detail',reason='Scénario numéroté et paramètres conservés au dossier ; le podcast privilégie le principe de la méthode.')
+                if decision['role']!='concept' and decision['level']=='foundation':decision['level']='core'
+                if re.search(r'\b(?:stratégie|algorithme|procédure|multi-étape|optimisation)\w*\b',idea['statement'],re.I):decision.update(role='method',level='core')
+                if decision['role']=='concept' and re.search(r'β|\b\d+(?:[.,]\d+)?\s*(?:nm|GHz|THz)\b|\bpréforme',idea['statement']):decision.update(level='detail',importance='detail')
                 decisions[idea['id']]=decision
             return {'decisions':decisions,'warnings':issues}
         packet=pipe.unit(step,f'{key}{index}','Classement éditorial — lot '+str(index),
@@ -160,6 +164,12 @@ def compile_documents(pipe):
             for idea in part['ideas']:
                 if idea.get('source_hash')!=source_hash(idea):raise ValueError('Source modifiée : réexaminer les résumés avant leur compilation. '+idea['id'])
             text,ids=summary(part['ideas'],6)
+            selected_ideas=[i for i in part['ideas'] if i['id'] in ids]
+            paragraphs=[]
+            for idea in selected_ideas:
+                packet=writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{}))
+                paragraphs.append(packet['text']+' ['+idea['id']+']')
+            text='\n\n'.join(paragraphs) or 'Aucune idée explicative retenue dans cette partie.'
             sections.append('### Partie '+str(part['number'])+'\n\n'+text)
             selected.extend(ids)
         doc['synthesis']='\n\n'.join(sections)
@@ -191,7 +201,12 @@ def common(pipe):
     for role in ROLES:
         entries=[i for i in ideas if i['role']==role]
         if not entries:continue
-        text='\n\n'.join(passage(i)+' ['+i['id']+']' for i in entries)
+        paragraphs=[]
+        for idea in entries:
+            packet=writing.rewrite(pipe,4,'Commun-'+idea['id'],idea,
+                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},'sentence')
+            paragraphs.append(packet['text']+' ['+idea['id']+']')
+        text='\n\n'.join(paragraphs)
         groups.append({'id':f'G{len(groups)+1}','title':LABELS[role],'role':role,
                        'idea_ids':[i['id'] for i in entries],'text':text})
         notes.append('## '+LABELS[role]+'\n\n'+text)
@@ -272,13 +287,7 @@ def plan(pipe):
     selected,excluded,cost,terms=selection(data,pipe.config['minutes'])
     if not selected:raise ValueError('Aucune idée ne tient dans la durée visée ; augmenter la durée ou choisir un extrait.')
     roles=[r for r in ROLES if any(i['role']==r for i in selected)]
-    topic_groups={}
-    for idea in selected:
-        name=idea.get('topic') or LABELS[idea['role']]
-        key=quality.definition_key(name)
-        topic_groups.setdefault(key,{'title':name,'ideas':[]})['ideas'].append(idea)
-    groups=sorted(topic_groups.values(),key=lambda g:(min({'foundation':0,'core':1}.get(i.get('level'),0 if i['role']=='concept' else 1) for i in g['ideas']),
-        min(data['ideas'].index(i) for i in g['ideas'])))
+    groups=[{'title':LABELS[role],'ideas':[i for i in selected if i['role']==role]} for role in ROLES if role in roles]
     topic_rows=[{'ref':f'T{n}','title':g['title'],
         'level':'foundation' if any(i.get('level')=='foundation' or (not i.get('level') and i['role']=='concept') for i in g['ideas']) else 'core',
         'sample':g['ideas'][0]['statement'][:180]} for n,g in enumerate(groups,1)]
@@ -307,7 +316,9 @@ def plan(pipe):
                 pédagogique. Les notions fondatrices précèdent les méthodes qui les utilisent.
                 Regroupe les notions proches ; les API, paramètres et cas numérotés viennent après
                 les principes du domaine. N'invente aucun thème ni aucune référence.
-                Structure : {"central_question":"question ?","titles":{"concept":"titre"}}.''',
+                questions : une question précise par rôle, 25 mots maximum, reliée aux points
+                fournis, qui prépare ce que l'auditeur va comprendre dans cette partie.
+                Structure : {"central_question":"question ?","titles":{"concept":"titre"},"questions":{"concept":"question ?"}}.''',
                 lambda v:(quality.validate_reference_map(v,'titles'),quality.validate_compilation({'text':v.get('central_question','')})),budget=900)
         except RECOVERABLE as error:
             value=fallback;issues.append('Question et titres indicatifs : '+str(error)[:200])
@@ -324,7 +335,7 @@ def plan(pipe):
             return len(tokens-(allowed|neutral))<=max(1,len(tokens)//3)
         # Une question libre peut présupposer un lien absent des sources, même
         # si chacun de ses mots apparaît quelque part dans le registre.
-        question=fallback['central_question']
+        question=value.get('central_question') if relevant(value.get('central_question'),30) and value['central_question'].strip().endswith('?') else fallback['central_question']
         titles={};seen=[]
         for role in roles:
             title=value['titles'].get(role)
@@ -332,7 +343,7 @@ def plan(pipe):
             token=set(key.split())
             declarative=isinstance(title,str) and re.search(r'\b(?:est|sont|utilise|utilisent|utilisé|utilisée|propose|proposent|proposé|proposée|nécessaire|introduit|se posent|implique|permet|garantit|améliore|améliorent|démontre|démontrent)\b',title,re.I)
             nominal=isinstance(title,str) and re.match(r'^(?:(?:les?|la|des?)\s+)?(?:notions|bases|principes|comprendre|problèmes?|défis|difficultés|méthodes?|démarches?|résultats|observations|mesures|applications|usages|limites|réserves|conditions|points? de vigilance)\b',title,re.I)
-            if (not relevant(title,12) or declarative or not nominal or any(key==other or (len(token&set(other.split()))/max(1,len(token|set(other.split()))))>.8 for other in seen)):
+            if (not relevant(title,12) or declarative or any(key==other or (len(token&set(other.split()))/max(1,len(token|set(other.split()))))>.8 for other in seen)):
                 title=LABELS[role];key=quality.definition_key(title)
                 issues.append('Titre '+role+' remplacé par un intitulé distinct et neutre.')
             titles[role]=title;seen.append(key)
@@ -344,7 +355,9 @@ def plan(pipe):
         # Même si le modèle propose l'inverse, les prérequis restent devant.
         levels={r['ref']:r['level'] for r in topic_rows}
         order=sorted(order,key=lambda ref:0 if levels[ref]=='foundation' else 1)
-        return {'central_question':question,'titles':titles,'warnings':issues,'topic_order':order}
+        proposed=value.get('questions',{})
+        questions={r:proposed.get(r) if isinstance(proposed,dict) and relevant(proposed.get(r),25) and proposed[r].endswith('?') else QUESTIONS[r] for r in roles}
+        return {'central_question':question,'titles':titles,'questions':questions,'warnings':issues,'topic_order':order}
     outline=pipe.unit(5,'Fil','Fil conducteur et titres du podcast',
         {'protocol':VERSION,'samples':samples,'roles':roles,'topics':topic_rows,'sources':[source_hash(i) for i in selected],
          'glossary':list(terms.values())},propose_outline,
@@ -360,8 +373,8 @@ def plan(pipe):
             title=base_title+(' — approfondissement '+str(start//5+1) if start else '')
             previous=chapters[-1]['title'] if chapters else None
             chapters.append({'id':f'C{len(chapters)+1}','title':title,'role':role,
-                'question':QUESTIONS[role],'known':previous or 'Aucune connaissance préalable n’est supposée.',
-                'new':'Comprendre les points sources de cette partie.',
+                'question':outline['questions'][role],'known':chapters[-1]['new'] if chapters else 'Aucune connaissance préalable n’est supposée.',
+                'new':' '.join(i['statement'] for i in chunk[:2]),
                 'why_next':'Relier ces points à la partie suivante.',
                 'recap_id':chapters[-1]['idea_ids'][-1] if chapters else None,
                 'idea_ids':[i['id'] for i in chunk],
@@ -371,7 +384,7 @@ def plan(pipe):
     if len(chapters)>6:warnings.append('Certaines parties sont divisées pour limiter le nombre d’idées par échange.')
     if cost<pipe.config['minutes']*145*.6:warnings.append('Peu de matière vérifiée pour la durée demandée ; aucun remplissage inventé.')
     named_topics=[g['title'] for g in groups if any(i.get('topic') for i in g['ideas'])]
-    central_question=('Comment comprendre '+', '.join(named_topics[:3])+' et leurs limites ?') if named_topics else outline['central_question']
+    central_question=outline['central_question']
     value={'workflow_version':VERSION,
         'central_question':central_question,
         'chapters':chapters,'exclusions':excluded,'warnings':warnings,'selected_count':len(selected),
@@ -416,34 +429,15 @@ def checked_registry(pipe):
     return plan,data,registry
 
 def sentences(pipe):
-    plan,data,registry=checked_registry(pipe);chapters=[];notes=[]
-    for c in plan['chapters']:
-        items=[{'idea_id':i,'sentence':registry[i]['statement'],'source_hash':source_hash(registry[i])} for i in c['idea_ids']]
-        chapters.append({'id':c['id'],'items':items})
-        notes+=['## '+c['title'],'','\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in items)]
-    return {'workflow_version':VERSION,'chapters':chapters,'warnings':[]},'\n\n'.join(notes)
+    return writing.sentences(pipe)
 
 def explanations(pipe):
-    plan,data,registry=checked_registry(pipe);keys=pipe.saved(6);chapters=[];notes=[]
-    if keys.get('workflow_version')!=VERSION:raise ValueError('Phrases anciennes : refaire l’étape 6 avant les explications.')
-    actual={i['idea_id']:i for c in keys['chapters'] for i in c['items']}
-    for c in plan['chapters']:
-        entries=[]
-        for identity in c['idea_ids']:
-            key=actual.get(identity)
-            if not key or key.get('source_hash')!=source_hash(registry[identity]) or key['sentence']!=registry[identity]['statement']:
-                raise ValueError('Phrase associée à une autre idée : refaire l’étape 6. '+identity)
-            entries.append({'idea_id':identity,'source_hash':source_hash(registry[identity]),'text':passage(registry[identity])})
-        transition=chapter_transition(c,chapters[-1]['title'] if chapters else None,registry)
-        text='\n\n'.join(i['text']+' ['+i['idea_id']+']' for i in entries)
-        chapters.append({'id':c['id'],'title':c['title'],'transition':transition,'text':text,'items':entries})
-        notes+=['## '+c['title'],'',transition,'',text]
-    return {'workflow_version':VERSION,'chapters':chapters,'warnings':[]},'\n\n'.join(notes)
+    return writing.explanations(pipe)
 
 def chapter_transition(chapter, previous=None, registry=None):
     if registry and chapter.get('recap_id'):
-        previous_fact=registry[chapter['recap_id']]['statement'].rstrip('. ')
-        return 'Nous avons retenu ce point : « '+previous_fact+' » ; voyons maintenant « '+chapter['title']+' ».'
+        previous_fact=registry[chapter['recap_id']].get('oral_key',registry[chapter['recap_id']]['statement']).rstrip('. ')
+        return 'Retenons le point précédent : '+previous_fact+'. Passons maintenant à '+chapter['title']+'.'
     if previous:return 'Après « '+previous+' », abordons « '+chapter['title']+' ».'
     return 'Pour commencer, voici les notions nécessaires pour comprendre le sujet.'
 
@@ -458,12 +452,20 @@ def closing_text(plan,registry):
         found=next((registry[i] for c in plan['chapters'] for i in c['idea_ids'] if registry[i]['role']==role),None)
         if found and found['id'] not in chosen:chosen.append(found['id'])
     if not chosen:chosen=[plan['chapters'][0]['idea_ids'][0]]
-    text='Pour conclure, voici les points à retenir. '+' '.join(registry[i]['statement'].rstrip('. ')+'.' for i in chosen)
+    text='Pour conclure, voici les points à retenir. '+' '.join(registry[i].get('oral_key',registry[i]['statement']).rstrip('. ')+'.' for i in chosen)
     text+=' Ces résultats doivent être interprétés dans les conditions des études présentées. Merci pour votre écoute.'
     return text,chosen
 
 def definition_text(row):
     return 'Dans ce document, '+row['term']+' désigne '+row['definition']+'.'
+
+def spoken_answer(text, definitions):
+    prefixes=[]
+    for d in definitions:
+        if re.search(r'\b'+re.escape(d['term'])+r's?\b',text) and quality.definition_key(d['definition']) not in quality.definition_key(text):
+            prefixes.append('Le sigle '+d['term']+' signifie '+d['definition']+'.')
+    return ' '.join(prefixes+[text])
+
 
 def valid_question(question, idea, others):
     if not isinstance(question,str) or not question.strip() or not question.strip().endswith('?'):
@@ -502,8 +504,9 @@ def dialogue(pipe):
     examples={i['idea_id']:i for c in explain['chapters'] for i in c['items']}
     for identity in plan['source_hashes']:
         entry=examples.get(identity)
-        if not entry or entry['source_hash']!=source_hash(registry[identity]) or entry['text']!=passage(registry[identity]):
+        if not entry or entry.get('source_hash')!=source_hash(registry[identity]) or entry.get('text_hash')!=fingerprint(entry.get('text')) or entry.get('writing_version')!=writing.VERSION:
             raise ValueError('Explication désolidarisée de sa source : refaire l’étape 7. '+identity)
+    for item in [i for c in pipe.saved(6)['chapters'] for i in c['items']]:registry[item['idea_id']]['oral_key']=item['sentence']
     speakers=pipe.config['speakers'];terms=definitions(data)
     memory={'explained_ideas':{},'definitions':{},'examples':[],'open_questions':[],'last_turns':[],'asked_questions':[]}
     chapters=[];memories=[];warnings=[]
@@ -515,8 +518,8 @@ def dialogue(pipe):
                 local={'F'+source_hash(i)[:10]:i for i in batch}
                 payload={'chapter':{k:c[k] for k in ('id','title','role')},
                     'ideas':[{'ref':ref,'statement':i['statement'][:1000],'statement_is_excerpt':len(i['statement'])>1000,
-                              'explanation':i.get('explanation','')[:1600],
-                              'explanation_is_excerpt':len(i.get('explanation',''))>1600} for ref,i in local.items()],
+                              'explanation':examples[i['id']]['text'],
+                              'explanation_is_excerpt':False} for ref,i in local.items()],
                     'memory':{'last_turns':[{'speaker':t['speaker'],'text':t['text'][:240]} for t in local_memory['last_turns'][-2:]],
                               'explained_ideas':{k:v[:160] for k,v in list(local_memory['explained_ideas'].items())[-8:]},
                               'definitions':dict(list(local_memory['definitions'].items())[-6:]),
@@ -563,12 +566,11 @@ def dialogue(pipe):
                         qspeaker=speakers[2] if len(speakers)==3 and (start+n)%2 else speakers[0]
                         result.append({'speaker':qspeaker,'text':question.strip(),'idea_ids':[],'kind':'question'})
                         defs=[d for d in fact_definitions(idea,terms) if (d['document']+':'+d['term']) not in block_defined]
-                        for d in defs:
-                            block_defined.add(d['document']+':'+d['term'])
-                            result.append({'speaker':speakers[1],'text':definition_text(d),'idea_ids':[],
-                                           'kind':'definition','glossary_source':d})
-                        result.append({'speaker':speakers[1],'text':passage(idea),'idea_ids':[idea['id']],
-                                       'kind':'source','source_hash':source_hash(idea)})
+                        for d in defs:block_defined.add(d['document']+':'+d['term'])
+                        answer=spoken_answer(examples[idea['id']]['text'],defs)
+                        result.append({'speaker':speakers[1],'text':answer,'idea_ids':[idea['id']],
+                                       'kind':'source','source_hash':source_hash(idea),
+                                       'text_hash':fingerprint(answer),'glossary_sources':defs})
                     return {'turns':result,'warnings':block_issues}
                 packet=pipe.unit(8,f"{c['id']}-B{start//2+1}",c['title']+' — échange '+str(start//2+1),
                     {'protocol':VERSION,'payload':payload,'sources':[source_hash(i) for i in batch],
@@ -576,6 +578,7 @@ def dialogue(pipe):
                     produce_block,lambda v:script_markdown([{'title':c['title'],'opening_transition':'','turns':v['turns']}],speakers))
                 turns.extend(packet['turns']);issues.extend(packet['warnings'])
                 for turn in packet['turns']:
+                    for d in turn.get('glossary_sources',[]):local_memory['definitions'][d['document']+':'+d['term']]=d['definition']
                     if turn.get('kind')=='definition':
                         d=turn['glossary_source'];local_memory['definitions'][d['document']+':'+d['term']]=d['definition']
                     elif turn.get('kind')=='question':
@@ -606,6 +609,7 @@ def script_markdown(chapters,speakers):
 def review(pipe):
     plan,data,registry=checked_registry(pipe);draft=pipe.saved(8)
     if draft.get('workflow_version')!=VERSION:raise ValueError('Dialogue ancien : refaire les étapes 6 à 8.')
+    for item in [i for c in pipe.saved(6)['chapters'] for i in c['items']]:registry[item['idea_id']]['oral_key']=item['sentence']
     chapters=copy.deepcopy(draft['chapters']);seen=[];issues=[]
     chapter_map={c['id']:c for c in plan['chapters']};terms=definitions(data)
     for c in chapters:
@@ -618,8 +622,10 @@ def review(pipe):
                 ids=turn['idea_ids']
                 if len(ids)!=1 or ids[0] not in registry:raise ValueError('Référence de dialogue inconnue.')
                 idea=registry[ids[0]]
-                if turn.get('source_hash')!=source_hash(idea) or turn['text']!=passage(idea):
+                if turn.get('source_hash')!=source_hash(idea) or turn.get('text_hash')!=fingerprint(turn['text']):
                     raise ValueError('Le dialogue modifie une idée source : reconstruire le chapitre. '+ids[0])
+                for d in turn.get('glossary_sources',[]):
+                    if terms.get((d.get('document'),d.get('term')))!=d:raise ValueError('Définition différente du lexique source.')
                 glossary={term:entries for doc in data.get('documents',[]) if doc['id']==idea.get('document') for term,entries in doc.get('glossary',{}).items()}
                 quality.validate_acronyms(turn['text'],glossary)
                 quality.validate_technical_wording(turn['text'],' '.join(e['quote'] for e in idea.get('evidence',[])))
@@ -632,6 +638,7 @@ def review(pipe):
                 raise ValueError('Réplique non rattachée au contrat de contenu source.')
     expected=[i for c in plan['chapters'] for i in c['idea_ids']]
     if len(seen)!=len(set(seen)) or set(seen)!=set(expected):raise ValueError('Le dialogue doit traiter toutes les idées affectées à ce chapitre.')
+    chapters,corrections=writing.final_pass(pipe,chapters,registry,data)
     speakers=pipe.config['speakers']
     conclusion,recap_ids=closing_text(plan,registry)
     chapters[-1]['turns'].append({'speaker':speakers[0],'text':conclusion,'idea_ids':[],
@@ -644,6 +651,7 @@ def review(pipe):
     if duration_warning:issues.append({'chapter':'ensemble','note':'Durée à ajuster : matière source et durée cible ne coïncident pas encore.'})
     result={'workflow_version':VERSION,'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(seen),
         'source_quality':quality.VERSION,'content_checks_passed':True,
+        'writing_version':writing.VERSION,'editorial_corrections':corrections,'independent_final_review':True,
         'source_registry':[copy.deepcopy(registry[i]) for i in expected],
         'source_glossaries':copy.deepcopy(data.get('documents',[])),
         'expected_idea_ids':sorted(expected),'all_planned_ids_present':True,'source_texts_preserved':True,
@@ -651,12 +659,13 @@ def review(pipe):
         'generation_warnings':warnings,'synthesis_warnings':[],'word_count':count,
         'estimated_minutes':round(count/145,1),'target_minutes':pipe.config['minutes'],
         'duration_warning':duration_warning,'markdown':script_markdown(chapters,speakers),'plain_text':plain,
-        'note':'Les réponses conservent les formulations sources retenues. Leur fidélité scientifique et la qualité pédagogique nécessitent une relecture humaine.'}
+        'responses_rewritten':True,'note':'Les réponses ont été reformulées puis relues contre les citations. Le registre original reste conservé. Ces contrôles automatiques ne remplacent pas une relecture scientifique et pédagogique humaine.'}
     result['selected_count']=len(expected);result['registry_count']=len(registry)
     source1=pipe.project/'etapes/01.json'
     result['source_coverage']=[{'document':d['id'],'unreadable_pages':d.get('empty_pages',[])}
         for d in read(source1)['data']['documents']] if source1.exists() else []
     notes=result['markdown']+'\n\n## Rapport de révision\n\n'+str(count)+' mots — environ '+str(result['estimated_minutes'])+' minutes.\n\n'+result['note']
+    if corrections:notes+='\n\n### Corrections de la révision\n\n'+'\n'.join('- '+c['idea_id']+' : '+c['reason'] for c in corrections)
     if issues:notes+='\n\n'+'\n'.join('- '+i['note'] for i in issues)
     if warnings:notes+='\n\n### Points à relire\n\n'+'\n'.join('- '+w for w in warnings)
     if plan['exclusions']:notes+='\n\n### Idées hors dialogue, conservées au dossier\n\n'+'\n'.join('- '+e['idea_id']+' : '+e['reason'] for e in plan['exclusions'])

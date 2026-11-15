@@ -104,7 +104,7 @@ class GroundingTests(unittest.TestCase):
             def ask(self,task,payload,instructions,validate,budget=4000):
                 self.calls.append((task,copy.deepcopy(payload)))
                 if len(payload['facts'])==1:raise ResponseLimitError('Limite de sortie')
-                value={'verdicts':{'I1':{'status':'supported','reason':'La citation appuie cette idée.'}}};validate(value);return value
+                value={'verdicts':{'I1':{'status':'supported','reason':'La citation appuie cette idée.','statement_quote':facts[0]['evidence'][0],'explanation_quote':facts[0]['evidence'][0]}}};validate(value);return value
         client=Missing();result=Pipeline(self.project,client).check_support(facts,80)
         self.assertEqual([i['id'] for i in result['kept']],['PDF1-P2-I109'])
         self.assertEqual([i['id'] for i in result['excluded']],['PDF1-P2-I110'])

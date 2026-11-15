@@ -148,8 +148,8 @@ class EditorialTests(unittest.TestCase):
         for n,i in enumerate(ideas):i.update(statement=f'Le SNR est observé dans la condition {n}.',explanation='La mesure conserve cette condition.')
         self.prepare(ideas,{'SNR':[{'definition':'Signal-to-noise ratio','page':1}]});self.generate()
         result=read(self.project/'exports/podcast.json')
-        definitions=[t for c in result['chapters'] for t in c['turns'] if t.get('kind')=='definition']
-        self.assertEqual(len(definitions),1);self.assertIn('rapport signal sur bruit',definitions[0]['text'])
+        definitions=[t for c in result['chapters'] for t in c['turns'] for d in t.get('glossary_sources',[]) if d['term']=='SNR']
+        self.assertEqual(len(definitions),1);self.assertIn('rapport signal sur bruit',definitions[0]['text']);self.assertNotIn('Dans ce document',definitions[0]['text'])
     def test_changed_glossary_requires_replanning(self):
         self.prepare(facts(2));self.generate(until=5)
         value=read(self.project/'etapes/04.json');value['data']['documents'][0]['glossary']={'SNR':[{'definition':'Signal-to-noise ratio','page':1}]}
@@ -159,8 +159,8 @@ class EditorialTests(unittest.TestCase):
         ideas=facts(1);ideas[0]['statement']='Le SNR est un indicateur de transmission.'
         self.prepare(ideas,{'SNR':[{'definition':'Signal-to-noise ratio','page':1}]});self.generate(until=8)
         value=read(self.project/'etapes/08.json')
-        turn=next(t for c in value['data']['chapters'] for t in c['turns'] if t.get('kind')=='definition')
-        turn['text']='Une définition inventée.'
+        turn=next(t for c in value['data']['chapters'] for t in c['turns'] if t.get('glossary_sources'))
+        turn['glossary_sources'][0]['definition']='Une définition inventée.'
         write(self.project/'etapes/08.json',value)
         with self.assertRaisesRegex(ValueError,'Définition différente'):Pipeline(self.project,FakeClient()).run(9,9)
     def test_word_count_excludes_speaker_labels(self):

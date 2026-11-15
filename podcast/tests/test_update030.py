@@ -60,7 +60,7 @@ class PedagogyTests(unittest.TestCase):
         source[3].update(topic='Bases du signal',level='foundation',role='concept')
         self.prepare(source);self.generate()
         plan=read(self.project/'etapes/05.json')['data']
-        self.assertEqual(plan['chapters'][0]['title'],'Bases du signal')
+        self.assertEqual(plan['chapters'][0]['role'],'concept')
         self.assertEqual(set(plan['chapters'][0]['idea_ids']),{source[1]['id'],source[3]['id']})
         final=read(self.project/'exports/podcast.json')
         self.assertIn('Bonjour',final['chapters'][0]['opening_transition'])
@@ -75,7 +75,7 @@ class PedagogyTests(unittest.TestCase):
     def test_final_review_rejects_wrong_expansion_even_with_the_original_hash(self):
         from pipeline import Pipeline
         source=facts(1);source[0]['statement']='Le DT (Data Transfer) représente le réseau.'
-        self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]});self.generate(until=8)
-        with self.assertRaisesRegex(ValueError,'Développement non confirmé'):Pipeline(self.project,FakeClient()).run(9,9)
+        self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]})
+        with self.assertRaisesRegex(ValueError,'Développement non confirmé'):self.generate(until=8)
 
 if __name__=='__main__':unittest.main()

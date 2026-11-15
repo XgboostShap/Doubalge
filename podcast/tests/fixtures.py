@@ -30,10 +30,12 @@ def make_pdf(path, label='Optique', page_count=3):
 
 
 def answer(task,p):
+    if task=='grounded_text':return {'text':p['statement'] if p['kind']=='sentence' else p['statement']+' '+p.get('explanation','')}
+    if task=='writing_check':return {'status':'supported','quote':p['source'],'reason':'Correspondance simulée entre formulation et preuve, pour le test technique.'}
     if task=='editorial_outline':
         from editorial import LABELS
         return {'central_question':'Comment comprendre les notions et leurs limites dans ces documents ?',
-                'titles':{r:LABELS[r] for r in p['roles']}}
+                'titles':{r:LABELS[r] for r in p['roles']},'questions':{r:'Comment comprendre les phénomènes et leurs conditions ?' for r in p['roles']}}
     if task=='editorial_roles':return {'roles':{i['ref']:{'role':'concept' if n%2==0 else 'method',
         'importance':'essential','reason':'Classement simulé pour le test.'} for n,i in enumerate(p['ideas'])}}
     if task=='part_summary':
@@ -46,7 +48,7 @@ def answer(task,p):
         return {'decisions':{i['id']:{'statement':i['statement'],'explanation':i['explanation'],
                         'evidence':[p['source_text'][:100]],'status':'kept','reason':'Appui simulé pour le test.'}
                        for i in p['candidates']}}
-    if task=='fact_support':return {'verdicts':{i['ref']:{'status':'supported','reason':'Appui sémantique simulé pour ce test.'} for i in p['facts']}}
+    if task=='fact_support':return {'verdicts':{i['ref']:{'status':'supported','reason':'Appui sémantique simulé pour ce test.','statement_quote':i['evidence'][0],'explanation_quote':i['evidence'][0]} for i in p['facts']}}
     if task=='common_paragraphs':return {'paragraphs':{i['ref']:i['statement']+' '+i.get('explanation','') for i in p['ideas']}}
     if task=='explanation_paragraphs':return {'transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',
         'paragraphs':{i['ref']:i['statement']+' '+i.get('explanation','') for i in p['ideas']}}

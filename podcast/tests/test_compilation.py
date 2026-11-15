@@ -42,7 +42,7 @@ class CompilationTests(unittest.TestCase):
         doc=read(self.project/'etapes/03.json')['data']['documents'][0]
         self.assertEqual(doc['parts'],original['documents'][0]['parts'])
         self.assertEqual((self.project/'etapes/02.json').read_bytes(),before)
-        self.assertNotIn('Ancienne formulation',doc['synthesis']);self.assertFalse(client.calls)
+        self.assertNotIn('Ancienne formulation',doc['synthesis']);self.assertTrue(any(t=='writing_check' for t,_ in client.calls))
         self.assertEqual(len(doc['synthesis_ids']),3)
     def test_changed_glossary_is_carried_forward_without_rewriting_facts(self):
         self.prepare();Pipeline(self.project,FakeClient()).run(3,3)
