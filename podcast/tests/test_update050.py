@@ -35,6 +35,11 @@ class ObservedErrors(unittest.TestCase):
         quality.prepare_decisions(value,'A digital twin (DT) represents a physical system.',terms)
         fact=value['decisions']['I1'];self.assertNotIn('Data Transfer',fact['statement'])
         self.assertIn('20 mW, 30 mW',fact['explanation']);self.assertTrue(fact['automatic_corrections']);self.assertEqual(fact['status'],'corrected')
+        for condition in ['Sans bruit','sans bruit','under stable conditions']:
+            value={'decisions':{'I1':{'status':'kept','statement':'Le DT ('+condition+') représente le système.','explanation':'Le système est représenté dans ces conditions.','reason':'Test.'}}}
+            quality.prepare_decisions(value,'A digital twin (DT) represents a physical system.',terms)
+            self.assertIn(condition,value['decisions']['I1']['statement'])
+            quality.validate_acronyms(value['decisions']['I1']['statement'],terms)
     def test_foreign_device_and_changed_case_unit_cannot_enter_a_paraphrase(self):
         idea={'statement':'Les WSS réduisent les pertes d’insertion.','explanation':'Le dispositif réduit ces pertes.','evidence':[{'quote':'The WSS devices minimize insertion loss.'}]}
         with self.assertRaises(ValueError):writing.validate_text('Les OMS réduisent les pertes d’insertion.',idea,{})

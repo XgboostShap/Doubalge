@@ -3241,9 +3241,13 @@ def prepare_decisions(value,source,terms):
         for term,entries in (terms or {}).items():
             if not re.search(r'\b'+re.escape(term)+r's?\b',source):continue
             aliases=definition_aliases(entries)
+            # Ne jamais effacer une condition entre parenthèses en la prenant
+            # pour un libellé. Seuls les trois contresens observés sont réparés.
+            observed={'DT':{'data transfer'},'SDN':{'switched digital network'},
+                      'OMS':{'one hop multi service switch'}}
             def replace_expansion(match):
                 expanded=definition_key(match[1])
-                if len(re.findall(r'[^\W\d_]+',match[1]))>=2 and not re.search(r'\d',match[1]) and expanded not in aliases:
+                if expanded in observed.get(term,set()) and expanded not in aliases:
                     changes.append('Développement non confirmé de '+term+' retiré ; sigle source conservé.')
                     return term
                 return match[0]
@@ -3264,6 +3268,7 @@ def validate_acronyms(value, terms):
             expanded=definition_key(match[1])
             # Une parenthèse numérique ou une référence n'est pas un libellé.
             if len(re.findall(r'[^\W\d_]+',match[1]))<2:continue
+            if re.match(r'^\s*(?:\d|sans\b|avec\b|sous\b|dans\b|si\b|en\b|without\b|with\b|under\b|in\b|when\b)',match[1],re.I):continue
             if expanded not in definitions:
                 raise ValueError('Développement non confirmé de '+term+' après le sigle : reprendre le glossaire source ou garder le sigle seul.')
         for match in re.finditer(r'\('+re.escape(term)+r's?\)',value):
@@ -6037,6 +6042,11 @@ class ObservedErrors(unittest.TestCase):
         quality.prepare_decisions(value,'A digital twin (DT) represents a physical system.',terms)
         fact=value['decisions']['I1'];self.assertNotIn('Data Transfer',fact['statement'])
         self.assertIn('20 mW, 30 mW',fact['explanation']);self.assertTrue(fact['automatic_corrections']);self.assertEqual(fact['status'],'corrected')
+        for condition in ['Sans bruit','sans bruit','under stable conditions']:
+            value={'decisions':{'I1':{'status':'kept','statement':'Le DT ('+condition+') représente le système.','explanation':'Le système est représenté dans ces conditions.','reason':'Test.'}}}
+            quality.prepare_decisions(value,'A digital twin (DT) represents a physical system.',terms)
+            self.assertIn(condition,value['decisions']['I1']['statement'])
+            quality.validate_acronyms(value['decisions']['I1']['statement'],terms)
     def test_foreign_device_and_changed_case_unit_cannot_enter_a_paraphrase(self):
         idea={'statement':'Les WSS réduisent les pertes d’insertion.','explanation':'Le dispositif réduit ces pertes.','evidence':[{'quote':'The WSS devices minimize insertion loss.'}]}
         with self.assertRaises(ValueError):writing.validate_text('Les OMS réduisent les pertes d’insertion.',idea,{})

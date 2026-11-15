@@ -15,7 +15,7 @@
     },
     {
       "path": "quality.py",
-      "sha256": "43c935aa163239052fa7679a54e5544f83f0b1673c2af3c4cf1a9beded6015f9"
+      "sha256": "761436b1aaefd3b281faa722b59ce31877c3882fc9961c032d5b59a88d807fa2"
     },
     {
       "path": "editorial.py",
@@ -71,7 +71,7 @@
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "c7553e6229912577a7f4aedd8b135ef91b917ec479d27101ee476bc0dc445521"
+      "sha256": "fb3600f4c7225c256d2ed8610931cc24e0d10e529c4405499f65635bdee5a7cb"
     }
   ]
 }

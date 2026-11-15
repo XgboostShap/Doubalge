@@ -274,9 +274,13 @@ def prepare_decisions(value,source,terms):
         for term,entries in (terms or {}).items():
             if not re.search(r'\b'+re.escape(term)+r's?\b',source):continue
             aliases=definition_aliases(entries)
+            # Ne jamais effacer une condition entre parenthèses en la prenant
+            # pour un libellé. Seuls les trois contresens observés sont réparés.
+            observed={'DT':{'data transfer'},'SDN':{'switched digital network'},
+                      'OMS':{'one hop multi service switch'}}
             def replace_expansion(match):
                 expanded=definition_key(match[1])
-                if len(re.findall(r'[^\W\d_]+',match[1]))>=2 and not re.search(r'\d',match[1]) and expanded not in aliases:
+                if expanded in observed.get(term,set()) and expanded not in aliases:
                     changes.append('Développement non confirmé de '+term+' retiré ; sigle source conservé.')
                     return term
                 return match[0]
@@ -297,6 +301,7 @@ def validate_acronyms(value, terms):
             expanded=definition_key(match[1])
             # Une parenthèse numérique ou une référence n'est pas un libellé.
             if len(re.findall(r'[^\W\d_]+',match[1]))<2:continue
+            if re.match(r'^\s*(?:\d|sans\b|avec\b|sous\b|dans\b|si\b|en\b|without\b|with\b|under\b|in\b|when\b)',match[1],re.I):continue
             if expanded not in definitions:
                 raise ValueError('Développement non confirmé de '+term+' après le sigle : reprendre le glossaire source ou garder le sigle seul.')
         for match in re.finditer(r'\('+re.escape(term)+r's?\)',value):
