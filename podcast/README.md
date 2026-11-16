@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.5.2
+# Podcast pédagogique — version 0.5.3
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,7 +7,9 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.2** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.3** en haut de la page.
+
+Pour le blocage de l’étape 3 « Développement non confirmé de PM » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Le lexique source, les étapes 1 et 2 et les passages déjà terminés restent conservés. La rédaction du passage en échec reçoit les libellés autorisés et une correction ciblée du sigle.
 
 Pour le blocage de l’étape 3 « Rédiger un passage clair de 5 à 85 mots » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 et 2 restent conservées et les passages déjà terminés à l’étape 3 sont réutilisés. Aucun réexamen de l’étape 2 ni réimport du PDF n’est nécessaire pour cette erreur de rédaction.
 
@@ -79,6 +81,14 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 | 9 | Vérification des sources et empreintes, vraie seconde relecture du dialogue, correction locale si possible, puis rapport et exports. Un passage non confirmé arrête explicitement la révision. |
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
+
+## Correctif 0.5.3 — développements de sigles et libellés français
+
+Les consignes de rédaction et la validation utilisent la même liste de libellés issus du glossaire source. Lorsque le PDF définit **PM comme Predictive Maintenance**, la rédaction privilégie **maintenance prédictive**. Les variantes reconnues **maintenance prévisionnelle** et **entretien prédictif**, ainsi que leurs pluriels, sont également acceptées. Ces variantes ne sont pas activées pour un document où PM possède un autre sens.
+
+Un développement refusé déclenche une reprise ciblée avec le brouillon, le sigle, la définition source et les formes autorisées. Le résultat repasse les contrôles de langue, de longueur, de nombres et d’unités, puis la relecture contre les citations. Le logiciel ne supprime pas une définition erronée pour la déclarer validée. Un refus persistant reste un arrêt explicite indiquant l’idée, le libellé reçu et les formes proposées. Une reprise de longueur et une reprise de vocabulaire sont possibles, une fois chacune.
+
+Les corrections de sigles sont enregistrées avec le passage. Les glossaires sources et les libellés déjà intégrés aux empreintes des plans restent inchangés ; les nouvelles préférences françaises concernent les nouvelles demandes de rédaction. Les parties déjà terminées en 0.5.2 sont réutilisées sans relancer l’analyse des PDF.
 
 ## Correctif 0.5.2 — reprise des rédactions trop longues
 

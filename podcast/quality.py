@@ -177,7 +177,8 @@ def definition_key(value):
 # Traductions usuelles activées par le LIBELLÉ source, jamais par l'acronyme
 # seul : un document où AI désigne autre chose n'hérite pas de ces traductions.
 _FRENCH_DEFINITIONS = {
-    'predictive maintenance':('maintenance prédictive',),
+    'predictive maintenance':('maintenance prédictive','maintenance prévisionnelle','entretien prédictif',
+                              'maintenances prédictives','maintenances prévisionnelles','entretiens prédictifs'),
     'frequent itemset mining':('fouille de motifs fréquents','recherche de motifs fréquents'),
     'discriminative pattern mining':('fouille de motifs discriminants','recherche de motifs discriminants'),
     'bayesian mixture model':('modèle de mélange bayésien',),
@@ -216,14 +217,23 @@ _FRENCH_DEFINITIONS = {
 }
 
 
-def definition_aliases(entries):
-    aliases=set()
+def definition_forms(entries):
+    """Libellés affichables, activés par la définition source et non par le sigle."""
+    forms=[];seen=set()
+    def add(value):
+        key=definition_key(value)
+        if key not in seen:forms.append(value);seen.add(key)
     for entry in entries:
-        key=definition_key(entry['definition']);aliases.add(key)
+        key=definition_key(entry['definition']);add(entry['definition'])
         for english,french in _FRENCH_DEFINITIONS.items():
             names={definition_key(english),*(definition_key(v) for v in french)}
-            if key in names:aliases.update(names)
-    return aliases
+            if key in names:
+                for value in (english,*french):add(value)
+    return forms
+
+
+def definition_aliases(entries):
+    return {definition_key(value) for value in definition_forms(entries)}
 
 
 def preferred_definition(value):
@@ -240,6 +250,28 @@ def preferred_definition(value):
         'erbium doped fiber amplifier':'amplificateur à fibre dopée à l’erbium',
         'nonlinear schrodinger equation':'équation de Schrödinger non linéaire','noise figure':'facteur de bruit'}
     return preferred.get(key,value)
+
+
+def writing_definition(value):
+    """Préférence française pour les nouvelles rédactions, sans changer les plans archivés."""
+    preferred=preferred_definition(value)
+    if preferred!=value:return preferred
+    key=definition_key(value)
+    for english,french in _FRENCH_DEFINITIONS.items():
+        if key in {definition_key(english),*(definition_key(v) for v in french)}:return french[0]
+    return value
+
+
+class AcronymExpansionError(ValueError):
+    def __init__(self,term,received,entries):
+        self.term=term
+        self.received=' '.join(str(received).split())[-180:]
+        self.allowed_forms=definition_forms(entries)
+        self.source_definitions=[dict(entry) for entry in entries]
+        self.preferred=writing_definition(entries[0]['definition']) if entries else term
+        allowed=' / '.join(self.allowed_forms)
+        super().__init__('Développement non confirmé de '+term+' : « '+self.received+' ». '
+            'Libellés autorisés par le glossaire source : '+allowed+'. Employer un de ces libellés ou le sigle seul.')
 
 
 def subject_symbols(value):
@@ -342,12 +374,12 @@ def validate_acronyms(value, terms):
             if len(re.findall(r'[^\W\d_]+',match[1]))<2:continue
             if re.match(r'^\s*(?:\d|sans\b|avec\b|sous\b|dans\b|si\b|en\b|without\b|with\b|under\b|in\b|when\b)',match[1],re.I):continue
             if expanded not in definitions:
-                raise ValueError('Développement non confirmé de '+term+' après le sigle : reprendre le glossaire source ou garder le sigle seul.')
+                raise AcronymExpansionError(term,match[1],entries)
         for match in re.finditer(r'\('+re.escape(term)+r's?\)',value):
             before=definition_key(value[:match.start()])
             if not before or before.split()[-1:]==[definition_key(term)]:continue
             if not any(before==d or before.endswith(' '+d) for d in definitions):
-                raise ValueError('Développement non confirmé de '+term+' : utiliser le libellé du glossaire source, une traduction française reconnue ou l’acronyme seul.')
+                raise AcronymExpansionError(term,' '.join(before.split()[-12:]),entries)
         pattern=r'\b'+re.escape(term)+r'\s+(?:signifie|désigne|correspond à)\s+([^.;\n]+)'
         for match in re.finditer(pattern,value,re.I):
             words=definition_key(match[1]).split()
@@ -355,7 +387,7 @@ def validate_acronyms(value, terms):
                 words.pop(0)
             expanded=' '.join(words)
             if not any(expanded==d or expanded.startswith(d+' ') for d in definitions):
-                raise ValueError('Définition de '+term+' incompatible avec le libellé du glossaire source.')
+                raise AcronymExpansionError(term,match[1],entries)
 
 
 def batches(items, max_chars=10000, max_items=12):

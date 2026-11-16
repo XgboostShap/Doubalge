@@ -3,6 +3,7 @@ import copy
 import unittest
 import quality,editorial
 from fixtures import FakeClient
+from llm import InvalidResponseError
 import test_editorial
 from test_editorial import facts
 from storage import read
@@ -76,6 +77,8 @@ class PedagogyTests(unittest.TestCase):
         from pipeline import Pipeline
         source=facts(1);source[0]['statement']='Le DT (Data Transfer) représente le réseau.'
         self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]})
-        with self.assertRaisesRegex(ValueError,'Développement non confirmé'):self.generate(until=8)
+        with self.assertRaisesRegex(InvalidResponseError,'Développement non confirmé'):self.generate(until=8)
+        self.assertFalse((self.project/'etapes/06.json').exists())
+        self.assertFalse((self.project/'exports/podcast.json').exists())
 
 if __name__=='__main__':unittest.main()

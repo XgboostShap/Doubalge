@@ -1,14 +1,14 @@
-PODCAST PEDAGOGIQUE 0.5.2 — CORRECTIF REDACTION TROP LONGUE
+PODCAST PEDAGOGIQUE 0.5.3 — CORRECTIF DEVELOPPEMENTS DE SIGLES
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.5.2.
+4. Relancer depuis le dossier installe et verifier Version 0.5.3.
 5. Ouvrir le DERNIER PROJET puis Continuer jusqu’au script final.
    Les etapes 1 et 2 et les passages deja termines sont reutilises.
    Ne pas reimporter le PDF ni reexaminer l’etape 2 pour l’erreur
-   de redaction « 5 a 85 mots » de l’etape 3.
+   de redaction « Developpement non confirme de PM » ou « 5 a 85 mots ».
 6. Relire le dialogue puis essayer un audio court avec les voix existantes.
 
 LES PDF, LEUR EXTRACTION, LES PROJETS ET LES VOIX SONT CONSERVES.
@@ -16,6 +16,12 @@ Les resultats remplaces sont archives. Aucun PDF n’est a reimporter.
 Si aucune idee n’est retenue a l’etape 2, utiliser Reexaminer l’etape 2.
 Pour un ancien controle signale par l’application, utiliser Ameliorer les
 resumes existants avant de continuer.
+
+Quand PM signifie Predictive Maintenance dans le PDF, la redaction propose
+maintenance predictive. Maintenance previsionnelle et entretien predictif
+sont aussi reconnus. Un autre sens de PM ne recoit pas ces traductions.
+Une correction ciblee recoit le libelle refuse et les definitions autorisees.
+Le resultat est relu contre les citations ; les faits et unites restent controles.
 
 La redaction vise un texte plus court. Si le brouillon est trop long,
 une demande ciblee le reformule avec son compte de mots et ses sources.

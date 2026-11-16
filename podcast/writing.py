@@ -86,7 +86,8 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     maximum=60 if kind=='sentence' else 160
     payload={'statement':idea['statement'],'explanation':idea.get('explanation',''),
              'source':evidence(idea),'glossary':terms,
-             'preferred_wording':{term:quality.preferred_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
+             'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
+             'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
              'kind':kind,'feedback':feedback,'context':context or {},
              'target_words':target,'preferred_max_words':preferred,'max_words':maximum,'length_policy':'bounded-concision-v1'}
     instructions='''Rédige en français naturel pour un podcast destiné à un débutant. Réécris le sens,
@@ -98,11 +99,17 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         N'ajoute ni chiffre, dispositif, résultat, exemple factuel ou causalité. Ne transforme pas un
         émetteur en récepteur ni une section en équipement. power=puissance, draw=étirage de fibre,
         second-order=du second ordre. Utilise le lexique fourni sans inventer de sigle.
-        preferred_wording donne les libellés reconnus. Préfère les termes français et explique le jargon.
+        preferred_wording donne les libellés reconnus à privilégier, allowed_definitions les variantes autorisées
+        par le glossaire source. N'invente aucun développement de sigle. Un sigle seul reste autorisé.
+        Pour définir un terme, reprends exactement un libellé proposé, sans le paraphraser ni créer un nouveau sigle.
+        Préfère les termes français et explique le jargon.
         Pas de citations [12], références de figures, formules lourdes, « le texte explique » ni consignes
         de correction. Le contexte évite les redites ; il n'autorise pas à transférer ses faits à cette idée.
         Si mode=shorten, reformule draft pour atteindre target_words en préservant le sens et les réserves ;
         source reste la seule preuve. Si mode=restart, repars de source, sans reproduire le brouillon raté.
+        Si mode=terminology, corrige les développements refusés dans draft avec allowed_definitions et
+        preferred_wording. Utilise canonical_definition pour term_to_fix, ou garde ce sigle seul si nécessaire.
+        Corrige tous les sigles concernés sans ajouter de fait, changer de sujet ou perdre une réserve.
         Retourne seulement {"text":"passage"}.'''
     def ask(current,limit):
         seen={}
@@ -111,12 +118,14 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
             seen['text']=text
             validate_text(text,idea,terms,limit)
         try:return pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
-        except (InvalidResponseError,TextShapeError,WordCountError) as error:
-            # Les autres erreurs de fidélité ne sont pas des problèmes de longueur.
+        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+            # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
-            while cause is not None and not isinstance(cause,(TextShapeError,WordCountError)):cause=cause.__cause__
+            while cause is not None and not isinstance(cause,(TextShapeError,WordCountError,quality.AcronymExpansionError)):cause=cause.__cause__
             if cause is not None:
-                error.draft_text=seen.get('text');error.length_issue=True
+                error.draft_text=seen.get('text')
+                if isinstance(cause,quality.AcronymExpansionError):error.terminology_issue=cause
+                else:error.length_issue=True
             raise
     def repair_payload(current,draft,problem,limit):
         count=len(draft.split()) if isinstance(draft,str) else 0
@@ -131,15 +140,25 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         notes=feedback
         for attempt in range(2):
             current={**payload,'mode':'draft','feedback':notes};adjusted=False;length_problem=''
-            try:value=ask(current,maximum)
-            except (InvalidResponseError,TextShapeError,WordCountError) as error:
-                if not getattr(error,'length_issue',False):raise
-                pipe.progress('Nouvelle rédaction ciblée — '+str(error))
-                retry=repair_payload(current,getattr(error,'draft_text',None),error,maximum)
-                try:value=ask(retry,maximum)
-                except (InvalidResponseError,TextShapeError,WordCountError) as failure:
-                    raise InvalidResponseError('Rédaction non validée pour '+idea['id']+' après une reprise ciblée : '+str(failure)) from failure
-                adjusted=True
+            request=current;repairs=set();terminology_corrections=[]
+            while True:
+                try:value=ask(request,maximum);break
+                except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+                    issue=getattr(error,'terminology_issue',None)
+                    category='terminology' if issue is not None else 'length' if getattr(error,'length_issue',False) else None
+                    if category is None:raise
+                    if category in repairs:
+                        raise InvalidResponseError('Rédaction non validée pour '+idea['id']+' après une reprise ciblée : '+str(error)) from error
+                    repairs.add(category)
+                    request=repair_payload(current,getattr(error,'draft_text',None),error,maximum)
+                    if issue is not None:
+                        pipe.progress('Correction du développement de '+issue.term+' — '+idea['id'])
+                        request.update(mode='terminology',term_to_fix=issue.term,canonical_definition=issue.preferred,
+                            source_definitions=issue.source_definitions,forbidden_expansion=issue.received)
+                        terminology_corrections.append({'term':issue.term,'received':issue.received,
+                            'preferred':issue.preferred,'allowed':issue.allowed_forms})
+                    else:
+                        pipe.progress('Nouvelle rédaction ciblée — '+str(error));adjusted=True
             if len(value['text'].split())>preferred:
                 pipe.progress('Réduction du passage '+idea['id']+' — '+str(len(value['text'].split()))+' mots, cible '+str(preferred))
                 shorter=repair_payload(current,value['text'],'Réduire le brouillon en gardant les conditions, réserves et limites.',preferred)
@@ -154,12 +173,14 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                 warnings=([idea['id']+' : passage de '+str(count)+' mots, au-delà de la cible éditoriale de '+str(preferred)+'. Conservé après relecture automatique des sources.'] if count>preferred else [])
                 return {'text':value['text'],'text_hash':fingerprint(value['text']),'source_hash':source_hash(idea),
                         'writing_version':VERSION,'review':verdict,'word_count':count,'preferred_max_words':preferred,
-                        'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings}
+                        'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings,
+                        'terminology_corrections':terminology_corrections}
             notes=verdict['reason']
         raise InvalidResponseError('Passage non validé après réécriture : '+notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
         {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,'terms':terms,'feedback':feedback,'context':context},
         produce,lambda v:v['text']+'\n\nSource : ['+idea['id']+']\n\nRelecture : '+v['review']['reason']+
+            ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in v['terminology_corrections']) if v.get('terminology_corrections') else '')+
             ('\n\nNote éditoriale : '+' '.join(v['warnings']) if v.get('warnings') else ''))
 
 

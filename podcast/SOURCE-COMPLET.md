@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.5.2
+# Sources complètes — Podcast pédagogique 0.5.3
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.
@@ -37,7 +37,7 @@ pause
 ## LIRE-MOI.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.2 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.5.3 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
@@ -113,17 +113,17 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.2 — CORRECTIF REDACTION TROP LONGUE
+PODCAST PEDAGOGIQUE 0.5.3 — CORRECTIF DEVELOPPEMENTS DE SIGLES
 
 1. Fermer la fenetre de lancement de PodcastPedago.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.5.2.
+4. Relancer depuis le dossier installe et verifier Version 0.5.3.
 5. Ouvrir le DERNIER PROJET puis Continuer jusqu’au script final.
    Les etapes 1 et 2 et les passages deja termines sont reutilises.
    Ne pas reimporter le PDF ni reexaminer l’etape 2 pour l’erreur
-   de redaction « 5 a 85 mots » de l’etape 3.
+   de redaction « Developpement non confirme de PM » ou « 5 a 85 mots ».
 6. Relire le dialogue puis essayer un audio court avec les voix existantes.
 
 LES PDF, LEUR EXTRACTION, LES PROJETS ET LES VOIX SONT CONSERVES.
@@ -131,6 +131,12 @@ Les resultats remplaces sont archives. Aucun PDF n’est a reimporter.
 Si aucune idee n’est retenue a l’etape 2, utiliser Reexaminer l’etape 2.
 Pour un ancien controle signale par l’application, utiliser Ameliorer les
 resumes existants avant de continuer.
+
+Quand PM signifie Predictive Maintenance dans le PDF, la redaction propose
+maintenance predictive. Maintenance previsionnelle et entretien predictif
+sont aussi reconnus. Un autre sens de PM ne recoit pas ces traductions.
+Une correction ciblee recoit le libelle refuse et les definitions autorisees.
+Le resultat est relu contre les citations ; les faits et unites restent controles.
 
 La redaction vise un texte plus court. Si le brouillon est trop long,
 une demande ciblee le reformule avec son compte de mots et ses sources.
@@ -154,7 +160,7 @@ Consulter README.md pour les limites des controles, de Windows et des voix.
 ## README.md
 
 ```text
-# Podcast pédagogique — version 0.5.2
+# Podcast pédagogique — version 0.5.3
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -163,7 +169,9 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.2** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.3** en haut de la page.
+
+Pour le blocage de l’étape 3 « Développement non confirmé de PM » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Le lexique source, les étapes 1 et 2 et les passages déjà terminés restent conservés. La rédaction du passage en échec reçoit les libellés autorisés et une correction ciblée du sigle.
 
 Pour le blocage de l’étape 3 « Rédiger un passage clair de 5 à 85 mots » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 et 2 restent conservées et les passages déjà terminés à l’étape 3 sont réutilisés. Aucun réexamen de l’étape 2 ni réimport du PDF n’est nécessaire pour cette erreur de rédaction.
 
@@ -235,6 +243,14 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 | 9 | Vérification des sources et empreintes, vraie seconde relecture du dialogue, correction locale si possible, puis rapport et exports. Un passage non confirmé arrête explicitement la révision. |
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
+
+## Correctif 0.5.3 — développements de sigles et libellés français
+
+Les consignes de rédaction et la validation utilisent la même liste de libellés issus du glossaire source. Lorsque le PDF définit **PM comme Predictive Maintenance**, la rédaction privilégie **maintenance prédictive**. Les variantes reconnues **maintenance prévisionnelle** et **entretien prédictif**, ainsi que leurs pluriels, sont également acceptées. Ces variantes ne sont pas activées pour un document où PM possède un autre sens.
+
+Un développement refusé déclenche une reprise ciblée avec le brouillon, le sigle, la définition source et les formes autorisées. Le résultat repasse les contrôles de langue, de longueur, de nombres et d’unités, puis la relecture contre les citations. Le logiciel ne supprime pas une définition erronée pour la déclarer validée. Un refus persistant reste un arrêt explicite indiquant l’idée, le libellé reçu et les formes proposées. Une reprise de longueur et une reprise de vocabulaire sont possibles, une fois chacune.
+
+Les corrections de sigles sont enregistrées avec le passage. Les glossaires sources et les libellés déjà intégrés aux empreintes des plans restent inchangés ; les nouvelles préférences françaises concernent les nouvelles demandes de rédaction. Les parties déjà terminées en 0.5.2 sont réutilisées sans relancer l’analyse des PDF.
 
 ## Correctif 0.5.2 — reprise des rédactions trop longues
 
@@ -328,7 +344,7 @@ import voice_legacy
 import source_review
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.2'
+APP_VERSION = '0.5.3'
 
 
 def settings(value):
@@ -3188,7 +3204,8 @@ def definition_key(value):
 # Traductions usuelles activées par le LIBELLÉ source, jamais par l'acronyme
 # seul : un document où AI désigne autre chose n'hérite pas de ces traductions.
 _FRENCH_DEFINITIONS = {
-    'predictive maintenance':('maintenance prédictive',),
+    'predictive maintenance':('maintenance prédictive','maintenance prévisionnelle','entretien prédictif',
+                              'maintenances prédictives','maintenances prévisionnelles','entretiens prédictifs'),
     'frequent itemset mining':('fouille de motifs fréquents','recherche de motifs fréquents'),
     'discriminative pattern mining':('fouille de motifs discriminants','recherche de motifs discriminants'),
     'bayesian mixture model':('modèle de mélange bayésien',),
@@ -3227,14 +3244,23 @@ _FRENCH_DEFINITIONS = {
 }
 
 
-def definition_aliases(entries):
-    aliases=set()
+def definition_forms(entries):
+    """Libellés affichables, activés par la définition source et non par le sigle."""
+    forms=[];seen=set()
+    def add(value):
+        key=definition_key(value)
+        if key not in seen:forms.append(value);seen.add(key)
     for entry in entries:
-        key=definition_key(entry['definition']);aliases.add(key)
+        key=definition_key(entry['definition']);add(entry['definition'])
         for english,french in _FRENCH_DEFINITIONS.items():
             names={definition_key(english),*(definition_key(v) for v in french)}
-            if key in names:aliases.update(names)
-    return aliases
+            if key in names:
+                for value in (english,*french):add(value)
+    return forms
+
+
+def definition_aliases(entries):
+    return {definition_key(value) for value in definition_forms(entries)}
 
 
 def preferred_definition(value):
@@ -3251,6 +3277,28 @@ def preferred_definition(value):
         'erbium doped fiber amplifier':'amplificateur à fibre dopée à l’erbium',
         'nonlinear schrodinger equation':'équation de Schrödinger non linéaire','noise figure':'facteur de bruit'}
     return preferred.get(key,value)
+
+
+def writing_definition(value):
+    """Préférence française pour les nouvelles rédactions, sans changer les plans archivés."""
+    preferred=preferred_definition(value)
+    if preferred!=value:return preferred
+    key=definition_key(value)
+    for english,french in _FRENCH_DEFINITIONS.items():
+        if key in {definition_key(english),*(definition_key(v) for v in french)}:return french[0]
+    return value
+
+
+class AcronymExpansionError(ValueError):
+    def __init__(self,term,received,entries):
+        self.term=term
+        self.received=' '.join(str(received).split())[-180:]
+        self.allowed_forms=definition_forms(entries)
+        self.source_definitions=[dict(entry) for entry in entries]
+        self.preferred=writing_definition(entries[0]['definition']) if entries else term
+        allowed=' / '.join(self.allowed_forms)
+        super().__init__('Développement non confirmé de '+term+' : « '+self.received+' ». '
+            'Libellés autorisés par le glossaire source : '+allowed+'. Employer un de ces libellés ou le sigle seul.')
 
 
 def subject_symbols(value):
@@ -3353,12 +3401,12 @@ def validate_acronyms(value, terms):
             if len(re.findall(r'[^\W\d_]+',match[1]))<2:continue
             if re.match(r'^\s*(?:\d|sans\b|avec\b|sous\b|dans\b|si\b|en\b|without\b|with\b|under\b|in\b|when\b)',match[1],re.I):continue
             if expanded not in definitions:
-                raise ValueError('Développement non confirmé de '+term+' après le sigle : reprendre le glossaire source ou garder le sigle seul.')
+                raise AcronymExpansionError(term,match[1],entries)
         for match in re.finditer(r'\('+re.escape(term)+r's?\)',value):
             before=definition_key(value[:match.start()])
             if not before or before.split()[-1:]==[definition_key(term)]:continue
             if not any(before==d or before.endswith(' '+d) for d in definitions):
-                raise ValueError('Développement non confirmé de '+term+' : utiliser le libellé du glossaire source, une traduction française reconnue ou l’acronyme seul.')
+                raise AcronymExpansionError(term,' '.join(before.split()[-12:]),entries)
         pattern=r'\b'+re.escape(term)+r'\s+(?:signifie|désigne|correspond à)\s+([^.;\n]+)'
         for match in re.finditer(pattern,value,re.I):
             words=definition_key(match[1]).split()
@@ -3366,7 +3414,7 @@ def validate_acronyms(value, terms):
                 words.pop(0)
             expanded=' '.join(words)
             if not any(expanded==d or expanded.startswith(d+' ') for d in definitions):
-                raise ValueError('Définition de '+term+' incompatible avec le libellé du glossaire source.')
+                raise AcronymExpansionError(term,match[1],entries)
 
 
 def batches(items, max_chars=10000, max_items=12):
@@ -6206,6 +6254,7 @@ import copy
 import unittest
 import quality,editorial
 from fixtures import FakeClient
+from llm import InvalidResponseError
 import test_editorial
 from test_editorial import facts
 from storage import read
@@ -6279,7 +6328,9 @@ class PedagogyTests(unittest.TestCase):
         from pipeline import Pipeline
         source=facts(1);source[0]['statement']='Le DT (Data Transfer) représente le réseau.'
         self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]})
-        with self.assertRaisesRegex(ValueError,'Développement non confirmé'):self.generate(until=8)
+        with self.assertRaisesRegex(InvalidResponseError,'Développement non confirmé'):self.generate(until=8)
+        self.assertFalse((self.project/'etapes/06.json').exists())
+        self.assertFalse((self.project/'exports/podcast.json').exists())
 
 if __name__=='__main__':unittest.main()
 ```
@@ -6749,6 +6800,179 @@ class StubServerContext:
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_update053.py
+
+```python
+"""PM : libellés français sourcés et correction bornée des développements refusés."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from fixtures import FakeClient,StubServer
+from llm import Cancelled,InvalidResponseError,ModelError,Ollama
+from pipeline import Pipeline
+from storage import defaults,read,write
+import quality,writing
+
+
+TERMS={'PM':[{'definition':'Predictive Maintenance','page':1}]}
+BAD='La prévision minière (PM) anticipe les défaillances avec les journaux d’événements.'
+GOOD='La maintenance prédictive (PM) anticipe les défaillances à partir des journaux d’événements, afin de préparer les interventions.'
+
+
+class TermDrafts(FakeClient):
+    def __init__(self,drafts,verdict='supported'):
+        super().__init__();self.drafts=iter(drafts);self.verdict=verdict
+    def ask(self,task,payload,instructions,validate,budget=4000):
+        if task=='grounded_text':
+            self.calls.append((task,copy.deepcopy(payload)));result=next(self.drafts)
+            if isinstance(result,Exception):raise result
+            value={'text':result};validate(value);return value
+        if task=='writing_check' and self.verdict!='supported':
+            self.calls.append((task,copy.deepcopy(payload)))
+            return {'status':self.verdict,'reason':'La source ne confirme pas ce mécanisme.'}
+        return super().ask(task,payload,instructions,validate,budget)
+
+
+class SourceTerminology(unittest.TestCase):
+    def test_pm_recognizes_standard_french_variants_in_all_definition_positions(self):
+        for label in ('maintenance prédictive','maintenance prévisionnelle','entretien prédictif',
+                      'maintenances prévisionnelles','entretiens prédictifs','Predictive Maintenance'):
+            for text in (label+' (PM) anticipe les pannes.','PM ('+label+') anticipe les pannes.',
+                         'PM désigne '+label+'.'):
+                with self.subTest(text=text):quality.validate_acronyms(text,TERMS)
+
+    def test_predictive_aliases_are_not_inferred_from_the_letters_pm(self):
+        for source in ('Pain management','Pattern mining','Preventive maintenance'):
+            for label in ('maintenance prédictive','maintenance prévisionnelle','entretien prédictif'):
+                with self.subTest(source=source,label=label),self.assertRaises(quality.AcronymExpansionError):
+                    quality.validate_acronyms(label+' (PM) est utilisée.',{'PM':[{'definition':source,'page':3}]})
+
+    def test_wrong_meanings_remain_rejected_before_after_and_beside_pm(self):
+        for label in ('prévision minière','maintenance préventive','gestion de la douleur'):
+            for text in (label+' (PM) est employée.','PM ('+label+') est employée.','PM signifie '+label+'.'):
+                with self.subTest(text=text),self.assertRaises(quality.AcronymExpansionError) as caught:
+                    quality.validate_acronyms(text,TERMS)
+                self.assertEqual(caught.exception.term,'PM')
+                self.assertIn('maintenance prédictive',caught.exception.allowed_forms)
+                self.assertIn('Predictive Maintenance',str(caught.exception))
+
+    def test_diagnostics_include_the_received_label_and_source_allowlist(self):
+        with self.assertRaises(quality.AcronymExpansionError) as caught:quality.validate_acronyms(BAD,TERMS)
+        issue=caught.exception
+        self.assertIn('prevision miniere',quality.definition_key(issue.received))
+        self.assertEqual(issue.source_definitions,TERMS['PM'])
+        self.assertEqual(issue.preferred,'maintenance prédictive')
+
+    def test_writing_preferences_and_validation_use_the_same_source_bound_forms(self):
+        for definition,expected in (('Predictive Maintenance','maintenance prédictive'),
+                                    ('Frequent Itemset Mining','fouille de motifs fréquents'),
+                                    ('Bayesian Mixture Model','modèle de mélange bayésien')):
+            terms={'TERM':[{'definition':definition,'page':1}]}
+            preferred=quality.writing_definition(definition)
+            self.assertEqual(preferred,expected)
+            quality.validate_acronyms(preferred+' (TERM) explique ce mécanisme.',terms)
+        self.assertEqual(quality.writing_definition('Pain management'),'Pain management')
+
+    def test_existing_plan_definition_labels_are_stable(self):
+        # Ces libellés participent aux empreintes des plans 0.5.2 : ne pas les changer.
+        self.assertEqual(quality.preferred_definition('Predictive Maintenance'),'Predictive Maintenance')
+        self.assertEqual(quality.preferred_definition('Frequent Itemset Mining'),'Frequent Itemset Mining')
+        self.assertEqual(quality.preferred_definition('Noise figure'),'facteur de bruit')
+
+    def test_numeric_and_conditional_parentheses_are_not_rewritten_as_definitions(self):
+        for text in ('Le PM (20 mW, 30 mW) est étudié.','Le PM (sans bruit) est étudié.',
+                     'Le PM (under stable conditions) est étudié.'):
+            quality.validate_acronyms(text,TERMS)
+
+
+class TerminologyRecovery(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        write(self.root/'projet.json',{'settings':defaults(),'pdfs':[]})
+        self.idea={'id':'PDF1-P1-I004','statement':'La maintenance prédictive anticipe les défaillances.',
+            'explanation':'Les journaux d’événements servent à prévoir les interventions.',
+            'document':'PDF1','pages':[1],
+            'evidence':[{'page':1,'quote':'Predictive Maintenance (PM) aims to anticipate failures in industrial systems to plan early interventions. Event logs provide information on system health.'}]}
+    def tearDown(self):self.temp.cleanup()
+    def rewrite(self,client):return writing.rewrite(Pipeline(self.root,client),3,'Synthese-'+self.idea['id'],self.idea,TERMS)
+
+    def test_recognized_french_variant_is_accepted_without_a_retry(self):
+        client=TermDrafts([GOOD.replace('prédictive','prévisionnelle')]);result=self.rewrite(client)
+        self.assertIn('prévisionnelle',result['text'])
+        self.assertEqual(len([t for t,_ in client.calls if t=='grounded_text']),1)
+        self.assertEqual(result['terminology_corrections'],[])
+
+    def test_unknown_expansion_receives_a_targeted_repair_and_source_review(self):
+        client=TermDrafts([BAD,GOOD]);result=self.rewrite(client)
+        drafts=[p for t,p in client.calls if t=='grounded_text']
+        self.assertEqual(drafts[0]['preferred_wording']['PM'],'maintenance prédictive')
+        self.assertEqual(drafts[1]['mode'],'terminology');self.assertEqual(drafts[1]['draft'],BAD)
+        self.assertEqual(drafts[1]['canonical_definition'],'maintenance prédictive')
+        self.assertEqual(drafts[1]['source_definitions'],TERMS['PM'])
+        self.assertEqual(drafts[0]['source'],drafts[1]['source'])
+        self.assertEqual(result['text'],GOOD);self.assertEqual(result['terminology_corrections'][0]['term'],'PM')
+        self.assertEqual(next(p for t,p in client.calls if t=='writing_check')['text'],GOOD)
+
+    def test_persistent_wrong_expansion_is_bounded_and_never_saved_as_complete(self):
+        client=TermDrafts([BAD,BAD])
+        with self.assertRaisesRegex(InvalidResponseError,'PDF1-P1-I004.*PM'):self.rewrite(client)
+        self.assertEqual(len(client.calls),2)
+        self.assertFalse(list((self.root/'etapes/parties').glob('*.json')))
+
+    def test_correct_pm_does_not_approve_an_invented_number_or_unit(self):
+        client=TermDrafts([BAD,GOOD+' La puissance est garantie à 900 MW.'])
+        with self.assertRaises((ValueError,InvalidResponseError)):self.rewrite(client)
+        self.assertFalse(list((self.root/'etapes/parties').glob('*.json')))
+
+    def test_correct_pm_still_requires_positive_semantic_review(self):
+        client=TermDrafts([BAD,GOOD,BAD,GOOD],verdict='uncertain')
+        with self.assertRaises(InvalidResponseError):self.rewrite(client)
+        self.assertEqual(len([t for t,_ in client.calls if t=='writing_check']),2)
+        self.assertFalse(list((self.root/'etapes/parties').glob('*.json')))
+
+    def test_length_and_terminology_can_be_repaired_once_each_in_either_order(self):
+        huge=('Les journaux d’événements fournissent des informations sur l’état du système. '*20)
+        for drafts in ([huge,BAD,GOOD],[BAD,huge,GOOD]):
+            with self.subTest(first=drafts[0][:30]),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);write(root/'projet.json',{'settings':defaults(),'pdfs':[]})
+                client=TermDrafts(drafts)
+                result=writing.rewrite(Pipeline(root,client),3,'Unique',self.idea,TERMS)
+                self.assertEqual(result['text'],GOOD)
+                self.assertEqual(len([t for t,_ in client.calls if t=='grounded_text']),3)
+
+    def test_cancel_and_network_errors_during_terminology_repair_propagate(self):
+        for error in (Cancelled(),ModelError('Connexion interrompue')):
+            with self.subTest(error=type(error).__name__),self.assertRaises(type(error)):
+                self.rewrite(TermDrafts([BAD,error]))
+            self.assertFalse(list((self.root/'etapes/parties').glob('*.json')))
+
+    def test_completed_old_entry_without_terminology_metadata_is_reused(self):
+        self.rewrite(TermDrafts([GOOD]));path=next((self.root/'etapes/parties').glob('*.json'))
+        value=read(path);value['data'].pop('terminology_corrections');write(path,value);before=path.read_bytes()
+        client=TermDrafts([]);self.assertEqual(self.rewrite(client)['text'],GOOD)
+        self.assertEqual(client.calls,[]);self.assertEqual(path.read_bytes(),before)
+
+    def test_real_http_client_routes_the_exact_wrapped_error_to_terminology_repair(self):
+        stub=StubServer()
+        try:
+            def event(text):return (200,[{'message':{'content':json.dumps({'text':text})},'done':True,'done_reason':'stop'}])
+            stub.responses=[event(BAD),event(BAD),event(GOOD)]
+            client=Ollama({**defaults(),'endpoint':stub.endpoint},self.root/'cache')
+            result=self.rewrite(client)
+            self.assertEqual(result['text'],GOOD)
+            payload=stub.calls[2][1]
+            self.assertEqual(payload['mode'],'terminology')
+            self.assertEqual(payload['term_to_fix'],'PM');self.assertEqual(payload['draft'],BAD)
+            self.assertEqual(stub.calls[-1][0],'writing_check')
+        finally:stub.close()
+
+
+if __name__=='__main__':unittest.main()
+```
+
 ## voice_legacy.py
 
 ```python
@@ -7041,7 +7265,8 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     maximum=60 if kind=='sentence' else 160
     payload={'statement':idea['statement'],'explanation':idea.get('explanation',''),
              'source':evidence(idea),'glossary':terms,
-             'preferred_wording':{term:quality.preferred_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
+             'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
+             'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
              'kind':kind,'feedback':feedback,'context':context or {},
              'target_words':target,'preferred_max_words':preferred,'max_words':maximum,'length_policy':'bounded-concision-v1'}
     instructions='''Rédige en français naturel pour un podcast destiné à un débutant. Réécris le sens,
@@ -7053,11 +7278,17 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         N'ajoute ni chiffre, dispositif, résultat, exemple factuel ou causalité. Ne transforme pas un
         émetteur en récepteur ni une section en équipement. power=puissance, draw=étirage de fibre,
         second-order=du second ordre. Utilise le lexique fourni sans inventer de sigle.
-        preferred_wording donne les libellés reconnus. Préfère les termes français et explique le jargon.
+        preferred_wording donne les libellés reconnus à privilégier, allowed_definitions les variantes autorisées
+        par le glossaire source. N'invente aucun développement de sigle. Un sigle seul reste autorisé.
+        Pour définir un terme, reprends exactement un libellé proposé, sans le paraphraser ni créer un nouveau sigle.
+        Préfère les termes français et explique le jargon.
         Pas de citations [12], références de figures, formules lourdes, « le texte explique » ni consignes
         de correction. Le contexte évite les redites ; il n'autorise pas à transférer ses faits à cette idée.
         Si mode=shorten, reformule draft pour atteindre target_words en préservant le sens et les réserves ;
         source reste la seule preuve. Si mode=restart, repars de source, sans reproduire le brouillon raté.
+        Si mode=terminology, corrige les développements refusés dans draft avec allowed_definitions et
+        preferred_wording. Utilise canonical_definition pour term_to_fix, ou garde ce sigle seul si nécessaire.
+        Corrige tous les sigles concernés sans ajouter de fait, changer de sujet ou perdre une réserve.
         Retourne seulement {"text":"passage"}.'''
     def ask(current,limit):
         seen={}
@@ -7066,12 +7297,14 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
             seen['text']=text
             validate_text(text,idea,terms,limit)
         try:return pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
-        except (InvalidResponseError,TextShapeError,WordCountError) as error:
-            # Les autres erreurs de fidélité ne sont pas des problèmes de longueur.
+        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+            # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
-            while cause is not None and not isinstance(cause,(TextShapeError,WordCountError)):cause=cause.__cause__
+            while cause is not None and not isinstance(cause,(TextShapeError,WordCountError,quality.AcronymExpansionError)):cause=cause.__cause__
             if cause is not None:
-                error.draft_text=seen.get('text');error.length_issue=True
+                error.draft_text=seen.get('text')
+                if isinstance(cause,quality.AcronymExpansionError):error.terminology_issue=cause
+                else:error.length_issue=True
             raise
     def repair_payload(current,draft,problem,limit):
         count=len(draft.split()) if isinstance(draft,str) else 0
@@ -7086,15 +7319,25 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         notes=feedback
         for attempt in range(2):
             current={**payload,'mode':'draft','feedback':notes};adjusted=False;length_problem=''
-            try:value=ask(current,maximum)
-            except (InvalidResponseError,TextShapeError,WordCountError) as error:
-                if not getattr(error,'length_issue',False):raise
-                pipe.progress('Nouvelle rédaction ciblée — '+str(error))
-                retry=repair_payload(current,getattr(error,'draft_text',None),error,maximum)
-                try:value=ask(retry,maximum)
-                except (InvalidResponseError,TextShapeError,WordCountError) as failure:
-                    raise InvalidResponseError('Rédaction non validée pour '+idea['id']+' après une reprise ciblée : '+str(failure)) from failure
-                adjusted=True
+            request=current;repairs=set();terminology_corrections=[]
+            while True:
+                try:value=ask(request,maximum);break
+                except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+                    issue=getattr(error,'terminology_issue',None)
+                    category='terminology' if issue is not None else 'length' if getattr(error,'length_issue',False) else None
+                    if category is None:raise
+                    if category in repairs:
+                        raise InvalidResponseError('Rédaction non validée pour '+idea['id']+' après une reprise ciblée : '+str(error)) from error
+                    repairs.add(category)
+                    request=repair_payload(current,getattr(error,'draft_text',None),error,maximum)
+                    if issue is not None:
+                        pipe.progress('Correction du développement de '+issue.term+' — '+idea['id'])
+                        request.update(mode='terminology',term_to_fix=issue.term,canonical_definition=issue.preferred,
+                            source_definitions=issue.source_definitions,forbidden_expansion=issue.received)
+                        terminology_corrections.append({'term':issue.term,'received':issue.received,
+                            'preferred':issue.preferred,'allowed':issue.allowed_forms})
+                    else:
+                        pipe.progress('Nouvelle rédaction ciblée — '+str(error));adjusted=True
             if len(value['text'].split())>preferred:
                 pipe.progress('Réduction du passage '+idea['id']+' — '+str(len(value['text'].split()))+' mots, cible '+str(preferred))
                 shorter=repair_payload(current,value['text'],'Réduire le brouillon en gardant les conditions, réserves et limites.',preferred)
@@ -7109,12 +7352,14 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                 warnings=([idea['id']+' : passage de '+str(count)+' mots, au-delà de la cible éditoriale de '+str(preferred)+'. Conservé après relecture automatique des sources.'] if count>preferred else [])
                 return {'text':value['text'],'text_hash':fingerprint(value['text']),'source_hash':source_hash(idea),
                         'writing_version':VERSION,'review':verdict,'word_count':count,'preferred_max_words':preferred,
-                        'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings}
+                        'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings,
+                        'terminology_corrections':terminology_corrections}
             notes=verdict['reason']
         raise InvalidResponseError('Passage non validé après réécriture : '+notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
         {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,'terms':terms,'feedback':feedback,'context':context},
         produce,lambda v:v['text']+'\n\nSource : ['+idea['id']+']\n\nRelecture : '+v['review']['reason']+
+            ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in v['terminology_corrections']) if v.get('terminology_corrections') else '')+
             ('\n\nNote éditoriale : '+' '.join(v['warnings']) if v.get('warnings') else ''))
 
 
