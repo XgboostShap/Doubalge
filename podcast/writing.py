@@ -1,6 +1,6 @@
 """Réécriture bornée, citations contrôlées et relecture critique indépendante."""
 import re
-from storage import fingerprint
+from storage import fingerprint,read
 import quality
 import source_review
 from llm import InvalidResponseError, RepetitionError, ResponseLimitError
@@ -8,6 +8,7 @@ from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 VERSION='grounded-writing-v2'
 RECOVERABLE=(InvalidResponseError,RepetitionError,ResponseLimitError)
 FINAL_WORD_LIMIT=240
+DRAFT_WORD_LIMIT=160
 
 
 class TextShapeError(ValueError):
@@ -20,6 +21,85 @@ class WordCountError(ValueError):
 
 def evidence(idea):
     return '\n'.join(e['quote'] for e in idea.get('evidence',[])) or (idea['statement']+' '+idea.get('explanation',''))
+
+
+def source_wording(idea):
+    original={'statement':idea['statement'],'explanation':idea.get('explanation','')}
+    prepared=quality.normalize_terminology(original,evidence(idea))
+    changes=[{'field':field,'before':original[field],'after':prepared[field]} for field in original if prepared[field]!=original[field]]
+    return prepared,changes
+
+
+def prepare_draft(text,idea):
+    source=evidence(idea)
+    text=quality.normalize_cost_wording(text,source)
+    # Une référence isolée déjà présente dans la citation reste dans les
+    # preuves. Les intervalles, indices accolés et références inventées restent
+    # intacts : ils doivent être reformulés ou refusés par les contrôles.
+    markers=set(re.findall(r'(?<!\S)\[[1-9]\d*\](?=\s|[.,;:!?]|$)',source))
+    text=re.sub(r'(?<!\S)\[[1-9]\d*\](?=\s|[.,;:!?]|$)',lambda m:'' if m[0] in markers else m[0],text)
+    return re.sub(r' +([.,;:!?])',r'\1',re.sub(r' {2,}',' ',text)).strip()
+
+
+def rewrite_inputs(idea,terms,kind='explanation',feedback='',context=None):
+    # Contrat des unités 0.5.1 à 0.5.3 conservé pour reprendre leurs résultats.
+    return {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,
+            'terms':terms,'feedback':feedback,'context':context}
+
+
+def entry_markdown(value,identity):
+    return (value['text']+'\n\nSource : ['+identity+']\n\nRelecture : '+value['review']['reason']+
+        ('\n\nCorrections de formulation : '+' ; '.join(c['before']+' → '+c['after'] for c in value['source_wording_corrections']) if value.get('source_wording_corrections') else '')+
+        ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in value['terminology_corrections']) if value.get('terminology_corrections') else '')+
+        ('\n\nNote éditoriale : '+' '.join(value['warnings']) if value.get('warnings') else ''))
+
+
+def validate_cached_entry(value,idea,terms):
+    if not isinstance(value,dict):raise ValueError('Rédaction enregistrée invalide.')
+    validate_entry(value,idea,'text')
+    review=value.get('review')
+    if not isinstance(review,dict) or review.get('status')!='supported':raise ValueError('Relecture favorable manquante.')
+    if not isinstance(review.get('reason'),str) or not review['reason'].strip():raise ValueError('Motif de relecture manquant.')
+    quote=review.get('quote')
+    if not isinstance(quote,str) or len(quote)<20 or quality.normalized(quote) not in quality.normalized(evidence(idea)):
+        raise ValueError('Preuve de relecture absente de la source.')
+    quality.explanatory_quote(quote)
+    validate_text(value['text'],idea,terms,DRAFT_WORD_LIMIT)
+
+
+def completed_entry(pipe,step,key,idea,terms,kind='explanation'):
+    """Lire une unité complète et compatible ; un Markdown libre ne suffit pas."""
+    if not re.fullmatch(r'[A-Za-z0-9-]+',key):raise ValueError('Identifiant de partie invalide.')
+    path=pipe.project/'etapes/parties'/f'{step:02}-{key}.json'
+    if not path.exists():return None
+    terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
+    try:
+        saved=read(path)
+        if not isinstance(saved,dict):return None
+        if saved.get('fingerprint')!=pipe.unit_fingerprint(rewrite_inputs(idea,terms,kind)):return None
+        value=saved['data'];validate_cached_entry(value,idea,terms)
+        return value
+    except (ValueError,KeyError,TypeError):
+        pipe.progress('Passage antérieur à revérifier — '+idea['id'])
+        return None
+
+
+def common_entry(pipe,idea,terms,original=None):
+    """Assembler le texte commun avec les rédactions déjà relues, sans les raccourcir à nouveau."""
+    key='Commun-'+idea['id']
+    for kind in ('explanation','sentence'):
+        packet=completed_entry(pipe,4,key,idea,terms,kind)
+        if packet is not None:
+            pipe.progress('Reprise du texte commun — '+idea['id']);return packet
+    original=original or idea
+    packet=completed_entry(pipe,3,'Synthese-'+idea['id'],original,terms)
+    if packet is not None and source_hash(original)==source_hash(idea):
+        local_terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
+        pipe.progress('Réutilisation de la synthèse relue — '+idea['id'])
+        return pipe.unit(4,key,'Texte commun — '+idea['id'],rewrite_inputs(idea,local_terms),
+            lambda:{**packet,'reused_from':{'step':3,'key':'Synthese-'+idea['id']}},
+            lambda value:entry_markdown(value,idea['id']),validate_saved=lambda value:validate_cached_entry(value,idea,local_terms))
+    return rewrite(pipe,4,key,idea,terms)
 
 
 def validate_text(text,idea,terms,limit=95):
@@ -49,8 +129,9 @@ def check(pipe,text,idea,terms,final=False,recent=None):
     source=evidence(idea)
     terms=quality.relevant_terms(terms,source+' '+text)
     rows=source_review.excerpts(source)
-    payload={'text':text,'source_excerpts':rows,'expected_statement':idea['statement'],
-             'expected_explanation':idea.get('explanation',''),'glossary':terms,'final_review':final,'recent_texts':recent or []}
+    prepared,_=source_wording(idea)
+    payload={'text':text,'source_excerpts':rows,'expected_statement':prepared['statement'],
+             'expected_explanation':prepared['explanation'],'glossary':terms,'final_review':final,'recent_texts':recent or []}
     def validate(value):
         if not isinstance(value,dict) or value.get('status') not in ('supported','uncertain','contradicted'):raise ValueError('Un verdict supported, uncertain ou contradicted est requis.')
         if not isinstance(value.get('reason'),str) or not value['reason'].strip():raise ValueError('Motiver le verdict de relecture.')
@@ -83,8 +164,9 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
     preferred=35 if kind=='sentence' else 85
     target=25 if kind=='sentence' else 55
-    maximum=60 if kind=='sentence' else 160
-    payload={'statement':idea['statement'],'explanation':idea.get('explanation',''),
+    maximum=DRAFT_WORD_LIMIT
+    prepared,wording_changes=source_wording(idea)
+    payload={'statement':prepared['statement'],'explanation':prepared['explanation'],
              'source':evidence(idea),'glossary':terms,
              'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
              'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
@@ -98,7 +180,10 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         sans extrapoler. Garde les conditions, réserves et limites essentielles, même pour raccourcir.
         N'ajoute ni chiffre, dispositif, résultat, exemple factuel ou causalité. Ne transforme pas un
         émetteur en récepteur ni une section en équipement. power=puissance, draw=étirage de fibre,
-        second-order=du second ordre. Utilise le lexique fourni sans inventer de sigle.
+        second-order=du second ordre. cost-effective décrit un bon rapport coût/efficacité ou une
+        intervention rentable. Si le résumé contient un
+        contresens, source fait foi pour rectifier ce sens, sans substituer une autre idée.
+        Utilise le lexique fourni sans inventer de sigle.
         preferred_wording donne les libellés reconnus à privilégier, allowed_definitions les variantes autorisées
         par le glossaire source. N'invente aucun développement de sigle. Un sigle seul reste autorisé.
         Pour définir un terme, reprends exactement un libellé proposé, sans le paraphraser ni créer un nouveau sigle.
@@ -116,8 +201,15 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         def validate(value):
             text=value.get('text') if isinstance(value,dict) else None
             seen['text']=text
-            validate_text(text,idea,terms,limit)
-        try:return pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
+            prepared=prepare_draft(text,idea) if isinstance(text,str) else text
+            validate_text(prepared,idea,terms,limit)
+        try:
+            value=pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
+            # La réponse brute reste dans le cache du modèle ; seule cette copie
+            # corrigée et tracée sera soumise à la relecture indépendante.
+            before=value['text'];after=prepare_draft(before,idea)
+            corrections=[{'field':'draft.text','before':before,'after':after}] if before!=after else []
+            return {**value,'text':after,'draft_wording_corrections':corrections}
         except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
             # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
@@ -174,14 +266,13 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                 return {'text':value['text'],'text_hash':fingerprint(value['text']),'source_hash':source_hash(idea),
                         'writing_version':VERSION,'review':verdict,'word_count':count,'preferred_max_words':preferred,
                         'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings,
-                        'terminology_corrections':terminology_corrections}
+                        'terminology_corrections':terminology_corrections,
+                        'source_wording_corrections':wording_changes+value['draft_wording_corrections']}
             notes=verdict['reason']
         raise InvalidResponseError('Passage non validé après réécriture : '+notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
-        {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,'terms':terms,'feedback':feedback,'context':context},
-        produce,lambda v:v['text']+'\n\nSource : ['+idea['id']+']\n\nRelecture : '+v['review']['reason']+
-            ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in v['terminology_corrections']) if v.get('terminology_corrections') else '')+
-            ('\n\nNote éditoriale : '+' '.join(v['warnings']) if v.get('warnings') else ''))
+        rewrite_inputs(idea,terms,kind,feedback,context),produce,lambda value:entry_markdown(value,idea['id']),
+        validate_saved=lambda value:validate_cached_entry(value,idea,terms))
 
 
 def source_hash(idea):

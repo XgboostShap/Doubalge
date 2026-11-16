@@ -118,23 +118,32 @@ class Pipeline:
     def saved(self, step):
         return read(self.project/'etapes'/f'{step:02}.json')['data']
 
-    def unit(self, step, key, title, inputs, produce, render):
+    def unit_fingerprint(self,inputs):
+        return fingerprint({'version':1,'inputs':inputs,'settings':self.config,
+                            'generation':self.meta.get('cache_generation','initial')})
+
+    def unit(self, step, key, title, inputs, produce, render,validate_saved=None):
         """Le JSON validé est le marqueur de fin, écrit après son Markdown."""
         if self.cancelled.is_set():
             raise Cancelled()
         if not re.fullmatch(r'[A-Za-z0-9-]+',key):
             raise ValueError('Identifiant de partie invalide.')
         path = self.project/'etapes'/'parties'/f'{step:02}-{key}.json'
-        signature = fingerprint({'version':1,'inputs':inputs,'settings':self.config,
-                                 'generation':self.meta.get('cache_generation','initial')})
+        signature = self.unit_fingerprint(inputs)
         if path.exists():
-            saved = read(path)
-            if saved.get('fingerprint')==signature:
-                value = saved['data']
-                if not path.with_suffix('.md').exists():
-                    write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
-                self.progress('Reprise — partie déjà enregistrée : '+title)
-                return value
+            try:
+                saved = read(path)
+                if not isinstance(saved,dict):raise ValueError('Partie enregistrée invalide.')
+                if saved.get('fingerprint')==signature:
+                    value = saved['data']
+                    if validate_saved is not None:validate_saved(value)
+                    if not path.with_suffix('.md').exists():
+                        write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
+                    self.progress('Reprise — partie déjà enregistrée : '+title)
+                    return value
+            except (ValueError,KeyError,TypeError):
+                if validate_saved is None:raise
+                self.progress('Partie enregistrée à revérifier — '+title)
         value = produce()
         if self.cancelled.is_set():
             raise Cancelled()

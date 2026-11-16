@@ -35,9 +35,11 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.locator('#check-model').click();page.wait_for_function('() => document.querySelector("#model-status").textContent.includes("mistral:test")')
             page.locator('#create').click();page.wait_for_function('() => current()?.pdfs.length===2')
             identifier=page.evaluate('selected');folder=app.project(identifier)
-            page.evaluate('() => {state.runtime=null;render()}')
-            assert page.locator('#continue').is_disabled()
-            assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
+            # Capturer les deux effets dans le même rendu : le polling peut
+            # rétablir runtime entre deux aller-retours Python/navigateur.
+            outdated_ui=page.evaluate('() => {state.runtime=null;render();return {disabled:document.querySelector("#continue").disabled,notice:document.querySelector("#notice").textContent}}')
+            assert outdated_ui['disabled']
+            assert 'ancienne instance' in outdated_ui['notice'].lower()
             page.evaluate('() => refresh()')
             page.wait_for_function('() => Boolean(state.runtime?.version)')
             page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task?.state==="done"')

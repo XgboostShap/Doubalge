@@ -26,7 +26,7 @@ import voice_legacy
 import source_review
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.3'
+APP_VERSION = '0.5.4'
 
 
 def settings(value):

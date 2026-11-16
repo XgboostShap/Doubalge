@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.5.3
+# Sources complètes — Podcast pédagogique 0.5.4
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.
@@ -37,7 +37,7 @@ pause
 ## LIRE-MOI.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.3 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.5.4 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
@@ -113,17 +113,17 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.3 — CORRECTIF DEVELOPPEMENTS DE SIGLES
+PODCAST PEDAGOGIQUE 0.5.4 — CORRECTIF ASSEMBLAGE DU TEXTE COMMUN
 
-1. Fermer la fenetre de lancement de PodcastPedago.
+1. Fermer l’application et sa fenetre de lancement.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.5.3.
+4. Relancer depuis le dossier installe et verifier Version 0.5.4.
 5. Ouvrir le DERNIER PROJET puis Continuer jusqu’au script final.
-   Les etapes 1 et 2 et les passages deja termines sont reutilises.
+   Les etapes 1 a 3 et les passages deja termines sont reutilises.
    Ne pas reimporter le PDF ni reexaminer l’etape 2 pour l’erreur
-   de redaction « Developpement non confirme de PM » ou « 5 a 85 mots ».
+   de redaction « 70 mots pour une limite de 60 » de l’etape 4.
 6. Relire le dialogue puis essayer un audio court avec les voix existantes.
 
 LES PDF, LEUR EXTRACTION, LES PROJETS ET LES VOIX SONT CONSERVES.
@@ -131,6 +131,11 @@ Les resultats remplaces sont archives. Aucun PDF n’est a reimporter.
 Si aucune idee n’est retenue a l’etape 2, utiliser Reexaminer l’etape 2.
 Pour un ancien controle signale par l’application, utiliser Ameliorer les
 resumes existants avant de continuer.
+
+L’etape 4 rassemble les redactions deja relues au lieu de demander a nouveau
+une phrase tres courte pour chaque idee. Les idees restantes recoivent un
+paragraphe et une relecture. Les empreintes, preuves et controles actuels
+sont verifies avant la reutilisation d’un ancien passage.
 
 Quand PM signifie Predictive Maintenance dans le PDF, la redaction propose
 maintenance predictive. Maintenance previsionnelle et entretien predictif
@@ -143,6 +148,14 @@ une demande ciblee le reformule avec son compte de mots et ses sources.
 Un depassement modere peut rester avec une note editoriale apres relecture
 automatique favorable. Aucun texte n’est coupe pour atteindre 85 mots.
 Les faits, nombres, unites et citations sont toujours controles.
+
+Le contresens observe sur cost-effective est corrige lorsque la citation
+source le justifie : rapport cout/efficacite, interventions rentables.
+La correction est tracee hors du texte parle et soumise a relecture.
+Les citations et le registre original restent conserves.
+Un marqueur bibliographique isole comme [1], deja present dans la source,
+reste dans les preuves et est retire de la copie du brouillon a lire.
+Ce retrait est trace et le passage corrige doit aussi passer la relecture.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif puis lancer :
@@ -160,7 +173,7 @@ Consulter README.md pour les limites des controles, de Windows et des voix.
 ## README.md
 
 ```text
-# Podcast pédagogique — version 0.5.3
+# Podcast pédagogique — version 0.5.4
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -169,7 +182,9 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.3** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.4** en haut de la page.
+
+Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 
 Pour le blocage de l’étape 3 « Développement non confirmé de PM » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Le lexique source, les étapes 1 et 2 et les passages déjà terminés restent conservés. La rédaction du passage en échec reçoit les libellés autorisés et une correction ciblée du sigle.
 
@@ -244,6 +259,18 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
 
+## Correctif 0.5.4 — assembler le texte commun sans réécrire les synthèses
+
+L’étape 4 utilisait la consigne de phrase clé, avec une borne de 60 mots, alors qu’elle doit réunir les idées dans un texte commun. Elle reprend désormais d’abord les passages déjà terminés de l’étape 4, puis les rédactions compatibles de l’étape 3. Seules les idées sans rédaction réutilisable demandent un nouveau paragraphe et sa relecture des sources. Toutes les idées du registre restent présentes, y compris celles qui n’avaient pas été sélectionnées dans la synthèse courte.
+
+Une unité réutilisée doit correspondre à ses entrées, paramètres et glossaire, conserver ses empreintes de source et de texte, porter une relecture favorable et citer un passage présent dans la source. Elle repasse aussi les contrôles statiques actuels. Un Markdown libre, une preuve inventée, un texte modifié ou une relecture incertaine ne suffisent pas. Une unité incompatible ou refusée est rédigée et relue à nouveau ; l’étape 3 n’est pas modifiée par cette reprise de l’étape 4.
+
+Le plafond technique des nouvelles rédactions est de **160 mots**, pour les paragraphes comme pour les phrases clés. Les cibles éditoriales restent plus courtes : environ 55 mots par explication et 25 par phrase clé. Un dépassement de la cible déclenche une réduction ; s’il reste modéré, il peut être signalé par une note après relecture favorable. Il ne bloque plus uniquement parce qu’il dépasse 60 mots. Les sources et réserves ne sont pas coupées pour raccourcir.
+
+Un contresens observé dans le fichier intermédiaire est également contrôlé : *cost-effective interventions* décrit le rapport coût/efficacité, et ne doit pas être traduit par « interventions coûteuses ». Ce contrôle s’applique aussi aux anciens passages avant leur réutilisation. Cette formulation est corrigée dans les données envoyées au rédacteur et au relecteur lorsque la citation la justifie. Si le modèle reproduit cette erreur précise, une copie du brouillon est corrigée avant ses contrôles et sa relecture indépendante. Les formulations avant et après correction sont enregistrées hors du texte parlé ; les citations et le registre original restent inchangés. Une négation ou une mention explicite d’interventions coûteuses dans la source empêche cette correction automatique. Un passage corrigé doit encore recevoir une relecture favorable pour être retenu. Ces contrôles complètent les relectures automatiques sans garantir à eux seuls la fidélité scientifique de tout le texte.
+
+Si le modèle recopie un marqueur bibliographique isolé comme `[1]` déjà présent dans la citation source, ce marqueur est retiré de la copie destinée au texte parlé avant ses contrôles et sa relecture. Le brouillon brut et la correction restent enregistrés. Les nombres scientifiques, unités, intervalles, indices accolés et références inconnues ne sont pas effacés par ce traitement.
+
 ## Correctif 0.5.3 — développements de sigles et libellés français
 
 Les consignes de rédaction et la validation utilisent la même liste de libellés issus du glossaire source. Lorsque le PDF définit **PM comme Predictive Maintenance**, la rédaction privilégie **maintenance prédictive**. Les variantes reconnues **maintenance prévisionnelle** et **entretien prédictif**, ainsi que leurs pluriels, sont également acceptées. Ces variantes ne sont pas activées pour un document où PM possède un autre sens.
@@ -260,7 +287,7 @@ Une explication vise environ 55 mots, avec une cible maximale de 85. Si le broui
 
 Un brouillon entre 86 et 160 mots peut être conservé avec une **note éditoriale visible** si la réduction n’aboutit pas et si sa propre relecture des sources est favorable. La réduction refusée n’est pas utilisée. Le dépassement de la cible ne vaut jamais validation scientifique. Les notes restent dans les rapports et ne sont pas lues par VoiceStudio. Les estimations de durée reposent sur le texte réellement retenu.
 
-Les bornes techniques restent limitées : 160 mots par explication, 60 pour une phrase clé, 240 pour une réponse finale incluant les définitions du lexique. Un champ absent, un texte trop court ou un brouillon au-delà de ces bornes déclenche une reprise ciblée ; un échec persistant s’arrête avec un diagnostic détaillé. Un brouillon démesuré peut être omis en entier lors de la reprise ; les citations source restent intégrales. Les erreurs réseau et les annulations restent des arrêts explicites.
+Les bornes techniques restent limitées : 160 mots par rédaction depuis la version 0.5.4, 240 pour une réponse finale incluant les définitions du lexique. Un champ absent, un texte trop court ou un brouillon au-delà de ces bornes déclenche une reprise ciblée ; un échec persistant s’arrête avec un diagnostic détaillé. Un brouillon démesuré peut être omis en entier lors de la reprise ; les citations source restent intégrales. Les erreurs réseau et les annulations restent des arrêts explicites.
 
 Les parties déjà validées en 0.5.1 restent réutilisables, sans recréer les sources ni les voix. Les réparations portent sur l’idée en échec. Les contrôles des faits, des identifiants, des nombres, des unités et des citations restent actifs.
 
@@ -344,7 +371,7 @@ import voice_legacy
 import source_review
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.3'
+APP_VERSION = '0.5.4'
 
 
 def settings(value):
@@ -1497,6 +1524,7 @@ def registry_markdown(ideas):
 
 def common(pipe):
     data=pipe.saved(3);ideas=[copy.deepcopy(i) for d in data['documents'] for p in d['parts'] for i in p['ideas']]
+    originals={i['id']:copy.deepcopy(i) for i in ideas}
     if data.get('workflow_version')!=VERSION:raise ValueError('Ancienne synthèse : reprendre à l’étape 3 après réexamen des sources.')
     if not ideas:raise ValueError(source_review.empty_message(data))
     if len({i['id'] for i in ideas})!=len(ideas):raise ValueError('Identifiants sources en doublon : reprendre les résumés.')
@@ -1511,8 +1539,8 @@ def common(pipe):
         if not entries:continue
         paragraphs=[]
         for idea in entries:
-            packet=writing.rewrite(pipe,4,'Commun-'+idea['id'],idea,
-                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},'sentence')
+            packet=writing.common_entry(pipe,idea,
+                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']])
             paragraphs.append(packet['text']+' ['+idea['id']+']')
             length_warnings.extend(packet.get('warnings',[]))
         text='\n\n'.join(paragraphs)
@@ -2313,7 +2341,7 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Pour le blocage de redaction de l etape 3, ouvrir le dernier projet puis Continuer jusqu au script final. Les parties terminees sont reutilisees. Si aucune idee n est retenue a l etape 2, utiliser Reexaminer l etape 2. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Pour le blocage de redaction de l etape 4, ouvrir le dernier projet puis Continuer jusqu au script final. Les etapes 1 a 3 et les passages termines restent conserves. Si aucune idee n est retenue a l etape 2, utiliser Reexaminer l etape 2. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }
 ```
@@ -2508,23 +2536,32 @@ class Pipeline:
     def saved(self, step):
         return read(self.project/'etapes'/f'{step:02}.json')['data']
 
-    def unit(self, step, key, title, inputs, produce, render):
+    def unit_fingerprint(self,inputs):
+        return fingerprint({'version':1,'inputs':inputs,'settings':self.config,
+                            'generation':self.meta.get('cache_generation','initial')})
+
+    def unit(self, step, key, title, inputs, produce, render,validate_saved=None):
         """Le JSON validé est le marqueur de fin, écrit après son Markdown."""
         if self.cancelled.is_set():
             raise Cancelled()
         if not re.fullmatch(r'[A-Za-z0-9-]+',key):
             raise ValueError('Identifiant de partie invalide.')
         path = self.project/'etapes'/'parties'/f'{step:02}-{key}.json'
-        signature = fingerprint({'version':1,'inputs':inputs,'settings':self.config,
-                                 'generation':self.meta.get('cache_generation','initial')})
+        signature = self.unit_fingerprint(inputs)
         if path.exists():
-            saved = read(path)
-            if saved.get('fingerprint')==signature:
-                value = saved['data']
-                if not path.with_suffix('.md').exists():
-                    write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
-                self.progress('Reprise — partie déjà enregistrée : '+title)
-                return value
+            try:
+                saved = read(path)
+                if not isinstance(saved,dict):raise ValueError('Partie enregistrée invalide.')
+                if saved.get('fingerprint')==signature:
+                    value = saved['data']
+                    if validate_saved is not None:validate_saved(value)
+                    if not path.with_suffix('.md').exists():
+                        write_text(path.with_suffix('.md'),'# '+title+'\n\n'+render(value))
+                    self.progress('Reprise — partie déjà enregistrée : '+title)
+                    return value
+            except (ValueError,KeyError,TypeError):
+                if validate_saved is None:raise
+                self.progress('Partie enregistrée à revérifier — '+title)
         value = produce()
         if self.cancelled.is_set():
             raise Cancelled()
@@ -3333,8 +3370,28 @@ def source_subject_check(fact, terms=None):
                 raise ValueError('La propriété citée n’est pas rattachée au sujet '+symbol+' dans la phrase source ; vérifier le dispositif concerné.')
 
 
+def costly_intervention_spans(text,source):
+    if not re.search(r'\bcost[-\s]*effective\b',source,re.I):return []
+    if re.search(r'\b(?:costly|expensive)\b',source,re.I):return []
+    if re.search(r'\b(?:not|never|non)\s+(?:\w+\s+){0,2}cost[-\s]*effective\b',source,re.I):return []
+    pattern=r'\b(?:planifier|prévoir|programmer)\b.{0,60}\b(?P<noun>interventions?)\b.{0,35}\b(?P<adjective>coûteuses?|onéreuses?)\b'
+    return [m for m in re.finditer(pattern,text,re.I)
+            if not re.search(r'\b(?:peu|moins|pas|non|sans)\b.{0,30}\b(?:coûteuses?|onéreuses?)\b',m[0],re.I)]
+
+
+def normalize_cost_wording(text,source):
+    for match in reversed(costly_intervention_spans(text,source)):
+        replacement='rentables' if match['noun'].casefold().endswith('s') else 'rentable'
+        start,end=match.span('adjective')
+        text=text[:start]+replacement+text[end:]
+    return text
+
+
 def normalize_terminology(fact, source):
     value=dict(fact)
+    # Une traduction déterministe ne change ni la source ni ses valeurs.
+    for field in ('statement','explanation'):
+        value[field]=normalize_cost_wording(value[field],source)
     if re.search(r'predictive maintenance',source,re.I) and not re.search(r'preventive maintenance',source,re.I):
         for field in ('statement','explanation'):
             value[field]=re.sub(r'\b(?:entretien préventif|maintenance préventive)\b','maintenance prédictive',value[field],flags=re.I)
@@ -3563,6 +3620,8 @@ def validate_evidence_details(text, evidence):
 
 def validate_technical_wording(text, evidence):
     claim=definition_key(text);source=definition_key(evidence)
+    if costly_intervention_spans(text,evidence):
+        raise ValueError('cost-effective signifie un bon rapport coût/efficacité ; ne pas le traduire par des interventions coûteuses.')
     if 'predictive maintenance' in source and 'preventive maintenance' not in source and re.search(r'\b(?:entretien preventif|maintenance preventive)\b',claim):
         raise ValueError('predictive maintenance signifie maintenance prédictive, distincte de la maintenance préventive.')
     if 'power' in source and re.search(r'\b(?:egalisation|reglage|optique).{0,55}\bpouvoir\b',claim):
@@ -4087,9 +4146,11 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.locator('#check-model').click();page.wait_for_function('() => document.querySelector("#model-status").textContent.includes("mistral:test")')
             page.locator('#create').click();page.wait_for_function('() => current()?.pdfs.length===2')
             identifier=page.evaluate('selected');folder=app.project(identifier)
-            page.evaluate('() => {state.runtime=null;render()}')
-            assert page.locator('#continue').is_disabled()
-            assert 'ancienne instance' in page.locator('#notice').inner_text().lower()
+            # Capturer les deux effets dans le même rendu : le polling peut
+            # rétablir runtime entre deux aller-retours Python/navigateur.
+            outdated_ui=page.evaluate('() => {state.runtime=null;render();return {disabled:document.querySelector("#continue").disabled,notice:document.querySelector("#notice").textContent}}')
+            assert outdated_ui['disabled']
+            assert 'ancienne instance' in outdated_ui['notice'].lower()
             page.evaluate('() => refresh()')
             page.wait_for_function('() => Boolean(state.runtime?.version)')
             page.locator('#run-step').click();page.wait_for_function('() => current()?.completed.includes(1)&&current()?.task?.state==="done"')
@@ -6973,6 +7034,269 @@ class TerminologyRecovery(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_update054.py
+
+```python
+"""Étape 4 : assembler les passages relus et reprendre les anciens résultats sans les couper."""
+import copy
+from pathlib import Path
+import tempfile
+import unittest
+
+from fixtures import FakeClient
+from llm import InvalidResponseError,ModelError
+from pipeline import Pipeline
+from storage import defaults,fingerprint,read,write
+import editorial,quality,writing
+
+
+PARAGRAPH=('Les motifs fréquents sont identifiés dans un ensemble de données. '*6+
+           'Cette analyse conserve les conditions du seuil et ses limites.')
+SHORT='Les motifs fréquents sont retenus selon un seuil. La sélection conserve ses conditions et ses limites.'
+
+
+class Replies(FakeClient):
+    def __init__(self,text=SHORT,status='supported'):
+        super().__init__();self.text=text;self.status=status
+    def ask(self,task,payload,instructions,validate,budget=4000):
+        if task=='grounded_text':
+            self.calls.append((task,copy.deepcopy(payload)))
+            value={'text':self.text};validate(value);return value
+        if task=='writing_check' and self.status!='supported':
+            self.calls.append((task,copy.deepcopy(payload)))
+            return {'status':self.status,'reason':'La source ne confirme pas le passage.'}
+        return super().ask(task,payload,instructions,validate,budget)
+
+
+class NoCalls(FakeClient):
+    def ask(self,*args,**kwargs):raise AssertionError('Une rédaction déjà relue et compatible doit être réutilisée.')
+
+
+class CommonTextTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        write(self.root/'projet.json',{'settings':defaults(),'pdfs':[]})
+        self.idea={'id':'PDF1-P2-I001','statement':'Les motifs fréquents dépendent du seuil dans les données.',
+            'explanation':'Le seuil doit être indiqué avec ses conditions.',
+            'document':'PDF1','pages':[2],'role':'concept','importance':'essential',
+            'evidence':[{'page':2,'quote':'Frequent patterns depend on a threshold in the data. The threshold determines retained patterns under the stated conditions.'}]}
+        self.idea['source_hash']=editorial.source_hash(self.idea)
+        self.terms={}
+    def tearDown(self):self.temp.cleanup()
+    def prepare(self,ideas=None):
+        data={'quality_version':quality.VERSION,'documents':[{'id':'PDF1','name':'Essai.pdf','glossary':self.terms,
+              'parts':[{'number':2,'ideas':ideas or [self.idea],'excluded_ideas':[]}]}]}
+        write(self.root/'etapes/02.json',{'data':data})
+    def warm(self,text=SHORT,ideas=None):
+        self.prepare(ideas);Pipeline(self.root,Replies(text)).run(3,3)
+    def snapshot3(self):
+        return {p:p.read_bytes() for p in (self.root/'etapes').glob('03.*')} | {
+            p:p.read_bytes() for p in (self.root/'etapes/parties').glob('03-*')}
+    def assert_preserved(self,files):
+        self.assertTrue(all(p.read_bytes()==raw for p,raw in files.items()))
+    def packet(self,step=3):
+        prefix='Synthese-' if step==3 else 'Commun-'
+        return self.root/'etapes/parties'/f'{step:02}-{prefix}{self.idea["id"]}.json'
+
+    def test_a_70_word_synthesis_is_reused_whole_without_another_model_call(self):
+        self.assertEqual(len(PARAGRAPH.split()),70)
+        self.warm(PARAGRAPH);before=self.snapshot3()
+        Pipeline(self.root,NoCalls()).run(4,4)
+        data=read(self.root/'etapes/04.json')['data']
+        self.assertIn(PARAGRAPH,data['groups'][0]['text'])
+        self.assertEqual(read(self.packet(4))['data']['reused_from']['step'],3)
+        self.assert_preserved(before)
+
+    def test_existing_stage4_sentence_units_remain_byte_identical(self):
+        self.warm()
+        writing.rewrite(Pipeline(self.root,Replies(SHORT)),4,'Commun-'+self.idea['id'],self.idea,self.terms,'sentence')
+        files={p:p.read_bytes() for p in self.packet(4).parent.glob('04-*')}
+        Pipeline(self.root,NoCalls()).run(4,4)
+        self.assert_preserved(files)
+        self.assertIn(SHORT,read(self.root/'etapes/04.json')['data']['groups'][0]['text'])
+
+    def test_missing_synthesis_unit_is_written_as_a_paragraph_not_a_key_sentence(self):
+        self.warm();before=(self.root/'etapes/03.json').read_bytes()
+        self.packet().unlink()
+        client=Replies(PARAGRAPH);Pipeline(self.root,client).run(4,4)
+        drafts=[p for task,p in client.calls if task=='grounded_text']
+        self.assertEqual(len(drafts),1);self.assertEqual(drafts[0]['kind'],'explanation')
+        self.assertEqual(read(self.packet(4))['data']['word_count'],70)
+        self.assertEqual((self.root/'etapes/03.json').read_bytes(),before)
+        self.assertTrue(any(task=='writing_check' for task,_ in client.calls))
+
+    def test_all_registry_ideas_survive_even_if_stage3_selected_only_two(self):
+        ideas=[]
+        for n,label in enumerate(('premier','second','dernier'),1):
+            idea=copy.deepcopy(self.idea);idea['id']=f'PDF1-P2-I{n:03}'
+            idea['statement']='Le '+label+' motif dépend des conditions de la collecte.'
+            idea['source_hash']=editorial.source_hash(idea);ideas.append(idea)
+        self.warm(ideas=ideas)
+        selected=set(read(self.root/'etapes/03.json')['data']['documents'][0]['synthesis_ids'])
+        self.assertEqual(len(selected),2)
+        client=Replies();Pipeline(self.root,client).run(4,4)
+        data=read(self.root/'etapes/04.json')['data']
+        self.assertEqual({i['id'] for i in data['ideas']},{i['id'] for i in ideas})
+        self.assertEqual({i for g in data['groups'] for i in g['idea_ids']},{i['id'] for i in ideas})
+        self.assertEqual(len([task for task,_ in client.calls if task=='grounded_text']),1)
+
+    def test_an_uncertain_cached_review_is_not_reused(self):
+        self.warm();value=read(self.packet());value['data']['review']['status']='uncertain';write(self.packet(),value)
+        client=Replies(PARAGRAPH);Pipeline(self.root,client).run(4,4)
+        self.assertTrue(any(task=='writing_check' for task,_ in client.calls))
+        self.assertNotIn('reused_from',read(self.packet(4))['data'])
+
+    def test_tampered_text_or_an_invented_review_quote_is_not_reused(self):
+        for field,bad in (('text','Une interprétation modifiée à la main.'),('quote','An invented quote that is absent from the source.')):
+            with self.subTest(field=field):
+                self.warm();value=read(self.packet())
+                if field=='text':value['data']['text']=bad
+                else:value['data']['review']['quote']=bad
+                write(self.packet(),value)
+                # Vérifier directement la sélection évite qu'une autre unité masque le refus.
+                self.assertIsNone(writing.completed_entry(Pipeline(self.root,NoCalls()),3,'Synthese-'+self.idea['id'],self.idea,self.terms))
+                self.packet().unlink()
+
+    def test_relevant_glossary_change_prevents_stale_reuse(self):
+        self.idea.update(statement='Le DT représente un système physique.',explanation='Le modèle dépend des données du système.',
+            evidence=[{'page':2,'quote':'A digital twin (DT) represents a physical system and depends on data from that system.'}])
+        self.idea['source_hash']=editorial.source_hash(self.idea)
+        self.terms={'DT':[{'definition':'Digital twin','page':2}]}
+        self.warm('Le jumeau numérique (DT) représente un système physique à partir de ses données.')
+        changed={'DT':[{'definition':'Decision tree','page':2}]}
+        self.assertIsNone(writing.completed_entry(Pipeline(self.root,NoCalls()),3,'Synthese-'+self.idea['id'],self.idea,changed))
+
+    def test_a_matching_but_invalid_stage4_cache_cannot_bypass_revalidation(self):
+        self.warm();Pipeline(self.root,NoCalls()).run(4,4)
+        value=read(self.packet(4));value['data']['text']='Les motifs garantissent une puissance de 900 MW.'
+        value['data']['text_hash']=fingerprint(value['data']['text']);write(self.packet(4),value)
+        Pipeline(self.root,NoCalls()).run(4,4)
+        data=read(self.packet(4))['data']
+        self.assertEqual(data['text'],SHORT);self.assertNotIn('900',data['text'])
+
+    def test_corrupt_app_cache_is_rebuilt_from_a_valid_source_unit(self):
+        self.warm();self.packet(4).write_text('{JSON interrompu',encoding='utf-8')
+        Pipeline(self.root,NoCalls()).run(4,4)
+        self.assertEqual(read(self.packet(4))['data']['text'],SHORT)
+
+    def test_rejected_new_paragraph_never_completes_stage4(self):
+        self.warm();self.packet().unlink()
+        before=(self.root/'etapes/03.json').read_bytes()
+        with self.assertRaises(InvalidResponseError):Pipeline(self.root,Replies(PARAGRAPH,status='uncertain')).run(4,4)
+        self.assertFalse((self.root/'etapes/04.json').exists());self.assertFalse(self.packet(4).exists())
+        self.assertEqual((self.root/'etapes/03.json').read_bytes(),before)
+
+    def test_a_real_key_sentence_over_60_words_is_an_editorial_issue_after_review(self):
+        packet=writing.rewrite(Pipeline(self.root,Replies(PARAGRAPH)),6,'Phrase-'+self.idea['id'],self.idea,self.terms,'sentence')
+        self.assertEqual(packet['text'],PARAGRAPH);self.assertEqual(packet['word_count'],70)
+        self.assertTrue(packet['warnings']);self.assertEqual(packet['review']['status'],'supported')
+        self.assertIn('ses limites',packet['text'])
+
+    def test_cost_effective_is_not_translated_as_expensive_interventions(self):
+        for source in ('cost-effective interventions','cost- effective interventions'):
+            with self.subTest(source=source),self.assertRaisesRegex(ValueError,'coût/efficacité'):
+                quality.validate_technical_wording('La méthode permet de planifier des interventions préventives coûteuses.',source)
+            quality.validate_technical_wording('La méthode permet de planifier des interventions rentables.',source)
+            quality.validate_technical_wording('La méthode permet de planifier des interventions moins coûteuses.',source)
+
+    def test_a_previously_supported_mistranslation_is_rewritten_from_its_source(self):
+        self.idea.update(statement='La maintenance prédictive anticipe les défaillances.',
+            explanation='Elle permet de planifier des interventions préventives coûteuses.',
+            evidence=[{'page':2,'quote':'Predictive maintenance anticipates failures to plan early and cost-effective interventions. Event logs report system health.'}])
+        self.idea['source_hash']=editorial.source_hash(self.idea)
+        good='La maintenance prédictive anticipe les défaillances et permet de planifier des interventions rentables.'
+        self.warm(good);value=read(self.packet())
+        value['data']['text']='La maintenance prédictive permet de planifier des interventions préventives coûteuses.'
+        value['data']['text_hash']=fingerprint(value['data']['text']);write(self.packet(),value)
+        client=Replies(good);Pipeline(self.root,client).run(4,4)
+        self.assertEqual(read(self.packet(4))['data']['text'],good)
+        self.assertTrue(any(task=='writing_check' for task,_ in client.calls))
+        self.assertNotIn('reused_from',read(self.packet(4))['data'])
+
+    def test_writer_and_reviewer_receive_corrected_wording_but_the_registry_is_preserved(self):
+        self.idea.update(explanation='La méthode permet de planifier des interventions préventives coûteuses.',
+            evidence=[{'page':2,'quote':'The method plans early and cost-effective interventions. Frequent patterns are retained under their threshold conditions.'}])
+        self.idea['source_hash']=editorial.source_hash(self.idea);original=copy.deepcopy(self.idea)
+        self.prepare();before=(self.root/'etapes/02.json').read_bytes()
+        client=Replies('La méthode planifie des interventions rentables tout en conservant les conditions de sélection des motifs.')
+        Pipeline(self.root,client).run(3,3)
+        draft=next(p for task,p in client.calls if task=='grounded_text')
+        review=next(p for task,p in client.calls if task=='writing_check')
+        self.assertIn('rentables',draft['explanation']);self.assertNotIn('coûteuses',draft['explanation'])
+        self.assertIn('rentables',review['expected_explanation'])
+        self.assertEqual(self.idea,original);self.assertEqual((self.root/'etapes/02.json').read_bytes(),before)
+        entry=read(self.packet())['data'];self.assertTrue(entry['source_wording_corrections'])
+        self.assertEqual(entry['source_hash'],editorial.source_hash(original))
+
+    def test_cost_wording_repair_requires_the_source_and_preserves_units_and_negations(self):
+        fact={'statement':'La méthode permet de planifier une intervention coûteuse.',
+              'explanation':'La puissance indiquée reste à 1 mW.'}
+        before=copy.deepcopy(fact)
+        repaired=quality.normalize_terminology(fact,'The method plans early and cost-effective interventions. The power remains 1 mW.')
+        self.assertIn('une intervention rentable',repaired['statement']);self.assertIn('1 mW',repaired['explanation'])
+        self.assertEqual(fact,before)
+        for source in ('The intervention can be expensive.','These interventions are not cost-effective.'):
+            self.assertEqual(quality.normalize_terminology(fact,source),fact)
+        less={**fact,'statement':'La méthode permet de planifier des interventions moins coûteuses.'}
+        self.assertEqual(quality.normalize_terminology(less,'Cost-effective interventions are planned.'),less)
+
+    def test_generated_cost_mistranslation_is_traced_and_reviewed_after_source_based_repair(self):
+        self.idea.update(statement='La méthode anticipe les défaillances.',
+            explanation='La méthode permet de planifier des interventions rentables.',
+            evidence=[{'page':2,'quote':'The method anticipates failures to plan early and cost-effective interventions.'}])
+        self.idea['source_hash']=editorial.source_hash(self.idea)
+        bad='La méthode anticipe les défaillances pour planifier des interventions coûteuses.'
+        self.prepare();client=Replies(bad);Pipeline(self.root,client).run(3,3)
+        entry=read(self.packet())['data']
+        self.assertIn('interventions rentables',entry['text'])
+        correction=next(c for c in entry['source_wording_corrections'] if c['field']=='draft.text')
+        self.assertEqual(correction['before'],bad);self.assertEqual(correction['after'],entry['text'])
+        review=next(p for task,p in client.calls if task=='writing_check')
+        self.assertEqual(review['text'],entry['text']);self.assertEqual(entry['review']['status'],'supported')
+
+    def test_a_source_based_translation_repair_does_not_bypass_a_negative_review(self):
+        self.idea.update(statement='La méthode anticipe les défaillances.',
+            explanation='La méthode permet de planifier des interventions rentables.',
+            evidence=[{'page':2,'quote':'The method anticipates failures to plan early and cost-effective interventions.'}])
+        self.idea['source_hash']=editorial.source_hash(self.idea);self.prepare()
+        client=Replies('La méthode permet de planifier des interventions coûteuses.',status='uncertain')
+        with self.assertRaises(InvalidResponseError):Pipeline(self.root,client).run(3,3)
+        self.assertFalse(self.packet().exists());self.assertFalse((self.root/'etapes/03.json').exists())
+
+    def test_source_bibliographic_markers_stay_in_evidence_and_out_of_reviewed_speech(self):
+        self.idea['evidence'][0]['quote']+=' The retained threshold is reported [1].'
+        self.idea['source_hash']=editorial.source_hash(self.idea);self.prepare()
+        before=(self.root/'etapes/02.json').read_bytes()
+        client=Replies('Le seuil détermine les motifs retenus dans les données [1]. Les conditions restent indiquées.')
+        Pipeline(self.root,client).run(3,3)
+        entry=read(self.packet())['data'];self.assertNotIn('[1]',entry['text'])
+        self.assertEqual((self.root/'etapes/02.json').read_bytes(),before)
+        self.assertIn('[1]',entry['source_wording_corrections'][0]['before'])
+        review=next(p for task,p in client.calls if task=='writing_check')
+        self.assertEqual(review['text'],entry['text']);self.assertTrue(any('[1]' in r['text'] for r in review['source_excerpts']))
+
+    def test_draft_preparation_keeps_values_ranges_conditions_indices_and_unknown_markers(self):
+        idea=copy.deepcopy(self.idea)
+        idea['evidence'][0]['quote']+=' A power of 1 mW is reported [1].'
+        for text in ('La puissance reste à 1 mW sous les mêmes conditions.',
+                     'La condition reste dans [0,1] et dans [1-2].',
+                     'Le code x[1] reste un indice dans le modèle.',
+                     'La méthode est attribuée à une référence inconnue [999].'):
+            with self.subTest(text=text):self.assertEqual(writing.prepare_draft(text,idea),text)
+        with self.assertRaisesRegex(ValueError,'références bibliographiques'):
+            writing.validate_text(writing.prepare_draft('Les motifs sont retenus selon ce seuil [999].',idea),idea,{})
+
+    def test_network_failure_during_a_missing_paragraph_preserves_the_previous_steps(self):
+        self.warm();self.packet().unlink();before=self.snapshot3()
+        class Offline(FakeClient):
+            def ask(self,*args,**kwargs):raise ModelError('Connexion interrompue')
+        with self.assertRaisesRegex(ModelError,'Étape 4/9'):Pipeline(self.root,Offline()).run(4,4)
+        self.assert_preserved(before);self.assertFalse((self.root/'etapes/04.json').exists())
+
+
+if __name__=='__main__':unittest.main()
+```
+
 ## voice_legacy.py
 
 ```python
@@ -7179,7 +7503,7 @@ input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }
 ```python
 """Réécriture bornée, citations contrôlées et relecture critique indépendante."""
 import re
-from storage import fingerprint
+from storage import fingerprint,read
 import quality
 import source_review
 from llm import InvalidResponseError, RepetitionError, ResponseLimitError
@@ -7187,6 +7511,7 @@ from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 VERSION='grounded-writing-v2'
 RECOVERABLE=(InvalidResponseError,RepetitionError,ResponseLimitError)
 FINAL_WORD_LIMIT=240
+DRAFT_WORD_LIMIT=160
 
 
 class TextShapeError(ValueError):
@@ -7199,6 +7524,85 @@ class WordCountError(ValueError):
 
 def evidence(idea):
     return '\n'.join(e['quote'] for e in idea.get('evidence',[])) or (idea['statement']+' '+idea.get('explanation',''))
+
+
+def source_wording(idea):
+    original={'statement':idea['statement'],'explanation':idea.get('explanation','')}
+    prepared=quality.normalize_terminology(original,evidence(idea))
+    changes=[{'field':field,'before':original[field],'after':prepared[field]} for field in original if prepared[field]!=original[field]]
+    return prepared,changes
+
+
+def prepare_draft(text,idea):
+    source=evidence(idea)
+    text=quality.normalize_cost_wording(text,source)
+    # Une référence isolée déjà présente dans la citation reste dans les
+    # preuves. Les intervalles, indices accolés et références inventées restent
+    # intacts : ils doivent être reformulés ou refusés par les contrôles.
+    markers=set(re.findall(r'(?<!\S)\[[1-9]\d*\](?=\s|[.,;:!?]|$)',source))
+    text=re.sub(r'(?<!\S)\[[1-9]\d*\](?=\s|[.,;:!?]|$)',lambda m:'' if m[0] in markers else m[0],text)
+    return re.sub(r' +([.,;:!?])',r'\1',re.sub(r' {2,}',' ',text)).strip()
+
+
+def rewrite_inputs(idea,terms,kind='explanation',feedback='',context=None):
+    # Contrat des unités 0.5.1 à 0.5.3 conservé pour reprendre leurs résultats.
+    return {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,
+            'terms':terms,'feedback':feedback,'context':context}
+
+
+def entry_markdown(value,identity):
+    return (value['text']+'\n\nSource : ['+identity+']\n\nRelecture : '+value['review']['reason']+
+        ('\n\nCorrections de formulation : '+' ; '.join(c['before']+' → '+c['after'] for c in value['source_wording_corrections']) if value.get('source_wording_corrections') else '')+
+        ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in value['terminology_corrections']) if value.get('terminology_corrections') else '')+
+        ('\n\nNote éditoriale : '+' '.join(value['warnings']) if value.get('warnings') else ''))
+
+
+def validate_cached_entry(value,idea,terms):
+    if not isinstance(value,dict):raise ValueError('Rédaction enregistrée invalide.')
+    validate_entry(value,idea,'text')
+    review=value.get('review')
+    if not isinstance(review,dict) or review.get('status')!='supported':raise ValueError('Relecture favorable manquante.')
+    if not isinstance(review.get('reason'),str) or not review['reason'].strip():raise ValueError('Motif de relecture manquant.')
+    quote=review.get('quote')
+    if not isinstance(quote,str) or len(quote)<20 or quality.normalized(quote) not in quality.normalized(evidence(idea)):
+        raise ValueError('Preuve de relecture absente de la source.')
+    quality.explanatory_quote(quote)
+    validate_text(value['text'],idea,terms,DRAFT_WORD_LIMIT)
+
+
+def completed_entry(pipe,step,key,idea,terms,kind='explanation'):
+    """Lire une unité complète et compatible ; un Markdown libre ne suffit pas."""
+    if not re.fullmatch(r'[A-Za-z0-9-]+',key):raise ValueError('Identifiant de partie invalide.')
+    path=pipe.project/'etapes/parties'/f'{step:02}-{key}.json'
+    if not path.exists():return None
+    terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
+    try:
+        saved=read(path)
+        if not isinstance(saved,dict):return None
+        if saved.get('fingerprint')!=pipe.unit_fingerprint(rewrite_inputs(idea,terms,kind)):return None
+        value=saved['data'];validate_cached_entry(value,idea,terms)
+        return value
+    except (ValueError,KeyError,TypeError):
+        pipe.progress('Passage antérieur à revérifier — '+idea['id'])
+        return None
+
+
+def common_entry(pipe,idea,terms,original=None):
+    """Assembler le texte commun avec les rédactions déjà relues, sans les raccourcir à nouveau."""
+    key='Commun-'+idea['id']
+    for kind in ('explanation','sentence'):
+        packet=completed_entry(pipe,4,key,idea,terms,kind)
+        if packet is not None:
+            pipe.progress('Reprise du texte commun — '+idea['id']);return packet
+    original=original or idea
+    packet=completed_entry(pipe,3,'Synthese-'+idea['id'],original,terms)
+    if packet is not None and source_hash(original)==source_hash(idea):
+        local_terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
+        pipe.progress('Réutilisation de la synthèse relue — '+idea['id'])
+        return pipe.unit(4,key,'Texte commun — '+idea['id'],rewrite_inputs(idea,local_terms),
+            lambda:{**packet,'reused_from':{'step':3,'key':'Synthese-'+idea['id']}},
+            lambda value:entry_markdown(value,idea['id']),validate_saved=lambda value:validate_cached_entry(value,idea,local_terms))
+    return rewrite(pipe,4,key,idea,terms)
 
 
 def validate_text(text,idea,terms,limit=95):
@@ -7228,8 +7632,9 @@ def check(pipe,text,idea,terms,final=False,recent=None):
     source=evidence(idea)
     terms=quality.relevant_terms(terms,source+' '+text)
     rows=source_review.excerpts(source)
-    payload={'text':text,'source_excerpts':rows,'expected_statement':idea['statement'],
-             'expected_explanation':idea.get('explanation',''),'glossary':terms,'final_review':final,'recent_texts':recent or []}
+    prepared,_=source_wording(idea)
+    payload={'text':text,'source_excerpts':rows,'expected_statement':prepared['statement'],
+             'expected_explanation':prepared['explanation'],'glossary':terms,'final_review':final,'recent_texts':recent or []}
     def validate(value):
         if not isinstance(value,dict) or value.get('status') not in ('supported','uncertain','contradicted'):raise ValueError('Un verdict supported, uncertain ou contradicted est requis.')
         if not isinstance(value.get('reason'),str) or not value['reason'].strip():raise ValueError('Motiver le verdict de relecture.')
@@ -7262,8 +7667,9 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     terms=quality.relevant_terms(terms,idea['statement']+' '+idea.get('explanation','')+' '+evidence(idea))
     preferred=35 if kind=='sentence' else 85
     target=25 if kind=='sentence' else 55
-    maximum=60 if kind=='sentence' else 160
-    payload={'statement':idea['statement'],'explanation':idea.get('explanation',''),
+    maximum=DRAFT_WORD_LIMIT
+    prepared,wording_changes=source_wording(idea)
+    payload={'statement':prepared['statement'],'explanation':prepared['explanation'],
              'source':evidence(idea),'glossary':terms,
              'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
              'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
@@ -7277,7 +7683,10 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         sans extrapoler. Garde les conditions, réserves et limites essentielles, même pour raccourcir.
         N'ajoute ni chiffre, dispositif, résultat, exemple factuel ou causalité. Ne transforme pas un
         émetteur en récepteur ni une section en équipement. power=puissance, draw=étirage de fibre,
-        second-order=du second ordre. Utilise le lexique fourni sans inventer de sigle.
+        second-order=du second ordre. cost-effective décrit un bon rapport coût/efficacité ou une
+        intervention rentable. Si le résumé contient un
+        contresens, source fait foi pour rectifier ce sens, sans substituer une autre idée.
+        Utilise le lexique fourni sans inventer de sigle.
         preferred_wording donne les libellés reconnus à privilégier, allowed_definitions les variantes autorisées
         par le glossaire source. N'invente aucun développement de sigle. Un sigle seul reste autorisé.
         Pour définir un terme, reprends exactement un libellé proposé, sans le paraphraser ni créer un nouveau sigle.
@@ -7295,8 +7704,15 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
         def validate(value):
             text=value.get('text') if isinstance(value,dict) else None
             seen['text']=text
-            validate_text(text,idea,terms,limit)
-        try:return pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
+            prepared=prepare_draft(text,idea) if isinstance(text,str) else text
+            validate_text(prepared,idea,terms,limit)
+        try:
+            value=pipe.client.ask('grounded_text',current,instructions,validate,budget=700)
+            # La réponse brute reste dans le cache du modèle ; seule cette copie
+            # corrigée et tracée sera soumise à la relecture indépendante.
+            before=value['text'];after=prepare_draft(before,idea)
+            corrections=[{'field':'draft.text','before':before,'after':after}] if before!=after else []
+            return {**value,'text':after,'draft_wording_corrections':corrections}
         except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
             # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
@@ -7353,14 +7769,13 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                 return {'text':value['text'],'text_hash':fingerprint(value['text']),'source_hash':source_hash(idea),
                         'writing_version':VERSION,'review':verdict,'word_count':count,'preferred_max_words':preferred,
                         'length_adjusted':adjusted,'length_repair_issue':length_problem,'warnings':warnings,
-                        'terminology_corrections':terminology_corrections}
+                        'terminology_corrections':terminology_corrections,
+                        'source_wording_corrections':wording_changes+value['draft_wording_corrections']}
             notes=verdict['reason']
         raise InvalidResponseError('Passage non validé après réécriture : '+notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
-        {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'kind':kind,'idea':idea,'terms':terms,'feedback':feedback,'context':context},
-        produce,lambda v:v['text']+'\n\nSource : ['+idea['id']+']\n\nRelecture : '+v['review']['reason']+
-            ('\n\nCorrections de sigles : '+' ; '.join(c['term']+' : '+c['received']+' → '+c['preferred'] for c in v['terminology_corrections']) if v.get('terminology_corrections') else '')+
-            ('\n\nNote éditoriale : '+' '.join(v['warnings']) if v.get('warnings') else ''))
+        rewrite_inputs(idea,terms,kind,feedback,context),produce,lambda value:entry_markdown(value,idea['id']),
+        validate_saved=lambda value:validate_cached_entry(value,idea,terms))
 
 
 def source_hash(idea):

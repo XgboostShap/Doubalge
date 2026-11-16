@@ -193,6 +193,7 @@ def registry_markdown(ideas):
 
 def common(pipe):
     data=pipe.saved(3);ideas=[copy.deepcopy(i) for d in data['documents'] for p in d['parts'] for i in p['ideas']]
+    originals={i['id']:copy.deepcopy(i) for i in ideas}
     if data.get('workflow_version')!=VERSION:raise ValueError('Ancienne synthèse : reprendre à l’étape 3 après réexamen des sources.')
     if not ideas:raise ValueError(source_review.empty_message(data))
     if len({i['id'] for i in ideas})!=len(ideas):raise ValueError('Identifiants sources en doublon : reprendre les résumés.')
@@ -207,8 +208,8 @@ def common(pipe):
         if not entries:continue
         paragraphs=[]
         for idea in entries:
-            packet=writing.rewrite(pipe,4,'Commun-'+idea['id'],idea,
-                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},'sentence')
+            packet=writing.common_entry(pipe,idea,
+                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']])
             paragraphs.append(packet['text']+' ['+idea['id']+']')
             length_warnings.extend(packet.get('warnings',[]))
         text='\n\n'.join(paragraphs)

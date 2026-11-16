@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.5.3
+# Podcast pédagogique — version 0.5.4
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,7 +7,9 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.3** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.4** en haut de la page.
+
+Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 
 Pour le blocage de l’étape 3 « Développement non confirmé de PM » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Le lexique source, les étapes 1 et 2 et les passages déjà terminés restent conservés. La rédaction du passage en échec reçoit les libellés autorisés et une correction ciblée du sigle.
 
@@ -82,6 +84,18 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
 
+## Correctif 0.5.4 — assembler le texte commun sans réécrire les synthèses
+
+L’étape 4 utilisait la consigne de phrase clé, avec une borne de 60 mots, alors qu’elle doit réunir les idées dans un texte commun. Elle reprend désormais d’abord les passages déjà terminés de l’étape 4, puis les rédactions compatibles de l’étape 3. Seules les idées sans rédaction réutilisable demandent un nouveau paragraphe et sa relecture des sources. Toutes les idées du registre restent présentes, y compris celles qui n’avaient pas été sélectionnées dans la synthèse courte.
+
+Une unité réutilisée doit correspondre à ses entrées, paramètres et glossaire, conserver ses empreintes de source et de texte, porter une relecture favorable et citer un passage présent dans la source. Elle repasse aussi les contrôles statiques actuels. Un Markdown libre, une preuve inventée, un texte modifié ou une relecture incertaine ne suffisent pas. Une unité incompatible ou refusée est rédigée et relue à nouveau ; l’étape 3 n’est pas modifiée par cette reprise de l’étape 4.
+
+Le plafond technique des nouvelles rédactions est de **160 mots**, pour les paragraphes comme pour les phrases clés. Les cibles éditoriales restent plus courtes : environ 55 mots par explication et 25 par phrase clé. Un dépassement de la cible déclenche une réduction ; s’il reste modéré, il peut être signalé par une note après relecture favorable. Il ne bloque plus uniquement parce qu’il dépasse 60 mots. Les sources et réserves ne sont pas coupées pour raccourcir.
+
+Un contresens observé dans le fichier intermédiaire est également contrôlé : *cost-effective interventions* décrit le rapport coût/efficacité, et ne doit pas être traduit par « interventions coûteuses ». Ce contrôle s’applique aussi aux anciens passages avant leur réutilisation. Cette formulation est corrigée dans les données envoyées au rédacteur et au relecteur lorsque la citation la justifie. Si le modèle reproduit cette erreur précise, une copie du brouillon est corrigée avant ses contrôles et sa relecture indépendante. Les formulations avant et après correction sont enregistrées hors du texte parlé ; les citations et le registre original restent inchangés. Une négation ou une mention explicite d’interventions coûteuses dans la source empêche cette correction automatique. Un passage corrigé doit encore recevoir une relecture favorable pour être retenu. Ces contrôles complètent les relectures automatiques sans garantir à eux seuls la fidélité scientifique de tout le texte.
+
+Si le modèle recopie un marqueur bibliographique isolé comme `[1]` déjà présent dans la citation source, ce marqueur est retiré de la copie destinée au texte parlé avant ses contrôles et sa relecture. Le brouillon brut et la correction restent enregistrés. Les nombres scientifiques, unités, intervalles, indices accolés et références inconnues ne sont pas effacés par ce traitement.
+
 ## Correctif 0.5.3 — développements de sigles et libellés français
 
 Les consignes de rédaction et la validation utilisent la même liste de libellés issus du glossaire source. Lorsque le PDF définit **PM comme Predictive Maintenance**, la rédaction privilégie **maintenance prédictive**. Les variantes reconnues **maintenance prévisionnelle** et **entretien prédictif**, ainsi que leurs pluriels, sont également acceptées. Ces variantes ne sont pas activées pour un document où PM possède un autre sens.
@@ -98,7 +112,7 @@ Une explication vise environ 55 mots, avec une cible maximale de 85. Si le broui
 
 Un brouillon entre 86 et 160 mots peut être conservé avec une **note éditoriale visible** si la réduction n’aboutit pas et si sa propre relecture des sources est favorable. La réduction refusée n’est pas utilisée. Le dépassement de la cible ne vaut jamais validation scientifique. Les notes restent dans les rapports et ne sont pas lues par VoiceStudio. Les estimations de durée reposent sur le texte réellement retenu.
 
-Les bornes techniques restent limitées : 160 mots par explication, 60 pour une phrase clé, 240 pour une réponse finale incluant les définitions du lexique. Un champ absent, un texte trop court ou un brouillon au-delà de ces bornes déclenche une reprise ciblée ; un échec persistant s’arrête avec un diagnostic détaillé. Un brouillon démesuré peut être omis en entier lors de la reprise ; les citations source restent intégrales. Les erreurs réseau et les annulations restent des arrêts explicites.
+Les bornes techniques restent limitées : 160 mots par rédaction depuis la version 0.5.4, 240 pour une réponse finale incluant les définitions du lexique. Un champ absent, un texte trop court ou un brouillon au-delà de ces bornes déclenche une reprise ciblée ; un échec persistant s’arrête avec un diagnostic détaillé. Un brouillon démesuré peut être omis en entier lors de la reprise ; les citations source restent intégrales. Les erreurs réseau et les annulations restent des arrêts explicites.
 
 Les parties déjà validées en 0.5.1 restent réutilisables, sans recréer les sources ni les voix. Les réparations portent sur l’idée en échec. Les contrôles des faits, des identifiants, des nombres, des unités et des citations restent actifs.
 

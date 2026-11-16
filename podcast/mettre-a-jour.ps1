@@ -73,6 +73,6 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Pour le blocage de redaction de l etape 3, ouvrir le dernier projet puis Continuer jusqu au script final. Les parties terminees sont reutilisees. Si aucune idee n est retenue a l etape 2, utiliser Reexaminer l etape 2. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Pour le blocage de redaction de l etape 4, ouvrir le dernier projet puis Continuer jusqu au script final. Les etapes 1 a 3 et les passages termines restent conserves. Si aucune idee n est retenue a l etape 2, utiliser Reexaminer l etape 2. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }

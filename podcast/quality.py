@@ -306,8 +306,28 @@ def source_subject_check(fact, terms=None):
                 raise ValueError('La propriété citée n’est pas rattachée au sujet '+symbol+' dans la phrase source ; vérifier le dispositif concerné.')
 
 
+def costly_intervention_spans(text,source):
+    if not re.search(r'\bcost[-\s]*effective\b',source,re.I):return []
+    if re.search(r'\b(?:costly|expensive)\b',source,re.I):return []
+    if re.search(r'\b(?:not|never|non)\s+(?:\w+\s+){0,2}cost[-\s]*effective\b',source,re.I):return []
+    pattern=r'\b(?:planifier|prévoir|programmer)\b.{0,60}\b(?P<noun>interventions?)\b.{0,35}\b(?P<adjective>coûteuses?|onéreuses?)\b'
+    return [m for m in re.finditer(pattern,text,re.I)
+            if not re.search(r'\b(?:peu|moins|pas|non|sans)\b.{0,30}\b(?:coûteuses?|onéreuses?)\b',m[0],re.I)]
+
+
+def normalize_cost_wording(text,source):
+    for match in reversed(costly_intervention_spans(text,source)):
+        replacement='rentables' if match['noun'].casefold().endswith('s') else 'rentable'
+        start,end=match.span('adjective')
+        text=text[:start]+replacement+text[end:]
+    return text
+
+
 def normalize_terminology(fact, source):
     value=dict(fact)
+    # Une traduction déterministe ne change ni la source ni ses valeurs.
+    for field in ('statement','explanation'):
+        value[field]=normalize_cost_wording(value[field],source)
     if re.search(r'predictive maintenance',source,re.I) and not re.search(r'preventive maintenance',source,re.I):
         for field in ('statement','explanation'):
             value[field]=re.sub(r'\b(?:entretien préventif|maintenance préventive)\b','maintenance prédictive',value[field],flags=re.I)
@@ -536,6 +556,8 @@ def validate_evidence_details(text, evidence):
 
 def validate_technical_wording(text, evidence):
     claim=definition_key(text);source=definition_key(evidence)
+    if costly_intervention_spans(text,evidence):
+        raise ValueError('cost-effective signifie un bon rapport coût/efficacité ; ne pas le traduire par des interventions coûteuses.')
     if 'predictive maintenance' in source and 'preventive maintenance' not in source and re.search(r'\b(?:entretien preventif|maintenance preventive)\b',claim):
         raise ValueError('predictive maintenance signifie maintenance prédictive, distincte de la maintenance préventive.')
     if 'power' in source and re.search(r'\b(?:egalisation|reglage|optique).{0,55}\bpouvoir\b',claim):
