@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.5.0
+# Podcast pédagogique — version 0.5.1
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,11 +7,13 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.0** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.1** en haut de la page.
 
-Pour **tous les anciens projets**, y compris ceux de la version 0.4.0 : ouvrir le dernier projet, cliquer sur **Améliorer les résumés existants**, attendre la fin du réexamen puis **Continuer jusqu’au script final**. Cette reprise est nécessaire : des résumés mal traduits ou mal appuyés pouvaient arriver jusqu’au dialogue. Les PDF et l’extraction de l’étape 1 sont conservés ; aucune réimportation n’est nécessaire. Les anciens textes et MP3 sont archivés, et les références des voix restent dans le projet.
+Si le projet indique **Aucune idée explicative retenue**, ouvrir le dernier projet puis cliquer sur **Réexaminer l’étape 2**. Les idées candidates déjà extraites sont réexaminées avec le nouveau protocole. Après la fin du traitement, consulter le nombre d’idées confirmées puis cliquer sur **Continuer jusqu’au script final**. Aucun PDF n’est à réimporter : l’extraction de l’étape 1, les références vocales et les archives sont conservées.
 
-L’outil de mise à jour vérifie les empreintes des **18 fichiers applicatifs**, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
+Un projet 0.5.0 dont les idées et le dialogue sont déjà confirmés peut continuer normalement. Pour une version plus ancienne signalée par le programme, utiliser **Améliorer les résumés existants**, puis Continuer.
+
+L’outil de mise à jour vérifie les empreintes des **19 fichiers applicatifs**, sauvegarde les fichiers remplacés et tente de les restaurer en cas d’échec. Il ne remplace ni `donnees`, ni `.venv`, ni `.runtime`. Si Windows refuse `Mettre-a-jour.cmd`, ouvrir PowerShell dans le dossier du correctif et lancer `powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1` ; choisir ensuite le dossier de l’installation.
 
 Pour lancer après mise à jour, utiliser **Lancer-Podcast.cmd dans l’ancien dossier installé**, pas dans le ZIP téléchargé. Le bouton Windows « Extraire tout » et la colonne « Taille compressée » indiquent que l’on se trouve encore dans une archive.
 
@@ -76,17 +78,29 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
 
+## Correctif 0.5.1 — projet sans idée retenue
+
+L’ancien contrôle pouvait écarter toutes les idées d’un PDF lisible parce que le modèle ne recopiait pas exactement les citations ou parce que son motif ressemblait à l’énoncé. Le nouveau protocole numérote les passages originaux : le modèle choisit leurs références et le programme insère les citations exactes. La seconde lecture sélectionne aussi des références pour l’énoncé et l’explication. Un motif reformulé n’est plus rejeté pour cette seule raison lorsqu’une preuve source valide a été sélectionnée.
+
+Les contrôles du sens, des unités, des dispositifs, des traductions et du périmètre des résultats restent actifs. Les définitions de sigles écrites dans le corps d’un article court sont aussi reprises lorsque leurs initiales correspondent ; elles ne sont pas inventées à partir du sigle seul. Un identifiant inconnu ou une idée non confirmée ne sont pas acceptés automatiquement. Les passages d’une même page coupée entre deux parties peuvent servir ensemble à la vérification, quand la page tient dans le budget ; les citations gardent leur numéro de page.
+
+Les numéros de preuve restent dans les références et ne doivent pas entrer dans le récit. Les annotations connues comme « (E1) » sont retirées des énoncés avec une correction enregistrée ; les citations restent inchangées et le sens est toujours contrôlé ensuite. Les listes simples de jeux de données doivent correspondre au nombre annoncé et leurs noms doivent figurer dans les citations. Le qualificatif « public » nécessite aussi un appui dans la source : un jeu mentionné dans un article n’est pas nécessairement public. Une notation ambiguë observée dans l’extraction d’un exposant est refusée : le modèle doit expliquer la complexité sans inventer la formule manquante. Ces contrôles ciblés s’appliquent dès l’examen des idées et pendant leur réécriture.
+
+Si aucune idée n’est confirmée, un diagnostic affiche les motifs et propose de réexaminer l’étape 2. La suite ne génère plus de synthèses vides présentées comme terminées. Un examen limité à l’étape 2 conserve son rapport avec l’état « à réexaminer » ; une génération complète s’arrête à ce point. Les anciennes réponses négatives en cache ne sont pas réutilisées par le nouveau protocole de sélection des sources.
+
+Les projets et les idées déjà correctement confirmés en 0.5.0 restent utilisables. Ce correctif résout une difficulté de format et de reprise ; il ne transforme pas chaque avis du modèle en preuve scientifique.
+
 ## Corrections de rédaction de la version 0.5.0
 
 Cette version répond à l’audit des étapes 01 à 09 fourni le 15 novembre. Les traductions « pouvoir » dans une égalisation de puissance, le mélange émetteur/récepteur, les fautes techniques observées et les commentaires de production ont des contrôles ciblés. Les notices de diffusion, même présentées comme des propriétés du réseau, et les remarques sur les publications de doctorat sont écartées du contenu explicatif. Une citation composée d’un titre et de « Proprietary – Restricted Distribution » est refusée comme preuve.
 
-La seconde lecture de l’étape 2 doit désormais fournir des citations exactes distinctes pour l’énoncé et l’explication. Elle travaille sur deux idées maximum à la fois. L’absence de preuve garde le passage parmi les éléments à vérifier. Une correction terminologique limitée peut préparer la demande du modèle pour éviter la recopie d’un mauvais résumé ; elle ne change ni les nombres, ni les unités, ni le rôle des équipements.
+La seconde lecture de l’étape 2 sélectionne désormais les références des passages exacts qui appuient l’énoncé et l’explication ; le programme les recopie. Elle travaille sur deux idées maximum à la fois. L’absence de preuve garde le passage parmi les éléments à vérifier. Une correction terminologique limitée peut préparer la demande du modèle pour éviter la recopie d’un mauvais résumé ; elle ne change ni les nombres, ni les unités, ni le rôle des équipements.
 
 Le registre de faits reste inchangé pendant la rédaction, mais les phrases du podcast peuvent être reformulées. Chaque réécriture reçoit son empreinte, les sources de l’idée et un verdict de relecture avec citation. Les contrôles vérifient notamment les acronymes, les dispositifs, les nombres et leurs unités. Il n’y a pas de retour silencieux à un ancien texte non validé.
 
 La révision finale prend aussi en compte les deux réponses précédentes pour repérer les redites. Elle peut demander une correction locale, vérifier cette correction à nouveau et enregistrer les versions avant/après. Une correction refusée ne produit pas un script automatiquement déclaré prêt pour le MP3. Les questions restent produites par petits blocs et les réponses viennent des explications réécrites et vérifiées ; il ne s’agit pas d’un dialogue libre sans contraintes factuelles.
 
-Les définitions du lexique sont intégrées à la réplique de réponse ; les 14 prises de parole isolées « Dans ce document… » de l’exemple ne sont plus nécessaires. Les rappels utilisent les nouvelles phrases courtes, sans modifier la casse des unités. Le texte destiné à VoiceStudio est préparé séparément : retrait des références numériques de publications, lecture française d’unités courantes et de certaines lettres grecques, conservation des valeurs. Le rapport CSV contient le **texte réellement envoyé à la synthèse**. Ce préparateur n’est pas un lecteur universel de LaTeX ou de formules mathématiques.
+Les définitions du lexique sont intégrées à la réplique de réponse ; les 14 prises de parole isolées « Dans ce document… » de l’exemple ne sont plus nécessaires. Les rappels utilisent les nouvelles phrases courtes, sans modifier la casse des unités. Le texte destiné à VoiceStudio est préparé séparément : retrait des références numériques de publications, lecture française d’unités courantes et de certaines lettres grecques, conservation des valeurs. Le rapport CSV contient le **texte réellement envoyé à la synthèse**. Les crochets numériques d’un dialogue TXT fourni manuellement sont conservés pour éviter de supprimer une valeur ou un intervalle. Ce préparateur n’est pas un lecteur universel de LaTeX ou de formules mathématiques.
 
 ## Petites requêtes et reprise
 

@@ -110,7 +110,9 @@ class QualityPipelineTests(unittest.TestCase):
     def prepare(self,doc):write(self.project/'etapes/01.json',{'data':{'documents':[doc]}})
     def test_non_scientific_pages_never_reach_the_extraction_or_summary_model(self):
         self.prepare(document(['HAL Id: abc Une couverture.','Acknowledgements Merci à tous.','Bibliography [1] Un ouvrage.']))
-        client=FakeClient();Pipeline(self.project,client).run(2,3)
+        client=FakeClient()
+        from llm import ModelError
+        with self.assertRaisesRegex(ModelError,'Étape 2/9'):Pipeline(self.project,client).run(2,3)
         data=read(self.project/'etapes/02.json')['data']
         self.assertEqual(data['quality_version'],quality.VERSION)
         self.assertTrue(all(not part['ideas'] and part['page_notes'] for part in data['documents'][0]['parts']))

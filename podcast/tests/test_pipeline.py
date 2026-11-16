@@ -129,8 +129,9 @@ class PipelineTests(unittest.TestCase):
                 if task=='part_summary':
                     value={'summary':'Extrait sans idée explicative.','ideas':[]};validate(value);return value
                 return super().ask(task,payload,instructions,validate,budget)
-        client=EmptyDocument();pipeline=Pipeline(self.project,client);pipeline.run(1,3)
-        with self.assertRaisesRegex(ValueError,'Aucune idée explicative'):pipeline.run(4,4)
+        client=EmptyDocument();pipeline=Pipeline(self.project,client)
+        with self.assertRaisesRegex(ModelError,'Étape 2/9'):pipeline.run(1,3)
+        self.assertFalse((self.project/'etapes/03.json').exists())
         self.assertFalse(any(task=='global_groups' for task,_ in client.calls))
         self.assertFalse((self.project/'etapes/04.json').exists())
 

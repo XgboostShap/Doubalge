@@ -13,7 +13,10 @@ def response_schema(task, payload):
         return {'type':'object','properties':properties,'required':list(properties),'additionalProperties':False}
     string={'type':'string'}
     if task=='grounded_text':return obj({'text':string})
-    if task=='writing_check':return obj({'status':{'type':'string','enum':['supported','uncertain','contradicted']},'quote':string,'reason':string})
+    if task=='writing_check':
+        proof={'quote':string}
+        if payload.get('source_excerpts'):proof={'quote_refs':{'type':'array','maxItems':2,'items':{'type':'string','enum':[r['ref'] for r in payload['source_excerpts']]}}}
+        return obj({'status':{'type':'string','enum':['supported','uncertain','contradicted']},**proof,'reason':string})
     if task=='editorial_outline':
         fields={'central_question':string,'titles':obj({r:string for r in payload['roles']}),'questions':obj({r:string for r in payload['roles']})}
         if payload.get('topics'):fields['topic_order']={'type':'array','items':{'type':'string','enum':[t['ref'] for t in payload['topics']]}}
@@ -36,6 +39,12 @@ def response_schema(task, payload):
         if task=='explanation_paragraphs':fields['transition']=string
         return obj(fields)
     if task=='fact_support':
+        if payload.get('proof_references'):
+            choices={}
+            for row in payload['facts']:
+                refs={'type':'array','items':{'type':'string','enum':[q['ref'] for q in row['evidence']]},'maxItems':2}
+                choices[row['ref']]=obj({'status':{'type':'string','enum':['supported','uncertain','contradicted']},'reason':string,'statement_refs':refs,'explanation_refs':refs})
+            return obj({'verdicts':obj(choices)})
         verdict=obj({'status':{'type':'string','enum':['supported','uncertain','contradicted']},'reason':string,'statement_quote':string,'explanation_quote':string})
         return obj({'verdicts':obj({i['ref']:verdict for i in payload['facts']})})
     if task in ('global_groups','key_sentences'):
@@ -43,7 +52,9 @@ def response_schema(task, payload):
         return obj({field:obj({i['ref']:string for i in payload['ideas']})})
     if task=='part_structure':return obj({key:string for key in TITLES})
     if task=='review_facts':
-        decision=obj({'statement':string,'explanation':string,'evidence':{'type':'array','items':string},
+        evidence={'type':'array','items':string}
+        if payload.get('source_excerpts'):evidence={'type':'array','maxItems':2,'items':{'type':'string','enum':[r['ref'] for r in payload['source_excerpts']]}}
+        decision=obj({'statement':string,'explanation':string,'evidence':evidence,
                       'status':{'type':'string','enum':['kept','corrected','excluded','uncertain']},'reason':string})
         return obj({'decisions':obj({i['id']:decision for i in payload['candidates']})})
     return None
@@ -131,6 +142,24 @@ def glossary(pages):
             definition=re.sub(r'\s+[ivxlcdm]+$','',definition)
             if 1<=len(definition.split())<=18 and re.search(r'[a-z]',definition):
                 terms.setdefault(match[1],[]).append({'definition':definition,'page':page})
+    # Les articles courts définissent souvent leurs sigles dans le corps du
+    # texte, sans page « Glossary ». Ne retenir qu'un libellé dont les initiales
+    # correspondent explicitement au sigle placé entre parenthèses.
+    for page,info in sorted(pages.items()):
+        if info['kind']!='content':continue
+        body=re.sub(r'(?<=[A-Za-z])-\s+(?=[a-z])','',info['text'])
+        for match in re.finditer(r'\(\s*([A-Z][A-Z0-9-]{1,11})\s*\)',body):
+            term=match[1]
+            if term in terms:continue  # Le glossaire explicite reste prioritaire.
+            prefix=body[max(0,match.start()-220):match.start()]
+            words=list(re.finditer(r'[A-Za-z]+',prefix))
+            for size in range(2,min(9,len(words)+1)):
+                chosen=words[-size:]
+                initial=''.join(w[0][0].upper() for w in chosen)
+                short=''.join(w[0][0].upper() for w in chosen if w[0].lower() not in ('of','the','and','for','in','to'))
+                if term.replace('-','') not in (initial,short):continue
+                definition=normalized(prefix[chosen[0].start():]).strip()
+                terms[term]=[{'definition':definition,'page':page}];break
     return terms
 
 
@@ -148,6 +177,10 @@ def definition_key(value):
 # Traductions usuelles activées par le LIBELLÉ source, jamais par l'acronyme
 # seul : un document où AI désigne autre chose n'hérite pas de ces traductions.
 _FRENCH_DEFINITIONS = {
+    'predictive maintenance':('maintenance prédictive',),
+    'frequent itemset mining':('fouille de motifs fréquents','recherche de motifs fréquents'),
+    'discriminative pattern mining':('fouille de motifs discriminants','recherche de motifs discriminants'),
+    'bayesian mixture model':('modèle de mélange bayésien',),
     'artificial intelligence':('intelligence artificielle','IA'),
     'machine learning':('apprentissage automatique','apprentissage machine'),
     'deep learning':('apprentissage profond',),
@@ -243,6 +276,12 @@ def source_subject_check(fact, terms=None):
 
 def normalize_terminology(fact, source):
     value=dict(fact)
+    if re.search(r'predictive maintenance',source,re.I) and not re.search(r'preventive maintenance',source,re.I):
+        for field in ('statement','explanation'):
+            value[field]=re.sub(r'\b(?:entretien préventif|maintenance préventive)\b','maintenance prédictive',value[field],flags=re.I)
+            value[field]=re.sub(r"\bl['’]maintenance prédictive\b",'la maintenance prédictive',value[field],flags=re.I)
+            value[field]=re.sub(r"\bd['’]maintenance prédictive\b",'de maintenance prédictive',value[field],flags=re.I)
+            value[field]=re.sub(r'\bla prédiction de la maintenance prédictive\b','la maintenance prédictive',value[field],flags=re.I)
     if re.search(r'optical|optique|\bfib(?:er|re)\b|\bEDFA\b',source,re.I):
         for field in ('statement','explanation'):
             value[field]=re.sub(r'\b(égalisation|régulation|profil|niveau|ajustement)( automatique)? du pouvoir\b',r'\1\2 de puissance',value[field],flags=re.I)
@@ -406,6 +445,7 @@ def validate_review(value, candidates, source, terms=None):
             if not isinstance(quote,str) or len(normalized(source_quote(quote)))<20 or normalized(source_quote(quote)) not in normalized(source):
                 raise ValueError('evidence doit recopier un passage exact du PDF fourni, jamais une paraphrase ni une référence seule.')
             explanatory_quote(source_quote(quote))
+        validate_evidence_details(fact['statement']+' '+fact['explanation'],' '.join(quotes))
         source_subject_check(fact,terms)
         validate_technical_wording(fact['statement']+' '+fact['explanation'],' '.join(quotes))
         explanation=fact['explanation'].strip()
@@ -434,8 +474,38 @@ def validate_review(value, candidates, source, terms=None):
         raise ValueError('Traiter chaque identifiant candidat exactement une fois dans kept ou excluded, sans en inventer.')
 
 
+def validate_evidence_details(text, evidence):
+    """Refuser les erreurs concrètes observées sans reconstruire une formule PDF."""
+    for marker in re.findall(r'\bE\d+\b',text):
+        if not re.search(r'\b'+re.escape(marker)+r'\b',evidence):
+            raise ValueError('Les numéros de passages comme '+marker+' restent dans les références, pas dans le texte à lire.')
+    if re.search(r'\b2d\s+param',text,re.I) and re.search(r'fully correlated.*Bernoulli|Bernoulli.*fully correlated',evidence,re.I|re.S):
+        raise ValueError('La transcription « 2d paramètres » est ambiguë : expliquer la complexité sans interpréter un exposant perdu lors de l’extraction PDF.')
+    wording=re.sub(r'(?<=[A-Za-z])-\s+(?=[a-z])','',evidence)
+    if (re.search(r'\bjeux?\s+de\s+données(?:\s+[\wÀ-ÿ-]+){0,5}\s+publi(?:c|que)s?\b',text,re.I)
+        and not re.search(r'\bpublic(?:ly)?\b|\bpubli(?:c|que)s?\b|en accès libre|librement accessibles?|\bopen(?:ly)?\s+(?:available|data)|\bfreely\s+available|\bopen[- ](?:access|source)',wording,re.I)):
+        raise ValueError('Le caractère public des jeux de données est absent des citations : retirer cette qualification ou citer le passage qui la confirme. Un jeu mentionné dans un article n’est pas nécessairement public.')
+    counts={'un':1,'deux':2,'trois':3,'quatre':4,'cinq':5,'six':6}
+    pattern=r'\b(un|deux|trois|quatre|cinq|six|\d+)\s+jeux?\s+de\s+données([^:.;\n]{0,100}):\s*([^.;\n]+)'
+    for match in re.finditer(pattern,text,re.I):
+        if re.search(r'\bet\s+(?:un|une|deux|trois|quatre|\d+)\b',match[2],re.I):continue
+        names=re.split(r'\s*(?:,|\bet\b)\s*',match[3].strip())
+        # Une liste de libellés simples est vérifiable ; un paragraphe libre ne
+        # se compte pas en séparant arbitrairement ses virgules.
+        if not all(re.fullmatch(r'[\w-]+',name) for name in names):continue
+        count=counts.get(match[1].casefold())
+        if count is None:count=int(match[1])
+        if count!=len(names):
+            raise ValueError('Le nombre de jeux de données ne correspond pas à la liste. Distinguer les jeux publics du jeu industriel selon la source, sans les reclasser.')
+        for name in names:
+            if not re.search(r'(?<!\w)'+re.escape(name)+r'(?!\w)',evidence,re.I):
+                raise ValueError('Le jeu de données '+name+' est absent des citations sélectionnées ; citer le passage qui le décrit ou retirer ce détail.')
+
+
 def validate_technical_wording(text, evidence):
     claim=definition_key(text);source=definition_key(evidence)
+    if 'predictive maintenance' in source and 'preventive maintenance' not in source and re.search(r'\b(?:entretien preventif|maintenance preventive)\b',claim):
+        raise ValueError('predictive maintenance signifie maintenance prédictive, distincte de la maintenance préventive.')
     if 'power' in source and re.search(r'\b(?:egalisation|reglage|optique).{0,55}\bpouvoir\b',claim):
         raise ValueError('Dans ce contexte physique, power signifie puissance, pas pouvoir.')
     if re.search(r'\b(?:transmetteur|emetteur) dans (?:un|le) recepteur\b',claim):

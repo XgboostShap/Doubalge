@@ -141,9 +141,24 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             assert page.locator('#render-audio').is_disabled()
             assert (folder/'etapes/01.json').read_bytes()==source_before
             assert not (audio_folder/'etapes/01.json').exists()
+            # Ancien projet 0.5 : toutes les idées rejetées, synthèse vide déjà enregistrée.
+            old={'quality_version':'source-review-v5','documents':[{'id':'PDF1','name':'optique.pdf','parts':[{'number':1,'ideas':[],'excluded_ideas':[{'id':'PDF1-P1-I001','statement':'Le signal perd de la puissance dans la fibre.','explanation':'Les pertes réduisent la puissance disponible.','pages':[1],'reason':'À vérifier : evidence doit recopier un passage exact du PDF fourni.'}]}],'glossary':{}}]}
+            write(folder/'etapes/02.json',{'data':old});(folder/'etapes/02.md').write_text('0 idées retenues — ancien rapport',encoding='utf-8')
+            stub.stall=False;stub.release.set()
+            page.locator('#projects button').filter(has_text='Test d’intégration').click()
+            page.wait_for_function('() => current()?.source_diagnostic.empty')
+            assert page.locator('#source-diagnostic').is_visible()
+            assert page.locator('#continue').is_disabled()
+            assert page.locator('#refine').inner_text()=='Réexaminer l’étape 2'
+            with page.expect_download() as download:page.locator('#source-report').click()
+            report=temp/'ancien-rapport.md';download.value.save_as(report);assert '0 idées' in report.read_text()
+            page.locator('#refine').click()
+            page.wait_for_function('() => current()?.task?.state==="done"&&!current()?.source_diagnostic.empty',timeout=60000)
+            assert page.locator('#source-diagnostic').is_hidden()
+            assert (folder/'etapes/01.json').read_bytes()==source_before
             assert not errors,errors
             assert not external,external
             browser.close()
-            print('Navigateur OK : neuf étapes, API historique authentifiée, MP3 lu et téléchargé, import ancien réglage/TXT, essais 3/5 min distincts, rapport CSV et protection des brouillons ; aucune erreur JS ou requête externe.')
+            print('Navigateur OK : neuf étapes, API historique authentifiée, MP3 lu et téléchargé, import ancien réglage/TXT, essais 3/5 min distincts, rapport CSV, protection des brouillons et reprise du projet sans idée retenue ; aucune erreur JS ou requête externe.')
     finally:
         stub.close();voices.close();server.shutdown();server.server_close();app.close();thread.join()

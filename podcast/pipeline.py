@@ -9,6 +9,7 @@ from llm import Cancelled, InvalidResponseError, ModelError, RepetitionError, Re
 from pdfs import extract, fragments
 import quality
 import editorial
+import source_review
 from storage import fingerprint, read, write, write_text
 
 SOURCE_PAGE_MODE = 'pdf-page-v1'
@@ -168,6 +169,8 @@ class Pipeline:
                 self.meta['summary_quality']=quality.VERSION
                 self.meta['summary_warnings']=sum(len(p.get('uncertain_ideas',[])) for d in data['documents'] for p in d['parts'])
                 write(self.project/'projet.json',self.meta)
+                if until>2 and source_review.diagnostic(data)['empty']:
+                    raise ModelError('Étape 2/9 — '+source_review.empty_message(data))
         if until==9:
             final = self.saved(9)
             folder = self.project/'exports';folder.mkdir(exist_ok=True)
@@ -250,7 +253,8 @@ class Pipeline:
         result={'text':text,'warnings':[],'summary_ids':identities}
         return result if details else text
 
-    def review_candidates(self, payload, batch, raw):
+    def review_candidates(self, payload, batch, raw, terms=None):
+        validation_terms=terms if terms is not None else payload.get('glossary',{})
         notices=[i for i in batch if quality.unusable_fact_text(i['statement']+' '+i.get('explanation',''))]
         ambiguous=[i for i in batch if i not in notices and quality.ambiguous_subject(i['statement'])]
         uncertain=[{'id':i['id'],'reason':'À vérifier : le sujet de l’énoncé initial est indéterminé. '
@@ -259,10 +263,12 @@ class Pipeline:
         candidates=[i for i in batch if i not in ambiguous and i not in notices]
         if not candidates:return {'kept':[],'excluded':uncertain}
         normalized={i['id']:quality.normalize_terminology(i,raw) for i in candidates}
-        payload={**payload,'candidates':[{k:normalized[i['id']][k] for k in ('id','statement','explanation')} for i in candidates]}
+        rows=source_review.excerpts(raw)
+        payload={'source_page':payload.get('source_page'),'source_excerpts':rows,'glossary':payload.get('glossary',{}),
+            'candidates':[{k:normalized[i['id']][k] for k in ('id','statement','explanation')} for i in candidates]}
         failure=None
         try:
-            response=self.client.ask('review_facts',payload,quality.REVIEW_PROMPT,quality.validate_review_envelope,budget=min(3000,900*len(candidates)+300))
+            response=self.client.ask('review_facts',payload,source_review.REVIEW_PROMPT,quality.validate_review_envelope,budget=min(1800,650*len(candidates)+300))
             decisions=response['decisions']
         except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
             decisions={};failure=error
@@ -274,8 +280,8 @@ class Pipeline:
                 problem=failure
                 try:
                     result={'decisions':{identity:initial}}
-                    quality.prepare_decisions(result,raw,payload.get('glossary'))
-                    quality.validate_review(result,[candidate],raw,payload.get('glossary'))
+                    source_review.decisions(result,rows,raw,validation_terms)
+                    quality.validate_review(result,[candidate],raw,validation_terms)
                     return quality.review_result(result)
                 except (ValueError,KeyError,TypeError) as error:problem=problem or error
                 # Une réponse globale inutilisable est reprise par idée. Pour une
@@ -284,16 +290,16 @@ class Pipeline:
                     self.progress('Relecture individuelle — '+identity)
                     try:
                         def validate_one(v):
-                            quality.prepare_decisions(v,raw,payload.get('glossary'))
-                            quality.validate_review(v,[candidate],raw,payload.get('glossary'))
-                        result=self.client.ask('review_facts',one,quality.REVIEW_PROMPT+
+                            source_review.decisions(v,rows,raw,validation_terms)
+                            quality.validate_review(v,[candidate],raw,validation_terms)
+                        result=self.client.ask('review_facts',one,source_review.REVIEW_PROMPT+
                             '\nCorrige uniquement cette idée. Le contrôle a relevé : '+str(problem)[:500],
-                            validate_one,budget=1500)
+                            validate_one,budget=1100)
                         return quality.review_result(result)
                     except (InvalidResponseError,RepetitionError,ResponseLimitError,ValueError) as error:problem=error
                 return {'kept':[],'excluded':[{'id':identity,'reason':'À vérifier : contrôle individuel non concluant. '+str(problem)[:500]}]}
             result=self.unit(2,'Verify-'+identity,'Appui source — '+identity,
-                {'protocol':quality.VERSION,'payload':one,'initial':initial},produce,review_markdown)
+                {'protocol':source_review.PROTOCOL,'quality':quality.VERSION,'payload':one,'validation_glossary':validation_terms,'initial':initial},produce,review_markdown)
             kept.extend(result['kept']);excluded.extend(result['excluded'])
         if kept:
             checked=self.check_support(kept,payload.get('source_page'))
@@ -301,7 +307,7 @@ class Pipeline:
         return {'kept':kept,'excluded':excluded}
 
     def check_support(self, facts, page):
-        """Deuxième lecture : les citations appuient-elles le sens de chaque idée ?"""
+        """Relire le sens en sélectionnant des preuves déjà copiées par le programme."""
         if len(facts)>2:
             result={'kept':[],'excluded':[]}
             for start in range(0,len(facts),2):
@@ -310,37 +316,39 @@ class Pipeline:
             return result
         local={f'I{n}':fact for n,fact in enumerate(facts,1)}
         entries=[{'ref':ref,'statement':f['statement'],'explanation':f['explanation'],
-                  'evidence':f['evidence']} for ref,f in local.items()]
-        payload={'source_page':page,'facts':entries}
+                  'evidence':[{'ref':'E'+str(n),'text':q} for n,q in enumerate(f['evidence'],1)]} for ref,f in local.items()]
+        payload={'source_page':page,'facts':entries,'proof_references':True}
+        def normalize(verdict,fact):
+            if isinstance(verdict,dict) and verdict.get('status')=='supported' and not ('statement_refs' in verdict or 'explanation_refs' in verdict) and quality.copied_support_reason(verdict,fact):
+                raise ValueError('Le motif recopie l’affirmation sans sélectionner de preuve source.')
+            return source_review.support(verdict,fact)
         def produce():
             try:
-                response=self.client.ask('fact_support',payload,quality.SUPPORT_PROMPT,quality.validate_support,budget=1800)
+                response=self.client.ask('fact_support',payload,source_review.SUPPORT_PROMPT,quality.validate_support,budget=1000)
                 verdicts=response['verdicts']
             except (InvalidResponseError,RepetitionError,ResponseLimitError) as error:
                 verdicts={};self.progress('Seconde lecture à reprendre : '+str(error)[:200])
             kept=[];excluded=[]
             for ref,fact in local.items():
                 verdict=verdicts.get(ref)
-                try:quality.validate_support({'verdicts':{ref:verdict}},[ref])
-                except ValueError:
+                try:verdict=normalize(verdict,fact)
+                except ValueError as problem:
+                    def validate_one(value):
+                        quality.validate_support(value,[ref]);normalize(value['verdicts'].get(ref),fact)
                     try:
-                        value=self.client.ask('fact_support',{'source_page':page,'facts':[entries[int(ref[1:])-1]]},
-                            quality.SUPPORT_PROMPT,lambda v:quality.validate_support(v,[ref]),budget=600)
-                        verdict=value['verdicts'][ref]
+                        value=self.client.ask('fact_support',{'source_page':page,'facts':[entries[int(ref[1:])-1]],'proof_references':True},
+                            source_review.SUPPORT_PROMPT+'\nReprendre uniquement cette idée. Contrôle : '+str(problem)[:250],validate_one,budget=700)
+                        verdict=normalize(value['verdicts'][ref],fact)
                     except (InvalidResponseError,RepetitionError,ResponseLimitError,ValueError) as error:
                         verdict={'status':'uncertain','reason':'Seconde lecture non concluante. '+str(error)[:300]}
-                if verdict['status']=='supported' and quality.copied_support_reason(verdict,fact):
-                    verdict={'status':'uncertain','reason':'Le motif de seconde lecture recopie l’affirmation sans justifier son appui dans les citations.'}
-                if verdict['status']=='supported':
-                    try:quality.support_quotes(verdict,fact)
-                    except ValueError as error:verdict={'status':'uncertain','reason':str(error)}
-                if verdict['status']=='supported':kept.append({**fact,'support_reason':verdict['reason']})
+                if verdict['status']=='supported':kept.append({**fact,'support_reason':verdict['reason'],'support_selection':verdict})
                 else:
                     label='citations en contradiction avec l’idée' if verdict['status']=='contradicted' else 'citations insuffisantes pour confirmer l’idée'
-                    excluded.append({'id':fact['id'],'reason':'À vérifier : '+label+'. '+verdict['reason']})
+                    excluded.append({'id':fact['id'],'reason':'À vérifier : '+label+'. '+verdict['reason'],
+                        'checked_statement':fact['statement'],'checked_explanation':fact['explanation'],'checked_evidence':fact['evidence'],'support_selection':verdict})
             return {'kept':kept,'excluded':excluded}
         return self.unit(2,'Support-'+facts[0]['id'],'Seconde lecture des citations — page '+str(page),
-            {'protocol':'source-support-v2','quality':quality.VERSION,'payload':payload,'facts':facts,'prompt':quality.SUPPORT_PROMPT},produce,review_markdown)
+            {'protocol':source_review.PROTOCOL,'quality':quality.VERSION,'payload':payload,'facts':facts},produce,review_markdown)
 
     def summarize_part(self, doc, part, pages, terms, previous=None):
         ideas, empty_excerpts, excluded, page_notes = [], [], [], []
@@ -375,23 +383,26 @@ class Pipeline:
                                        'statement':idea['statement'],'explanation':idea['explanation'],'pages':[page]})
             # Chaque contrôle reçoit un texte source court. Un candidat ancien
             # reste consultable dans les archives même s'il est écarté ici.
-            for number,batch in enumerate(quality.batches(candidates,max_chars=6000,max_items=6),1):
+            for number,batch in enumerate(quality.batches(candidates,max_chars=4000,max_items=2),1):
                 raw=' '.join(b['text'] for b in chunk)
+                # Une coupure entre parties ne doit pas retirer la fin de la
+                # phrase à vérifier. Les références restent sur la même page.
+                if len(pages[page].get('text',''))<=10000:raw=pages[page].get('text') or raw
                 payload={'source_page':page,'source_text':raw,
                          'candidates':[{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in batch],
-                         'glossary':quality.relevant_terms(terms,raw)}
+                         'glossary':terms if len(json.dumps(terms,ensure_ascii=False))<=5000 else quality.relevant_terms(terms,raw)}
                 reviewed=self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
-                    f'{doc["id"]} — contrôle page {page}',{'protocol':quality.VERSION,'payload':payload,'prompt':quality.REVIEW_PROMPT},
-                    lambda:self.review_candidates(payload,batch,raw),review_markdown)
+                    f'{doc["id"]} — contrôle page {page}',{'protocol':source_review.PROTOCOL,'quality':quality.VERSION,'payload':payload,'prompt':source_review.REVIEW_PROMPT},
+                    lambda:self.review_candidates(payload,batch,raw,terms),review_markdown)
                 originals={i['id']:i for i in batch}
                 for fact in reviewed['kept']:
                     fact=quality.normalize_terminology(fact,raw)
                     ideas.append({'id':fact['id'],'statement':fact['statement'],'explanation':fact['explanation'],
                                   'pages':[page],'document':doc['id'],'status':fact['status'],'review_reason':fact['reason'],
                                   'automatic_corrections':fact.get('automatic_corrections',[]),
-                                  'support_reason':fact.get('support_reason',''),
+                                  'support_reason':fact.get('support_reason',''),'support_selection':fact.get('support_selection',{}),
                                   'evidence':[{'page':page,'quote':quality.source_quote(q)} for q in fact['evidence']]})
-                excluded.extend({**originals[i['id']],'reason':i['reason']} for i in reviewed['excluded'])
+                excluded.extend({**originals[i['id']],**i} for i in reviewed['excluded'])
         # Fusion seulement des formulations strictement identiques : pas de
         # rapprochement approximatif qui pourrait effacer une nuance scientifique.
         unique={}
@@ -412,7 +423,7 @@ class Pipeline:
         uncertain=[i for i in excluded if re.search(r'à vérifier|incertain|insuffisant|non concluant',i['reason'],re.I)]
         return {'number':part['number'],'summary':summary['text'],'synthesis_warnings':summary['warnings'],
                 'editorial_warnings':editorial_warnings,
-                'ideas':ideas,'quality_version':quality.VERSION,
+                'ideas':ideas,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,
                 'excerpts_without_ideas':empty_excerpts,'excluded_ideas':excluded,'page_notes':page_notes,
                 'uncertain_ideas':uncertain,
                 'quality_note':'Citations exactes et seconde lecture automatique de leur appui aux idées. Ces contrôles ne garantissent pas la fidélité scientifique ; une relecture reste nécessaire.'}
@@ -428,7 +439,7 @@ class Pipeline:
                 title = f'{doc["id"]} — partie {part["number"]}'
                 previous=self.previous_part(doc,part,source_signature)
                 value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,
-                                  {'source':part,'quality_version':quality.VERSION,'glossary':terms},
+                                  {'source':part,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,'glossary':terms},
                                   lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown)
                 parts.append(value)
                 notes.append('## '+title+'\n\n'+part_markdown(value))
@@ -437,7 +448,9 @@ class Pipeline:
                     '- **'+term+'** : '+' / '.join(e['definition']+' (page '+str(e['page'])+')' for e in entries)
                     for term,entries in sorted(terms.items())))
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts,'glossary':terms})
-        return {'documents':documents,'quality_version':quality.VERSION},'\n\n'.join(notes)
+        result={'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL}
+        result['source_diagnostic']=source_review.diagnostic(result)
+        return result,'\n\n'.join(notes)
 
     def step3(self):
         return editorial.compile_documents(self)

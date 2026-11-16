@@ -1,4 +1,4 @@
-PODCAST PEDAGOGIQUE 0.5.0 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.5.1 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
@@ -21,7 +21,8 @@ Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
 
 Conservez le dossier donnees pour garder vos projets et reglages vocaux.
 Pour une installation PodcastPedago existante, utiliser le ZIP correctif.
-Pour tout ancien projet, Ameliorer les resumes existants puis Continuer.
+Pour un projet sans idee retenue, Reexaminer l’etape 2 puis Continuer.
+Les projets 0.5.0 deja confirmes restent utilisables.
 Les PDF et leur extraction restent conserves ; ne pas les reimporter.
 L’ancienne application Streamlit V7 reste separee : importer seulement ses
 reglages et son texte dans cette nouvelle installation.

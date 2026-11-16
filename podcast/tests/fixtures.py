@@ -31,7 +31,7 @@ def make_pdf(path, label='Optique', page_count=3):
 
 def answer(task,p):
     if task=='grounded_text':return {'text':p['statement'] if p['kind']=='sentence' else p['statement']+' '+p.get('explanation','')}
-    if task=='writing_check':return {'status':'supported','quote':p['source'],'reason':'Correspondance simulée entre formulation et preuve, pour le test technique.'}
+    if task=='writing_check':return {'status':'supported',**({'quote_refs':[p['source_excerpts'][0]['ref']]} if p.get('source_excerpts') else {'quote':p['source']}),'reason':'Correspondance simulée entre formulation et preuve, pour le test technique.'}
     if task=='editorial_outline':
         from editorial import LABELS
         return {'central_question':'Comment comprendre les notions et leurs limites dans ces documents ?',
@@ -46,8 +46,9 @@ def answer(task,p):
     if task=='pdf_synthesis':return {'text':'Les trois parties relient les pertes, leur compensation et les limites.'}
     if task=='review_facts':
         return {'decisions':{i['id']:{'statement':i['statement'],'explanation':i['explanation'],
-                        'evidence':[p['source_text'][:100]],'status':'kept','reason':'Appui simulé pour le test.'}
+                        'evidence':[p['source_excerpts'][0]['ref']] if p.get('source_excerpts') else [p['source_text'][:100]],'status':'kept','reason':'Appui simulé pour le test.'}
                        for i in p['candidates']}}
+    if task=='fact_support' and p.get('proof_references'):return {'verdicts':{i['ref']:{'status':'supported','reason':'Appui simulé contre la citation sélectionnée.','statement_refs':[i['evidence'][0]['ref']],'explanation_refs':[i['evidence'][0]['ref']]} for i in p['facts']}}
     if task=='fact_support':return {'verdicts':{i['ref']:{'status':'supported','reason':'Appui sémantique simulé pour ce test.','statement_quote':i['evidence'][0],'explanation_quote':i['evidence'][0]} for i in p['facts']}}
     if task=='common_paragraphs':return {'paragraphs':{i['ref']:i['statement']+' '+i.get('explanation','') for i in p['ideas']}}
     if task=='explanation_paragraphs':return {'transition':'Nous avons vu les pertes ; étudions maintenant leur compensation.',

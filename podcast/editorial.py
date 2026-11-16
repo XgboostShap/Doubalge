@@ -7,6 +7,7 @@ from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 from storage import fingerprint, read
 import quality
 import writing
+import source_review
 
 VERSION = 'grounded-editorial-v3'
 MAX_QUESTION_WORDS = 20
@@ -158,6 +159,7 @@ def compile_documents(pipe):
     data=copy.deepcopy(pipe.saved(2));notes=[]
     if data.get('quality_version')!=quality.VERSION:
         raise ValueError('Anciennes sources : utiliser Améliorer les résumés existants avant de continuer.')
+    if source_review.diagnostic(data)['empty']:raise ValueError(source_review.empty_message(data))
     for doc in data['documents']:
         sections=[];selected=[]
         for part in doc['parts']:
@@ -190,7 +192,7 @@ def registry_markdown(ideas):
 def common(pipe):
     data=pipe.saved(3);ideas=[copy.deepcopy(i) for d in data['documents'] for p in d['parts'] for i in p['ideas']]
     if data.get('workflow_version')!=VERSION:raise ValueError('Ancienne synthèse : reprendre à l’étape 3 après réexamen des sources.')
-    if not ideas:raise ValueError('Aucune idée explicative retenue ; revoir le rapport des sources à l’étape 2.')
+    if not ideas:raise ValueError(source_review.empty_message(data))
     if len({i['id'] for i in ideas})!=len(ideas):raise ValueError('Identifiants sources en doublon : reprendre les résumés.')
     if any(i.get('source_hash')!=source_hash(i) for i in ideas):raise ValueError('Source modifiée : réexaminer les résumés avant le texte commun.')
     warnings=[]

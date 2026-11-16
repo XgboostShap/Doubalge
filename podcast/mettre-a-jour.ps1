@@ -4,7 +4,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -73,6 +73,6 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Ouvrez le dernier projet, cliquez sur Ameliorer les resumes existants, attendez la fin puis Continuer jusqu au script final. Relisez le nouveau dialogue avant un essai audio court. Inutile de reimporter les PDF.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Si aucune idee n est retenue, ouvrir le dernier projet puis Reexaminer l etape 2. Attendre la fin puis Continuer. Aucun PDF n est a reimporter. Un projet 0.5.0 deja confirme peut continuer normalement.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }

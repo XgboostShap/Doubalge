@@ -23,9 +23,10 @@ from pipeline import Pipeline, STEPS
 from storage import defaults, fingerprint, invalidate, read, write
 import audio_export
 import voice_legacy
+import source_review
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.0'
+APP_VERSION = '0.5.1'
 
 
 def settings(value):
@@ -107,17 +108,21 @@ class App:
     def summary(self, folder):
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
-        needs_upgrade=2 in completed and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v5'
+        source_data=read(folder/'etapes/02.json')['data'] if 2 in completed else {}
+        source_diagnostic=source_review.diagnostic(source_data)
+        needs_upgrade=2 in completed and source_data.get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
         if task and task['state']=='error' and task.get('app_version')!=APP_VERSION:
             task={**task,'message':'Ancien échec enregistré — cliquez sur Continuer pour reprendre avec la version '+APP_VERSION,
                   'from_previous_version':True}
+            if source_diagnostic['empty']:task['message']='Ancien échec — réexaminer l’étape 2 avec le nouveau contrôle des citations'
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
-        if needs_upgrade:exports=[]
+        if needs_upgrade or source_diagnostic['empty']:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
-                'audio':self.audio_summary(folder,meta,needs_upgrade),
+                'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty']),
+                'source_diagnostic':source_diagnostic,
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':next((n for n in range(1,10) if n not in completed),10)}
 
@@ -249,6 +254,8 @@ class App:
                 raise ValueError('Étapes invalides.')
             if first>1 and not (folder/'etapes'/f'{first-1:02}.json').exists():
                 raise ValueError('L’étape précédente doit être terminée.')
+            if first>2 and (folder/'etapes/02.json').exists() and source_review.diagnostic(read(folder/'etapes/02.json')['data'])['empty']:
+                raise ValueError(source_review.empty_message(read(folder/'etapes/02.json')['data']))
             regenerate,refine = body.get('regenerate',False),body.get('refine',False)
             if type(regenerate) is not bool or type(refine) is not bool:
                 raise ValueError('Option de régénération invalide.')
@@ -304,6 +311,8 @@ class App:
                 self.active = (task['id'],client)
                 Pipeline(folder,client,cancel,progress).run(task['first'],task['until'])
                 task.update(state='done',message='Étapes terminées et enregistrées')
+                if task['until']==2 and source_review.diagnostic(read(folder/'etapes/02.json')['data'])['empty']:
+                    task.update(state='needs_review',message='Rapport enregistré — aucune idée confirmée ; consulter les motifs et réexaminer l’étape 2')
             except Cancelled:
                 task.update(state='cancelled',message='Annulé. Les répliques audio terminées sont conservées pour la reprise.' if task.get('kind')=='audio' else 'Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
             except Exception as error:
