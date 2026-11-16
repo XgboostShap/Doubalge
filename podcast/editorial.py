@@ -161,7 +161,7 @@ def compile_documents(pipe):
         raise ValueError('Anciennes sources : utiliser Améliorer les résumés existants avant de continuer.')
     if source_review.diagnostic(data)['empty']:raise ValueError(source_review.empty_message(data))
     for doc in data['documents']:
-        sections=[];selected=[]
+        sections=[];selected=[];length_warnings=[]
         for part in doc['parts']:
             for idea in part['ideas']:
                 if idea.get('source_hash')!=source_hash(idea):raise ValueError('Source modifiée : réexaminer les résumés avant leur compilation. '+idea['id'])
@@ -171,14 +171,16 @@ def compile_documents(pipe):
             for idea in selected_ideas:
                 packet=writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{}))
                 paragraphs.append(packet['text']+' ['+idea['id']+']')
+                length_warnings.extend(packet.get('warnings',[]))
             text='\n\n'.join(paragraphs) or 'Aucune idée explicative retenue dans cette partie.'
             sections.append('### Partie '+str(part['number'])+'\n\n'+text)
             selected.extend(ids)
         doc['synthesis']='\n\n'.join(sections)
         doc['synthesis_ids']=selected
-        doc['synthesis_warnings']=[]
+        doc['synthesis_warnings']=length_warnings
         doc['synthesis_provisional']=False
         notes.append('## '+doc['id']+' — '+doc['name']+'\n\n'+doc['synthesis'])
+        if length_warnings:notes.append('### Notes éditoriales\n\n'+'\n'.join('- '+w for w in length_warnings))
         notes.append('### Registre complet des idées\n\n'+registry_markdown([i for p in doc['parts'] for i in p['ideas']]))
     data['workflow_version']=VERSION
     return data,'\n\n'.join(notes)
@@ -199,7 +201,7 @@ def common(pipe):
     if any(i.get('role') not in ROLES for i in ideas):
         ideas,warnings=annotated(pipe,ideas)
     for i in ideas:i['source_hash']=source_hash(i)
-    groups=[];notes=[]
+    groups=[];notes=[];length_warnings=[]
     for role in ROLES:
         entries=[i for i in ideas if i['role']==role]
         if not entries:continue
@@ -208,16 +210,18 @@ def common(pipe):
             packet=writing.rewrite(pipe,4,'Commun-'+idea['id'],idea,
                 {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},'sentence')
             paragraphs.append(packet['text']+' ['+idea['id']+']')
+            length_warnings.extend(packet.get('warnings',[]))
         text='\n\n'.join(paragraphs)
         groups.append({'id':f'G{len(groups)+1}','title':LABELS[role],'role':role,
                        'idea_ids':[i['id'] for i in entries],'text':text})
         notes.append('## '+LABELS[role]+'\n\n'+text)
     result={'workflow_version':VERSION,'groups':groups,'ideas':ideas,
         'documents':[{k:d.get(k,{}) for k in ('id','name','glossary')} for d in data['documents']],
-        'classification_warnings':warnings,'text_warnings':[],
-        'synthesis_warnings':[],
+        'classification_warnings':warnings,'text_warnings':length_warnings,
+        'synthesis_warnings':[w for d in data['documents'] for w in d.get('synthesis_warnings',[])],
         'source_uncertainties':[{'document':d['id'],'id':i['id'],'pages':i.get('pages',[]),'reason':i['reason']}
             for d in data['documents'] for p in d['parts'] for i in p.get('uncertain_ideas',[])]}
+    if length_warnings:notes.append('### Notes éditoriales\n\n'+'\n'.join('- '+w for w in length_warnings))
     return result,'\n\n'.join(notes)+'\n\n## Sources et idées\n\n'+registry_markdown(ideas)
 
 def definitions(data):
@@ -511,7 +515,7 @@ def dialogue(pipe):
     for item in [i for c in pipe.saved(6)['chapters'] for i in c['items']]:registry[item['idea_id']]['oral_key']=item['sentence']
     speakers=pipe.config['speakers'];terms=definitions(data)
     memory={'explained_ideas':{},'definitions':{},'examples':[],'open_questions':[],'last_turns':[],'asked_questions':[]}
-    chapters=[];memories=[];warnings=[]
+    chapters=[];memories=[];warnings=explain.get('warnings',[])[:]
     for c in plan['chapters']:
         def produce_chapter():
             local_memory=copy.deepcopy(memory);turns=[];issues=[]
@@ -648,7 +652,8 @@ def review(pipe):
     plain='\n\n'.join(speakers[0]+' : '+c['opening_transition']+'\n\n'+'\n\n'.join(t['speaker']+' : '+t['text'] for t in c['turns']) for c in chapters)
     count=sum(words(c['opening_transition'])+sum(words(t['text']) for t in c['turns']) for c in chapters)
     target=pipe.config['minutes']*145
-    warnings=data.get('classification_warnings',[])+plan.get('warnings',[])+draft.get('warnings',[])
+    warnings=(data.get('classification_warnings',[])+data.get('text_warnings',[])+plan.get('warnings',[])+draft.get('warnings',[])+
+              [t['length_warning'] for c in chapters for t in c['turns'] if t.get('length_warning')])
     duration_warning=not .75*target<=count<=1.15*target
     if duration_warning:issues.append({'chapter':'ensemble','note':'Durée à ajuster : matière source et durée cible ne coïncident pas encore.'})
     result={'workflow_version':VERSION,'chapters':chapters,'issues':issues,'covered_idea_ids':sorted(seen),
@@ -658,7 +663,7 @@ def review(pipe):
         'source_glossaries':copy.deepcopy(data.get('documents',[])),
         'expected_idea_ids':sorted(expected),'all_planned_ids_present':True,'source_texts_preserved':True,
         'excluded_ideas':plan['exclusions'],'source_uncertainties':data.get('source_uncertainties',[]),
-        'generation_warnings':warnings,'synthesis_warnings':[],'word_count':count,
+        'generation_warnings':warnings,'synthesis_warnings':data.get('synthesis_warnings',[]),'word_count':count,
         'estimated_minutes':round(count/145,1),'target_minutes':pipe.config['minutes'],
         'duration_warning':duration_warning,'markdown':script_markdown(chapters,speakers),'plain_text':plain,
         'responses_rewritten':True,'note':'Les réponses ont été reformulées puis relues contre les citations. Le registre original reste conservé. Ces contrôles automatiques ne remplacent pas une relecture scientifique et pédagogique humaine.'}

@@ -1,9 +1,9 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.2",
   "files": [
     {
       "path": "app.py",
-      "sha256": "15e34f2c9eb4172bf05b7cf216e9a11db1b21accdfb80cf5f083a0ffe0f44d0d"
+      "sha256": "bcabf84bf14c71bb7f95676f1a450caab75951d92c1d75ee2538b2d86e09675d"
     },
     {
       "path": "storage.py",
@@ -23,11 +23,11 @@
     },
     {
       "path": "editorial.py",
-      "sha256": "8789fd61e2392abf07918b3b93500115279ccbe2d4bc53e626e4f2b909675cb1"
+      "sha256": "47f4a457de62dfcb2587d9f8a2bfea7567c5143e2d636e57d8b767758ccedb66"
     },
     {
       "path": "writing.py",
-      "sha256": "1451501bd2a467748cc91428fff88f8824b384052a0bd39762eb90c60cecbd2f"
+      "sha256": "55a9d94808094c739a79de47d58e30e8f25dfde53adc544a244a8b7c9d102aed"
     },
     {
       "path": "spoken.py",
@@ -67,15 +67,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "239539d48490dabaf07f0927c12861357a6e62f1966ff1f70a9f18d136195ec1"
+      "sha256": "c67f2d7cf03c43307502695ea6f0611dac747d6db2bfc424283a083224c87fba"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "83c4696e4170cc6f5a877672db8091341ae5ded1aa4a65512ff3bafd2fff813a"
+      "sha256": "d0ed93554c9c4fc28cd58d73bbd9e62949f3c05b21acdf922fcdee8451204d8f"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "652954f1136334f93f6d978569e92d76fe33c638ca8d1af4fb3cab03381be265"
+      "sha256": "7d49dcd9520a1a8f081708317e4863f6ae822df25feb41e3b02828bf9efa3bb9"
     }
   ]
 }

@@ -1,4 +1,4 @@
-# Podcast pédagogique — version 0.5.1
+# Podcast pédagogique — version 0.5.2
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
 
@@ -7,7 +7,9 @@ Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue p
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.1** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.5.2** en haut de la page.
+
+Pour le blocage de l’étape 3 « Rédiger un passage clair de 5 à 85 mots » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 et 2 restent conservées et les passages déjà terminés à l’étape 3 sont réutilisés. Aucun réexamen de l’étape 2 ni réimport du PDF n’est nécessaire pour cette erreur de rédaction.
 
 Si le projet indique **Aucune idée explicative retenue**, ouvrir le dernier projet puis cliquer sur **Réexaminer l’étape 2**. Les idées candidates déjà extraites sont réexaminées avec le nouveau protocole. Après la fin du traitement, consulter le nombre d’idées confirmées puis cliquer sur **Continuer jusqu’au script final**. Aucun PDF n’est à réimporter : l’extraction de l’étape 1, les références vocales et les archives sont conservées.
 
@@ -72,11 +74,23 @@ Le serveur est accessible uniquement sur `127.0.0.1:8766`. Garder la fenêtre de
 | 4 | Texte commun réunissant les idées sous forme de phrases réécrites et vérifiées, classées par rôle pédagogique ; registre complet conservé. |
 | 5 | Notions et problème avant méthodes, résultats, applications et limites. Question directrice et titres proposés à partir des sources. Détails et idées hors durée restent au dossier avec leur motif. |
 | 6 | Une phrase centrale réécrite par idée, 35 mots maximum, puis vérification du sens contre la source. |
-| 7 | Une explication orale de 85 mots maximum par idée, relue séparément ; contexte court pour éviter les redites. |
+| 7 | Une explication orale concise par idée, relue séparément ; réduction ciblée des textes longs et contexte court pour éviter les redites. |
 | 8 | Questions courtes et réponses issues de la rédaction vérifiée ; définitions intégrées à la même réplique, mémoire bornée et rappels entre chapitres. |
 | 9 | Vérification des sources et empreintes, vraie seconde relecture du dialogue, correction locale si possible, puis rapport et exports. Un passage non confirmé arrête explicitement la révision. |
 
 Chaque résultat terminé est sauvegardé en Markdown et JSON avant la suite. Le dialogue est enregistré par blocs de deux idées au maximum, puis par chapitre. **Continuer** réutilise les blocs terminés après une interruption. Une erreur réseau, une annulation ou un problème d’enregistrement reste un arrêt explicite.
+
+## Correctif 0.5.2 — reprise des rédactions trop longues
+
+La limite de 85 mots mélangeait une cible éditoriale et un motif de refus. Le même message couvrait aussi un champ `text` absent ou un texte vide. Les diagnostics indiquent désormais l’identifiant de l’idée, le type d’erreur et le nombre de mots reçu.
+
+Une explication vise environ 55 mots, avec une cible maximale de 85. Si le brouillon la dépasse, une demande ciblée reçoit le texte entier, son nombre de mots et ses sources pour le reformuler sans perdre les conditions et réserves. Le résultat est relu contre les citations. Aucun texte n’est coupé automatiquement pour atteindre le compte de mots.
+
+Un brouillon entre 86 et 160 mots peut être conservé avec une **note éditoriale visible** si la réduction n’aboutit pas et si sa propre relecture des sources est favorable. La réduction refusée n’est pas utilisée. Le dépassement de la cible ne vaut jamais validation scientifique. Les notes restent dans les rapports et ne sont pas lues par VoiceStudio. Les estimations de durée reposent sur le texte réellement retenu.
+
+Les bornes techniques restent limitées : 160 mots par explication, 60 pour une phrase clé, 240 pour une réponse finale incluant les définitions du lexique. Un champ absent, un texte trop court ou un brouillon au-delà de ces bornes déclenche une reprise ciblée ; un échec persistant s’arrête avec un diagnostic détaillé. Un brouillon démesuré peut être omis en entier lors de la reprise ; les citations source restent intégrales. Les erreurs réseau et les annulations restent des arrêts explicites.
+
+Les parties déjà validées en 0.5.1 restent réutilisables, sans recréer les sources ni les voix. Les réparations portent sur l’idée en échec. Les contrôles des faits, des identifiants, des nombres, des unités et des citations restent actifs.
 
 ## Correctif 0.5.1 — projet sans idée retenue
 

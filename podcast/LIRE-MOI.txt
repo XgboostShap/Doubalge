@@ -1,4 +1,4 @@
-PODCAST PEDAGOGIQUE 0.5.1 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.5.2 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois.
