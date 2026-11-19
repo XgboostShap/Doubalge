@@ -1,9 +1,9 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "files": [
     {
       "path": "app.py",
-      "sha256": "c1fac03bebb8c3e2ed7b51e2f2c233a421f6717423f7fdc1ebf86f0ffa206d7b"
+      "sha256": "970c55de045d326f8548b712e148c0eddae4ca8a5dea7286eabc1c236f007b38"
     },
     {
       "path": "storage.py",
@@ -11,7 +11,7 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "f0194a5de289f9b7940133a1eaac0635ab939a10485f89a065fe61cc54c3c8d4"
+      "sha256": "5e4a835e2646acbb67d81002f9cb57e1eebaaa6a9a851285d74ceb05ce9fcc05"
     },
     {
       "path": "quality.py",
@@ -23,7 +23,7 @@
     },
     {
       "path": "editorial.py",
-      "sha256": "42cb30179dbb846c4234a0ea1f7ee9ca4f1536c94b609875425601b5eaa3d6be"
+      "sha256": "10efbd613a69a1ddc1b1a25a9415f7beb352ce77596648ee9cec559a36ce33df"
     },
     {
       "path": "writing.py",
@@ -55,11 +55,15 @@
     },
     {
       "path": "review_queue.py",
-      "sha256": "a373a951ba54174f2c10bac64ad547ef779e74a6ab2898e951013b6d8e0d7c4d"
+      "sha256": "ee537627e80a70d596ca204794d72f8758625152ea71f682b22744d723b2798a"
     },
     {
       "path": "source_decisions.py",
       "sha256": "d03b6164b0870bbb425e189b7975e3a9d1ee666574625ebec18a45216978c176"
+    },
+    {
+      "path": "review_flow.py",
+      "sha256": "1183b0c2b6ee233c4774648fea520aa3a1c14053f4bd3b7ac821f13ce5e89a00"
     },
     {
       "path": "source_checks.py",
@@ -75,15 +79,19 @@
     },
     {
       "path": "web/index.html",
-      "sha256": "2e0ce98380e1a98b2581b4ed085ee347f5bc3435c59a07e641b9dc647792eb1b"
+      "sha256": "b17648309a922ceb6e85feaf927e13ba9447fb1fabc417da4fee3c155ba73981"
     },
     {
       "path": "web/app.js",
-      "sha256": "320533a0ad4ba85375f52bf27bfac13a733499301ed0a48bd366b82e72f78474"
+      "sha256": "7d3be61ebb11e9976328d712029c245217b7a84cbfdbf224b550670161482722"
+    },
+    {
+      "path": "web/reviews.js",
+      "sha256": "a8806a2831a978bbfbcb49e4229b12b6363357e466e3b37cc3b5af35624ec716"
     },
     {
       "path": "web/style.css",
-      "sha256": "5d59ee340b0f9bfc60205c1a6198286823cc34180b73b1dc8a8774b25dc63c2a"
+      "sha256": "8089a2d0cf34999ef303771cf50f087a3fcf170a1156ac3f1e9ea92147327ba8"
     },
     {
       "path": "Lancer-Podcast.cmd",
@@ -91,15 +99,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "78e829319e7ef0d51fa12d2cba77775d25c972ed714fe5c481f24f03c311fcdb"
+      "sha256": "287a851125b7844d6a02339942f2a01c4c301193b2673890469a2406e65f30bf"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "9249315dadc7510a2f07c35b5680df4083d457fc9e94138ac5702af98425b34a"
+      "sha256": "c201aaf0f2e41aa9d21402abc35575d65c420d9af48b04e121f32278c9437797"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "9cf96746a54473213f78959fe15fdf3531681e7204c277f6603504f9a8e91e7c"
+      "sha256": "220f25a9c03b37a6ca8f8a2f4f7b7caf615d9a325999548f254b6d69487e860c"
     }
   ]
 }

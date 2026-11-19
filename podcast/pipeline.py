@@ -501,7 +501,7 @@ class Pipeline:
         result=apply_corrections(self.project,{'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL})
         for doc in result['documents']:
             for part in doc['parts']:
-                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'])
+                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'],include_deferred=True)
                 for idea in part.get('uncertain_ideas',[]):
                     candidate={**idea,'document':doc['id']}
                     # La relecture rejetée reste visible, sans devenir une preuve acceptée.

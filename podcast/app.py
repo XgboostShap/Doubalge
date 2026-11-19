@@ -25,12 +25,13 @@ import audio_export
 import voice_legacy
 import source_review
 import source_decisions
+import review_flow
 import pdf_reread
 from issues import ReviewRequired, DownloadConsentRequired, SourceIssue
 from review_queue import Reviews
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.6.0'
+APP_VERSION = '0.6.1'
 
 
 def settings(value):
@@ -74,6 +75,7 @@ class App:
         self.task_errors = {}
         self.active = None
         self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
+                        'review_ui':'paged-v1',
                         'summary_quality':getattr(pipeline_module,'SUMMARY_QUALITY_MODE','legacy'),
                         'editorial_mode':getattr(pipeline_module,'EDITORIAL_MODE','legacy'),
                         'app_dir':str(ROOT),'pid':os.getpid()}
@@ -114,6 +116,8 @@ class App:
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         source_data=read(folder/'etapes/02.json')['data'] if 2 in completed else {}
         review_store=Reviews(folder);pending_reviews=review_store.pending();review_data=review_store.data()
+        deferred_reviews=[i for i in review_data['items'] if i['status']=='deferred']
+        for item in pending_reviews+deferred_reviews:item['label']=review_flow.reason_label(item)
         source_diagnostic=source_review.diagnostic(source_data)
         needs_upgrade=2 in completed and source_data.get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
@@ -125,16 +129,48 @@ class App:
         if needs_upgrade or source_diagnostic['empty'] or pending_reviews:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
+        flow=review_flow.overview(source_data,completed,task,pending_reviews,deferred_reviews,len(parts),
+            [i['step'] for i in review_data['items'] if i['status']=='retry'])
+        flow['step_saved_parts']=sum(name.startswith(f'{flow["current_step"]:02}-') for name in parts)
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
                 'pdf_reread_available':pdf_reread.available(),
                 'pdf_readings':[p.name for p in (folder/'lectures_pdf').glob('*.md') if p.with_suffix('.json').exists()],
                 'reviews':pending_reviews,'review_history':len(review_data['decisions']),
+                'deferred_reviews':deferred_reviews,
+                'flow':flow,
                 'incomplete_source_parts':[d['id']+'-P'+str(p['number']) for d in source_data.get('documents',[]) for p in d['parts'] if p.get('incomplete_extraction')],
                 'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty'] or bool(pending_reviews)),
                 'source_diagnostic':source_diagnostic,
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':min([next((n for n in range(1,10) if n not in completed),10)]+
                     [i['step'] for i in review_data['items'] if i['status']=='retry'])}
+
+    def defer_reviews(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            if not (folder/'etapes/02.json').exists():raise ValueError('Terminez l’étape 2 avant de choisir les passages à laisser de côté.')
+            source=read(folder/'etapes/02.json')['data']
+            if source.get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:raise ValueError('Réexaminez les sources avec les contrôles actuels avant de poursuivre.')
+            store=Reviews(folder);pending=store.pending();eligible=review_flow.eligible_reviews(source,pending)
+            identities=body.get('ids');resume=body.get('continue',False)
+            if not isinstance(identities,list) or not identities or len(identities)>10000 or any(not isinstance(i,str) for i in identities):raise ValueError('Choisissez les passages à mettre de côté.')
+            if len(set(identities))!=len(identities) or not set(identities)<={i['id'] for i in eligible}:raise ValueError('Seuls les candidats non retenus à l’étape 2 peuvent être laissés de côté. Une idée utilisée ou un extrait non lu doit être vérifié.')
+            if type(resume) is not bool:raise ValueError('Option de poursuite invalide.')
+            if resume:
+                if set(identities)!={i['id'] for i in pending}:raise ValueError('D’autres vérifications restent nécessaires avant de continuer. Actualisez la page.')
+                if not any(p['ideas'] for d in source['documents'] for p in d['parts']):raise ValueError('Aucune idée retenue ne permet de poursuivre le podcast.')
+            count=store.defer(identities)
+            self.review_status(folder,f'{count} passage(s) mis de côté. Ils restent consultables et ne sont pas utilisés dans le podcast.')
+            first=min([next((n for n in range(3,10) if not (folder/'etapes'/f'{n:02}.json').exists()),10)]+
+                [i['step'] for i in store.data()['items'] if i['status']=='retry'])
+            task=self.enqueue(folder,{'first':first,'until':9}) if resume and first<=9 else None
+            return {'deferred':count,'task':task}
+
+    def reopen_review(self,folder,body):
+        with self.lock:
+            self.idle(folder);item=Reviews(folder).reopen(body.get('id'))
+            self.review_status(folder,'Vérification reprise : ce passage reste à confirmer avant de continuer.')
+            return {'saved':True,'id':item['id']}
 
     def enqueue_reread(self,folder,body):
         with self.lock:
@@ -148,7 +184,7 @@ class App:
             if index>=len(meta['pdfs']):raise ValueError('PDF inconnu.')
             page=min(source['pages'])
             task={'id':uuid.uuid4().hex,'kind':'pdf_reading','document':source['document'],'page':page,
-                'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
+                'queued_at':time.time(),'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel));return task
@@ -173,7 +209,7 @@ class App:
             self.idle(folder);data=read(folder/'etapes/02.json')['data']
             idea=next((i for d in data['documents'] for p in d['parts'] for i in p['ideas']+p.get('excluded_ideas',[]) if i['id']==body.get('id')),None)
             if idea is None:raise ValueError('Idée source inconnue.')
-            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'))
+            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'),force=True)
             self.review_status(folder,'Une idée a été ajoutée aux vérifications regroupées.')
             return item
 
@@ -284,7 +320,7 @@ class App:
             if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
                   'allow_download':body.get('allow_download') is True,
-                  'message':'Audio en attente','error':None,'app_version':APP_VERSION}
+                  'queued_at':time.time(),'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel));return task
@@ -327,7 +363,7 @@ class App:
             elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v5':
                 raise ValueError('Ce projet utilise les anciens contrôles. Cliquer sur Améliorer les résumés existants : les résultats seront archivés et les sources réexaminées avant la reconstruction du plan et du dialogue.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
-                    'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
+                    'queued_at':time.time(),'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
             self.task_errors.pop(folder.name,None)
@@ -351,12 +387,21 @@ class App:
                 config = {**meta['settings'],'_generation':meta.get('cache_generation','initial')}
                 if any(i['status']=='retry' for i in Reviews(folder).data()['items']):
                     config['_review_retry']=task['id']
+                source_totals={}
                 def progress(message):
                     task['message'] = message
+                    task['updated_at']=time.time()
+                    if message.startswith('Partie enregistrée en Markdown'):
+                        task['last_saved_at']=task['updated_at']
+                    page=re.match(r'(PDF\d+) — partie (\d+), page (\d+), fragment (\d+)',message)
+                    if page:
+                        if page[1] not in source_totals and (folder/'etapes/01.json').exists():
+                            source_totals.update({d['id']:d.get('page_count') for d in read(folder/'etapes/01.json')['data']['documents']})
+                        task['source_progress']={'document':page[1],'part':int(page[2]),'page':int(page[3]),'page_count':source_totals.get(page[1])}
                     match=re.match(r'Étape (\d+)/9',message)
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
-                task['state']='running';progress('Préparation du traitement')
+                task.update(state='running',started_at=time.time());progress('Préparation du traitement')
                 if task.get('kind')=='pdf_reading':
                     index=int(task['document'][3:])-1;pdf=folder/'sources'/meta['pdfs'][index]['file']
                     pdf_reread.run(pdf,task['page'],folder/'lectures_pdf'/f'{task["document"]}-p{task["page"]}.md',cancel,progress)
@@ -388,6 +433,7 @@ class App:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
                 self.active = None
+                task['finished_at']=time.time()
                 try:
                     write(folder/'tache.json',task)
                 except OSError as error:
@@ -497,7 +543,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path=urlsplit(self.path).path
             if path=='/api/state':self.json(self.app.state());return
-            static={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
+            static={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/reviews.js':('reviews.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
             if path in static:
                 name,mime=static[path];self.respond(200,(ROOT/'web'/name).read_bytes(),mime);return
             parts=path.split('/')
@@ -521,6 +567,17 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts)==6 and parts[1:3]==['api','projects'] and parts[4]=='stages':
                 folder=self.app.project(parts[3]);number=int(parts[5])
                 if not 1<=number<=9:raise ValueError('Étape invalide.')
+                if number==2 and parse_qs(urlsplit(self.path).query).get('view')==['summary']:
+                    data=read(folder/'etapes/02.json')['data']
+                    summaries=[]
+                    blocks=['# Résumé de l’étape 2','Le registre complet et les motifs détaillés sont disponibles dans les fichiers à télécharger.']
+                    for doc in data['documents']:
+                        for part in doc['parts']:
+                            summaries.append({'document':doc['id'],'number':part['number'],'summary':part['summary'],
+                                'retained':len(part['ideas']),'unconfirmed':len(part.get('uncertain_ideas',[]))})
+                            blocks.append('## '+doc['id']+' — partie '+str(part['number'])+'\n\n'+
+                                str(len(part['ideas']))+' idées retenues · '+str(len(part.get('uncertain_ideas',[])))+' à examiner\n\n'+part['summary'])
+                    self.json({'markdown':'\n\n'.join(blocks),'parts':summaries});return
                 self.json({'markdown':(folder/'etapes'/f'{number:02}.md').read_text(encoding='utf-8')});return
             if len(parts)==4 and parts[1]=='files':
                 folder=self.app.project(parts[2]);name=parts[3]
@@ -610,6 +667,8 @@ class Handler(BaseHTTPRequestHandler):
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
             elif action=='review':self.json(self.app.resolve_review(folder,body))
+            elif action=='defer-reviews':self.json(self.app.defer_reviews(folder,body))
+            elif action=='reopen-review':self.json(self.app.reopen_review(folder,body))
             elif action=='flag-source':self.json(self.app.flag_source(folder,body))
             elif action=='reread':self.json(self.app.enqueue_reread(folder,body),202)
             elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))

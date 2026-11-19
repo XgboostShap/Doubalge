@@ -675,6 +675,10 @@ def review(pipe):
         'duration_warning':duration_warning,'markdown':script_markdown(chapters,speakers),'plain_text':plain,
         'responses_rewritten':True,'note':'Les réponses ont été reformulées puis relues contre les citations. Le registre original reste conservé. Ces contrôles automatiques ne remplacent pas une relecture scientifique et pédagogique humaine.'}
     result['selected_count']=len(expected);result['registry_count']=len(registry)
+    from review_queue import Reviews
+    result['deferred_source_ideas']=[{'id':i['idea_id'],'reason':i['reason'],
+        'document':i['source'].get('document'),'pages':i['source'].get('pages',[])}
+        for i in Reviews(pipe.project).data()['items'] if i['status']=='deferred']
     source1=pipe.project/'etapes/01.json'
     result['source_coverage']=[{'document':d['id'],'unreadable_pages':d.get('empty_pages',[])}
         for d in read(source1)['data']['documents']] if source1.exists() else []
@@ -683,6 +687,7 @@ def review(pipe):
     if issues:notes+='\n\n'+'\n'.join('- '+i['note'] for i in issues)
     if warnings:notes+='\n\n### Points à relire\n\n'+'\n'.join('- '+w for w in warnings)
     if plan['exclusions']:notes+='\n\n### Idées hors dialogue, conservées au dossier\n\n'+'\n'.join('- '+e['idea_id']+' : '+e['reason'] for e in plan['exclusions'])
+    if result['deferred_source_ideas']:notes+='\n\n### Passages non confirmés mis de côté\n\n'+str(len(result['deferred_source_ideas']))+' passages ne sont pas utilisés dans le podcast. Leurs citations et motifs restent dans les vérifications du projet.'
     for entry in result['source_coverage']:
         if entry['unreadable_pages']:notes+='\n\nPages sans texte extractible dans '+entry['document']+' : '+', '.join(map(str,entry['unreadable_pages']))+'. Leur contenu visuel reste à examiner.'
     return result,notes

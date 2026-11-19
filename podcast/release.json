@@ -1,24 +1,24 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "file": "PodcastPedago-Windows.zip",
-  "versioned_file": "PodcastPedago-Windows-0.6.0.zip",
-  "bytes": 377943,
-  "sha256": "b27c48e5039b498407190a2258e3c80d665276320705a423013bd449ab0808c4",
-  "source_files": 52,
+  "versioned_file": "PodcastPedago-Windows-0.6.1.zip",
+  "bytes": 398391,
+  "sha256": "86f00fef5a37a255837dc75dd8c2a64b8164ce5e02092b3a2c1b5fb0b394286e",
+  "source_files": 55,
   "patch": {
-    "file": "PodcastPedago-Correctif-0.6.0.zip",
-    "bytes": 295029,
-    "sha256": "cccfaf0ca8ebfb175b67a6c70bf693b80e9d71f03a2578efe0cfc8f82213786f"
+    "file": "PodcastPedago-Correctif-0.6.1.zip",
+    "bytes": 312569,
+    "sha256": "e1ca63bd6d39bec9df76e2198c7cf8e82ce25c339a230bf39451361086d28d6a"
   },
-  "source_commit": "f29394e9819d6a666996ce49d5d6aad5e92520b2",
+  "source_commit": "b037d8234397c92fd606dc04d6c7409484e505ea",
   "validation": {
-    "tests": 272,
-    "migration_from": "0.5.4",
-    "payload_files": 25,
+    "tests": 285,
+    "migration_from": "0.6.0",
+    "payload_files": 27,
     "powershell_platform": "Linux",
-    "browser": "Chromium, simulated model and voice APIs, actual MP3 encoding/playback/download",
-    "real_model": "Mistral 7.2B Q4_K_M, two EUSIPCO ideas, stages 3 and 4, CPU, offline",
-    "docling": "One page, cached models, CPU, offline",
+    "browser": "Paginated source reviews, manual corrections, nine-stage flow and actual MP3 playback/download with simulated model and voice APIs",
+    "source_resume": "First two stages preserved byte for byte; explicitly deferred candidates stay excluded from generated content and remain in the report",
+    "reported_case": "Markdown reconstruction used to check large-queue navigation and entry into stage 3; stopped before any model call",
     "native_windows_and_actual_voice_profiles_tested": false
   }
 }

@@ -4,7 +4,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','issues.py','review_queue.py','source_decisions.py','review_flow.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/reviews.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -73,6 +73,6 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets, voix et passages compatibles sont conserves. Rouvrez le dernier projet puis Continuer. Les refus persistants sont regroupes dans Verifications regroupees : corrigez la source, ecartez l idee avec un motif ou demandez une nouvelle tentative. Les autres passages termines restent conserves. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets, voix et passages compatibles sont conserves. Rouvrez le dernier projet. Le tableau de bord indique si le calcul est actif ou attend votre choix. Continuer avec les idees retenues permet de conserver les passages incertains de cote et de lancer la suite. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }

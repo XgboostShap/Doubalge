@@ -1,31 +1,31 @@
-PODCAST PEDAGOGIQUE 0.6.0 — REPRISE ET VERIFICATION DES SOURCES
+PODCAST PEDAGOGIQUE 0.6.1 — SUIVI ET POURSUITE APRES L ETAPE 2
 
 1. Fermer l application et sa fenetre de lancement.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.6.0.
-5. Rouvrir le DERNIER PROJET puis Continuer. Ne pas reimporter les PDF.
-6. Si Verifications regroupees apparait : ouvrir la page du PDF, corriger
-   l idee et ses citations, ou ecarter l idee avec un motif. Traiter le
-   groupe puis Continuer. La correction sert aux etapes suivantes.
-7. Relire le dialogue puis essayer un audio court avec les voix existantes.
+4. Relancer et verifier Version 0.6.1. Rouvrir le DERNIER PROJET.
+5. Si l etape 2 est en attente, utiliser Continuer avec les idees retenues
+   pour laisser les candidats non confirmes de cote et lancer la suite.
+   Ils restent consultables dans Mis de cote et ne sont pas utilises.
+6. Pour examiner les passages : huit par page, un formulaire a la fois,
+   avec recherche et filtre. Corriger l idee source et ses citations ou
+   reprendre les verifications mises de cote lorsque vous le souhaitez.
 
-LES PDF, PROJETS, REFERENCES VOCALES ET UNITES COMPATIBLES SONT CONSERVES.
-Les resultats remplaces sont archives. Les refus persistants n empechent
-plus d enregistrer les autres passages de l etape. Une etape incomplete
-ne produit pas un script final declare valide.
+Le tableau de bord montre si le programme calcule ou attend votre choix.
+L apercu de l etape 2 reste court ; le registre complet est telechargeable.
+Les PDF, l extraction, les etapes 1 et 2, les references vocales et les
+parties deja enregistrees sont conserves. Ne pas reimporter le PDF.
 
-Le mode normal est local. L application refuse les adresses Ollama et
-VoiceStudio distantes et les alias Ollama cloud. Un telechargement du
-moteur MP3 absent demande une autorisation separee, apres explication.
-Docling est facultatif, avec modeles deja en cache ; aucun telechargement
-automatique. Il ne garantit pas la restauration des formules.
+Les idees encore utilisees et les extraits non lus ne peuvent pas etre
+ignores par cette poursuite. S il n y a aucune idee retenue, reexaminer
+l etape 2. Les controles scientifiques restent inchanges et faillibles.
+
+Le mode normal est local. Aucun modele ni outil n est telecharge par ce
+correctif. La preparation d un moteur absent demande un accord separe.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif puis lancer :
 powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1
 
-Cette mise a jour ne remplace ni VoiceStudio ni les profils vocaux existants.
-Les validations scientifiques, Windows natif et vos voix reelles restent a
-controler sur votre PC. Voir README.md et SOURCE-COMPLET.md.
+Voir README.md et SOURCE-COMPLET.md pour le detail du fonctionnement.

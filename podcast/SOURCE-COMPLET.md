@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.6.0
+# Sources complètes — Podcast pédagogique 0.6.1
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.
@@ -38,7 +38,7 @@ pause
 ## LIRE-MOI.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.6.0 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.6.1 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois. Il demande votre accord avant
@@ -59,6 +59,12 @@ Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
 Chaque partie est sauvegardee en Markdown avant la suivante.
 Continuer reprend les parties manquantes apres une interruption.
 Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
+
+SUIVRE LE TRAITEMENT
+Le tableau de bord distingue Calcul en cours et Un choix est attendu.
+Si l etape 2 est en attente, attendre ne lance pas l etape 3.
+Continuer avec les idees retenues met les passages non confirmes de cote
+et lance la suite. Ils restent consultables ; ils ne sont pas approuves.
 
 SI UN PASSAGE RESTE A VERIFIER
 Ouvrir les Verifications regroupees, consulter la page du PDF et corriger
@@ -121,45 +127,57 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.6.0 — REPRISE ET VERIFICATION DES SOURCES
+PODCAST PEDAGOGIQUE 0.6.1 — SUIVI ET POURSUITE APRES L ETAPE 2
 
 1. Fermer l application et sa fenetre de lancement.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.6.0.
-5. Rouvrir le DERNIER PROJET puis Continuer. Ne pas reimporter les PDF.
-6. Si Verifications regroupees apparait : ouvrir la page du PDF, corriger
-   l idee et ses citations, ou ecarter l idee avec un motif. Traiter le
-   groupe puis Continuer. La correction sert aux etapes suivantes.
-7. Relire le dialogue puis essayer un audio court avec les voix existantes.
+4. Relancer et verifier Version 0.6.1. Rouvrir le DERNIER PROJET.
+5. Si l etape 2 est en attente, utiliser Continuer avec les idees retenues
+   pour laisser les candidats non confirmes de cote et lancer la suite.
+   Ils restent consultables dans Mis de cote et ne sont pas utilises.
+6. Pour examiner les passages : huit par page, un formulaire a la fois,
+   avec recherche et filtre. Corriger l idee source et ses citations ou
+   reprendre les verifications mises de cote lorsque vous le souhaitez.
 
-LES PDF, PROJETS, REFERENCES VOCALES ET UNITES COMPATIBLES SONT CONSERVES.
-Les resultats remplaces sont archives. Les refus persistants n empechent
-plus d enregistrer les autres passages de l etape. Une etape incomplete
-ne produit pas un script final declare valide.
+Le tableau de bord montre si le programme calcule ou attend votre choix.
+L apercu de l etape 2 reste court ; le registre complet est telechargeable.
+Les PDF, l extraction, les etapes 1 et 2, les references vocales et les
+parties deja enregistrees sont conserves. Ne pas reimporter le PDF.
 
-Le mode normal est local. L application refuse les adresses Ollama et
-VoiceStudio distantes et les alias Ollama cloud. Un telechargement du
-moteur MP3 absent demande une autorisation separee, apres explication.
-Docling est facultatif, avec modeles deja en cache ; aucun telechargement
-automatique. Il ne garantit pas la restauration des formules.
+Les idees encore utilisees et les extraits non lus ne peuvent pas etre
+ignores par cette poursuite. S il n y a aucune idee retenue, reexaminer
+l etape 2. Les controles scientifiques restent inchanges et faillibles.
+
+Le mode normal est local. Aucun modele ni outil n est telecharge par ce
+correctif. La preparation d un moteur absent demande un accord separe.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif puis lancer :
 powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1
 
-Cette mise a jour ne remplace ni VoiceStudio ni les profils vocaux existants.
-Les validations scientifiques, Windows natif et vos voix reelles restent a
-controler sur votre PC. Voir README.md et SOURCE-COMPLET.md.
+Voir README.md et SOURCE-COMPLET.md pour le detail du fonctionnement.
 ```
 
 ## README.md
 
 ```text
-# Podcast pédagogique — version 0.6.0
+# Podcast pédagogique — version 0.6.1
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
+
+## 0.6.1 — suivre le traitement et poursuivre après l’étape 2
+
+Le tableau de bord indique explicitement **Calcul en cours** ou **Un choix est attendu — le calcul est arrêté**. Il conserve l’étape active à l’écran, affiche la durée de l’exécution et les points de reprise enregistrés. Quand le programme attend une décision, attendre plus longtemps ne lance pas la suite.
+
+Les vérifications s’ouvrent à la demande : huit passages par page, recherche, filtre par motif et un seul formulaire à la fois. Le titre montre le texte de l’idée ; son identifiant reste dans le détail. L’aperçu de l’étape 2 présente les synthèses des trois parties ; le registre intégral reste téléchargeable.
+
+Si des candidats non confirmés sont déjà absents des idées retenues, **Continuer avec les idées retenues** permet de les mettre de côté explicitement et de lancer la suite. Ils ne deviennent pas des idées approuvées et ne sont pas utilisés dans le podcast. Ils restent dans **Mis de côté**, dans l’historique et dans le rapport final. **Reprendre cette vérification** permet de revenir dessus plus tard.
+
+Cette poursuite est refusée s’il n’existe aucune idée retenue, si un extrait n’a pas pu être lu ou si la vérification porte sur une idée encore utilisée. Ces cas demandent une décision ou une correction. Les contrôles des chiffres, citations et affirmations restent identiques. Les demandes de nouvelle tentative déjà enregistrées sont respectées.
+
+Pour reprendre le projet existant : fermer l’application, appliquer le correctif, relancer et ouvrir le dernier projet. L’extraction et l’étape 2 restent conservées. Le bouton de poursuite démarre à la première étape manquante, généralement la 3 ; aucune nouvelle extraction du PDF n’est nécessaire.
 
 ## Stabilisation 0.6.0 : traiter, vérifier, reprendre
 
@@ -203,6 +221,7 @@ Docling n’est pas une dépendance obligatoire du correctif. Pour une installat
 | `source_checks.py` | Contraintes explicites de formule, périmètre et appui source. |
 | `review_queue.py` | Questions regroupées, historique et réapplication des corrections. |
 | `source_decisions.py` | Vérification des citations, décisions humaines et reprise du registre. |
+| `review_flow.py`, `web/reviews.js` | État d’avancement, vérifications paginées et poursuite explicite avec les idées retenues. |
 | `pdf_reread.py` | Relecture facultative d’une page avec ressources locales. |
 | `llm.py` | Ollama local, validation des réponses, cache et budget de reprises. |
 | `pipeline.py`, `editorial.py`, `writing.py` | Étapes, unités sauvegardées, registre et rédaction reliée aux preuves. |
@@ -213,7 +232,7 @@ Docling n’est pas une dépendance obligatoire du correctif. Pour une installat
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.6.0** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.6.1** en haut de la page.
 
 Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 
@@ -401,12 +420,13 @@ import audio_export
 import voice_legacy
 import source_review
 import source_decisions
+import review_flow
 import pdf_reread
 from issues import ReviewRequired, DownloadConsentRequired, SourceIssue
 from review_queue import Reviews
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.6.0'
+APP_VERSION = '0.6.1'
 
 
 def settings(value):
@@ -450,6 +470,7 @@ class App:
         self.task_errors = {}
         self.active = None
         self.runtime = {'version':APP_VERSION,'page_sources':getattr(pipeline_module,'SOURCE_PAGE_MODE','legacy'),
+                        'review_ui':'paged-v1',
                         'summary_quality':getattr(pipeline_module,'SUMMARY_QUALITY_MODE','legacy'),
                         'editorial_mode':getattr(pipeline_module,'EDITORIAL_MODE','legacy'),
                         'app_dir':str(ROOT),'pid':os.getpid()}
@@ -490,6 +511,8 @@ class App:
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         source_data=read(folder/'etapes/02.json')['data'] if 2 in completed else {}
         review_store=Reviews(folder);pending_reviews=review_store.pending();review_data=review_store.data()
+        deferred_reviews=[i for i in review_data['items'] if i['status']=='deferred']
+        for item in pending_reviews+deferred_reviews:item['label']=review_flow.reason_label(item)
         source_diagnostic=source_review.diagnostic(source_data)
         needs_upgrade=2 in completed and source_data.get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
@@ -501,16 +524,48 @@ class App:
         if needs_upgrade or source_diagnostic['empty'] or pending_reviews:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
+        flow=review_flow.overview(source_data,completed,task,pending_reviews,deferred_reviews,len(parts),
+            [i['step'] for i in review_data['items'] if i['status']=='retry'])
+        flow['step_saved_parts']=sum(name.startswith(f'{flow["current_step"]:02}-') for name in parts)
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
                 'pdf_reread_available':pdf_reread.available(),
                 'pdf_readings':[p.name for p in (folder/'lectures_pdf').glob('*.md') if p.with_suffix('.json').exists()],
                 'reviews':pending_reviews,'review_history':len(review_data['decisions']),
+                'deferred_reviews':deferred_reviews,
+                'flow':flow,
                 'incomplete_source_parts':[d['id']+'-P'+str(p['number']) for d in source_data.get('documents',[]) for p in d['parts'] if p.get('incomplete_extraction')],
                 'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty'] or bool(pending_reviews)),
                 'source_diagnostic':source_diagnostic,
                 'needs_source_upgrade':needs_upgrade,
                 'next_step':min([next((n for n in range(1,10) if n not in completed),10)]+
                     [i['step'] for i in review_data['items'] if i['status']=='retry'])}
+
+    def defer_reviews(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            if not (folder/'etapes/02.json').exists():raise ValueError('Terminez l’étape 2 avant de choisir les passages à laisser de côté.')
+            source=read(folder/'etapes/02.json')['data']
+            if source.get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:raise ValueError('Réexaminez les sources avec les contrôles actuels avant de poursuivre.')
+            store=Reviews(folder);pending=store.pending();eligible=review_flow.eligible_reviews(source,pending)
+            identities=body.get('ids');resume=body.get('continue',False)
+            if not isinstance(identities,list) or not identities or len(identities)>10000 or any(not isinstance(i,str) for i in identities):raise ValueError('Choisissez les passages à mettre de côté.')
+            if len(set(identities))!=len(identities) or not set(identities)<={i['id'] for i in eligible}:raise ValueError('Seuls les candidats non retenus à l’étape 2 peuvent être laissés de côté. Une idée utilisée ou un extrait non lu doit être vérifié.')
+            if type(resume) is not bool:raise ValueError('Option de poursuite invalide.')
+            if resume:
+                if set(identities)!={i['id'] for i in pending}:raise ValueError('D’autres vérifications restent nécessaires avant de continuer. Actualisez la page.')
+                if not any(p['ideas'] for d in source['documents'] for p in d['parts']):raise ValueError('Aucune idée retenue ne permet de poursuivre le podcast.')
+            count=store.defer(identities)
+            self.review_status(folder,f'{count} passage(s) mis de côté. Ils restent consultables et ne sont pas utilisés dans le podcast.')
+            first=min([next((n for n in range(3,10) if not (folder/'etapes'/f'{n:02}.json').exists()),10)]+
+                [i['step'] for i in store.data()['items'] if i['status']=='retry'])
+            task=self.enqueue(folder,{'first':first,'until':9}) if resume and first<=9 else None
+            return {'deferred':count,'task':task}
+
+    def reopen_review(self,folder,body):
+        with self.lock:
+            self.idle(folder);item=Reviews(folder).reopen(body.get('id'))
+            self.review_status(folder,'Vérification reprise : ce passage reste à confirmer avant de continuer.')
+            return {'saved':True,'id':item['id']}
 
     def enqueue_reread(self,folder,body):
         with self.lock:
@@ -524,7 +579,7 @@ class App:
             if index>=len(meta['pdfs']):raise ValueError('PDF inconnu.')
             page=min(source['pages'])
             task={'id':uuid.uuid4().hex,'kind':'pdf_reading','document':source['document'],'page':page,
-                'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
+                'queued_at':time.time(),'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel));return task
@@ -549,7 +604,7 @@ class App:
             self.idle(folder);data=read(folder/'etapes/02.json')['data']
             idea=next((i for d in data['documents'] for p in d['parts'] for i in p['ideas']+p.get('excluded_ideas',[]) if i['id']==body.get('id')),None)
             if idea is None:raise ValueError('Idée source inconnue.')
-            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'))
+            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'),force=True)
             self.review_status(folder,'Une idée a été ajoutée aux vérifications regroupées.')
             return item
 
@@ -660,7 +715,7 @@ class App:
             if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
                   'allow_download':body.get('allow_download') is True,
-                  'message':'Audio en attente','error':None,'app_version':APP_VERSION}
+                  'queued_at':time.time(),'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
             self.pending.put((folder,task,cancel));return task
@@ -703,7 +758,7 @@ class App:
             elif first>2 and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!='source-review-v5':
                 raise ValueError('Ce projet utilise les anciens contrôles. Cliquer sur Améliorer les résumés existants : les résultats seront archivés et les sources réexaminées avant la reconstruction du plan et du dialogue.')
             task = {'id':uuid.uuid4().hex,'first':first,'until':until,'state':'queued',
-                    'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
+                    'queued_at':time.time(),'message':'En attente','error':None,'regenerate':regenerate,'refine':refine,'app_version':APP_VERSION}
             cancel = threading.Event();self.cancels[task['id']] = cancel
             write(folder/'tache.json',task)
             self.task_errors.pop(folder.name,None)
@@ -727,12 +782,21 @@ class App:
                 config = {**meta['settings'],'_generation':meta.get('cache_generation','initial')}
                 if any(i['status']=='retry' for i in Reviews(folder).data()['items']):
                     config['_review_retry']=task['id']
+                source_totals={}
                 def progress(message):
                     task['message'] = message
+                    task['updated_at']=time.time()
+                    if message.startswith('Partie enregistrée en Markdown'):
+                        task['last_saved_at']=task['updated_at']
+                    page=re.match(r'(PDF\d+) — partie (\d+), page (\d+), fragment (\d+)',message)
+                    if page:
+                        if page[1] not in source_totals and (folder/'etapes/01.json').exists():
+                            source_totals.update({d['id']:d.get('page_count') for d in read(folder/'etapes/01.json')['data']['documents']})
+                        task['source_progress']={'document':page[1],'part':int(page[2]),'page':int(page[3]),'page_count':source_totals.get(page[1])}
                     match=re.match(r'Étape (\d+)/9',message)
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
-                task['state']='running';progress('Préparation du traitement')
+                task.update(state='running',started_at=time.time());progress('Préparation du traitement')
                 if task.get('kind')=='pdf_reading':
                     index=int(task['document'][3:])-1;pdf=folder/'sources'/meta['pdfs'][index]['file']
                     pdf_reread.run(pdf,task['page'],folder/'lectures_pdf'/f'{task["document"]}-p{task["page"]}.md',cancel,progress)
@@ -764,6 +828,7 @@ class App:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
                 self.active = None
+                task['finished_at']=time.time()
                 try:
                     write(folder/'tache.json',task)
                 except OSError as error:
@@ -873,7 +938,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path=urlsplit(self.path).path
             if path=='/api/state':self.json(self.app.state());return
-            static={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
+            static={'/':('index.html','text/html; charset=utf-8'),'/app.js':('app.js','text/javascript; charset=utf-8'),'/reviews.js':('reviews.js','text/javascript; charset=utf-8'),'/style.css':('style.css','text/css; charset=utf-8')}
             if path in static:
                 name,mime=static[path];self.respond(200,(ROOT/'web'/name).read_bytes(),mime);return
             parts=path.split('/')
@@ -897,6 +962,17 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts)==6 and parts[1:3]==['api','projects'] and parts[4]=='stages':
                 folder=self.app.project(parts[3]);number=int(parts[5])
                 if not 1<=number<=9:raise ValueError('Étape invalide.')
+                if number==2 and parse_qs(urlsplit(self.path).query).get('view')==['summary']:
+                    data=read(folder/'etapes/02.json')['data']
+                    summaries=[]
+                    blocks=['# Résumé de l’étape 2','Le registre complet et les motifs détaillés sont disponibles dans les fichiers à télécharger.']
+                    for doc in data['documents']:
+                        for part in doc['parts']:
+                            summaries.append({'document':doc['id'],'number':part['number'],'summary':part['summary'],
+                                'retained':len(part['ideas']),'unconfirmed':len(part.get('uncertain_ideas',[]))})
+                            blocks.append('## '+doc['id']+' — partie '+str(part['number'])+'\n\n'+
+                                str(len(part['ideas']))+' idées retenues · '+str(len(part.get('uncertain_ideas',[])))+' à examiner\n\n'+part['summary'])
+                    self.json({'markdown':'\n\n'.join(blocks),'parts':summaries});return
                 self.json({'markdown':(folder/'etapes'/f'{number:02}.md').read_text(encoding='utf-8')});return
             if len(parts)==4 and parts[1]=='files':
                 folder=self.app.project(parts[2]);name=parts[3]
@@ -986,6 +1062,8 @@ class Handler(BaseHTTPRequestHandler):
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
             elif action=='review':self.json(self.app.resolve_review(folder,body))
+            elif action=='defer-reviews':self.json(self.app.defer_reviews(folder,body))
+            elif action=='reopen-review':self.json(self.app.reopen_review(folder,body))
             elif action=='flag-source':self.json(self.app.flag_source(folder,body))
             elif action=='reread':self.json(self.app.enqueue_reread(folder,body),202)
             elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))
@@ -1424,7 +1502,7 @@ def main():
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
     payload=['app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py',
-             'issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css',
+             'issues.py','review_queue.py','source_decisions.py','review_flow.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/reviews.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
@@ -2134,6 +2212,10 @@ def review(pipe):
         'duration_warning':duration_warning,'markdown':script_markdown(chapters,speakers),'plain_text':plain,
         'responses_rewritten':True,'note':'Les réponses ont été reformulées puis relues contre les citations. Le registre original reste conservé. Ces contrôles automatiques ne remplacent pas une relecture scientifique et pédagogique humaine.'}
     result['selected_count']=len(expected);result['registry_count']=len(registry)
+    from review_queue import Reviews
+    result['deferred_source_ideas']=[{'id':i['idea_id'],'reason':i['reason'],
+        'document':i['source'].get('document'),'pages':i['source'].get('pages',[])}
+        for i in Reviews(pipe.project).data()['items'] if i['status']=='deferred']
     source1=pipe.project/'etapes/01.json'
     result['source_coverage']=[{'document':d['id'],'unreadable_pages':d.get('empty_pages',[])}
         for d in read(source1)['data']['documents']] if source1.exists() else []
@@ -2142,6 +2224,7 @@ def review(pipe):
     if issues:notes+='\n\n'+'\n'.join('- '+i['note'] for i in issues)
     if warnings:notes+='\n\n### Points à relire\n\n'+'\n'.join('- '+w for w in warnings)
     if plan['exclusions']:notes+='\n\n### Idées hors dialogue, conservées au dossier\n\n'+'\n'.join('- '+e['idea_id']+' : '+e['reason'] for e in plan['exclusions'])
+    if result['deferred_source_ideas']:notes+='\n\n### Passages non confirmés mis de côté\n\n'+str(len(result['deferred_source_ideas']))+' passages ne sont pas utilisés dans le podcast. Leurs citations et motifs restent dans les vérifications du projet.'
     for entry in result['source_coverage']:
         if entry['unreadable_pages']:notes+='\n\nPages sans texte extractible dans '+entry['document']+' : '+', '.join(map(str,entry['unreadable_pages']))+'. Leur contenu visuel reste à examiner.'
     return result,notes
@@ -2524,7 +2607,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','issues.py','review_queue.py','source_decisions.py','review_flow.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/reviews.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -2593,7 +2676,7 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets, voix et passages compatibles sont conserves. Rouvrez le dernier projet puis Continuer. Les refus persistants sont regroupes dans Verifications regroupees : corrigez la source, ecartez l idee avec un motif ou demandez une nouvelle tentative. Les autres passages termines restent conserves. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets, voix et passages compatibles sont conserves. Rouvrez le dernier projet. Le tableau de bord indique si le calcul est actif ou attend votre choix. Continuer avec les idees retenues permet de conserver les passages incertains de cote et de lancer la suite. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }
 ```
@@ -3259,7 +3342,7 @@ class Pipeline:
         result=apply_corrections(self.project,{'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL})
         for doc in result['documents']:
             for part in doc['parts']:
-                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'])
+                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'],include_deferred=True)
                 for idea in part.get('uncertain_ideas',[]):
                     candidate={**idea,'document':doc['id']}
                     # La relecture rejetée reste visible, sans devenir une preuve acceptée.
@@ -4217,6 +4300,70 @@ Une rubrique absente des sources doit être une chaîne vide. Aucune autre clé.
 pypdf==6.21.4
 ```
 
+## review_flow.py
+
+```python
+"""Avancement lisible et poursuite explicite avec les seules idées retenues."""
+import time
+
+
+def eligible_reviews(source_data, items):
+    parts=[p for d in source_data.get('documents',[]) for p in d['parts']]
+    if any(p.get('incomplete_extraction') for p in parts):return []
+    retained={i['id'] for p in parts for i in p['ideas']}
+    excluded={i['id'] for p in parts for i in p.get('excluded_ideas',[])}
+    return [i for i in items if i['step']==2 and i['idea_id'] in excluded-retained
+            and not i['source'].get('unextracted')]
+
+
+def reason_label(item):
+    reason=item.get('reason','').lower()
+    if 'développement non confirmé' in reason:return 'Sigle à vérifier'
+    if 'bibliograph' in reason:return 'Référence bibliographique'
+    if 'plan du document' in reason or 'liste de publications' in reason:return 'Contenu secondaire'
+    if 'français' in reason or 'francais' in reason or 'bruit, pompage' in reason:return 'Formulation'
+    return {'formula':'Formule','scope':'Portée du résultat','length':'Longueur',
+        'format':'Format de réponse','generation':'Génération','terminology':'Terminologie',
+        'source':'Appui source'}.get(item.get('category'),'Passage à examiner')
+
+
+def overview(source_data, completed, task, pending, deferred, parts_count=0, retry_steps=()):
+    retained=sum(len(p['ideas']) for d in source_data.get('documents',[]) for p in d['parts'])
+    eligible=eligible_reviews(source_data,pending)
+    running=task and task.get('state') in ('running','queued')
+    next_step=min([next((n for n in range(1,10) if n not in completed),10)]+list(retry_steps))
+    current=(task.get('step') or task.get('first') or min(next_step,9)) if running else min(
+        (i['step'] for i in pending),default=min(next_step,9))
+    if running:
+        status='running'
+        title=('Préparation audio en cours' if task.get('kind')=='audio' else
+               'Relecture de la page en cours' if task.get('kind')=='pdf_reading' else
+               f'Étape {current}/9 — calcul en cours') if task['state']=='running' else 'Traitement en attente de démarrage'
+        detail=task.get('message','')
+    elif pending:
+        status='needs_review';title='Un choix est attendu — le calcul est arrêté'
+        detail=(f'L’étape 2 est enregistrée. {len(pending)} passage(s) attendent une décision avant l’étape 3.'
+                if 2 in completed and all(i['step']==2 for i in pending) else
+                f'{len(pending)} passage(s) attendent une décision. Les autres parties réussies sont conservées.')
+    elif task and task.get('state')=='error':
+        status='error';title='Traitement arrêté sur une erreur';detail=task.get('error') or task.get('message','')
+    elif source_data.get('documents') and not retained:
+        status='needs_source';title='Aucune idée retenue à l’étape 2'
+        detail='Réexaminez cette étape avant la synthèse. Le PDF et son extraction sont conservés.'
+    elif next_step==10:
+        status='done';title='Le script est terminé';detail='Le dialogue peut être relu, puis préparé avec vos voix.'
+    else:
+        status='ready';title=f'Prêt pour l’étape {next_step}';detail='Cliquez sur Continuer pour reprendre les parties manquantes.'
+    started=(task or {}).get('started_at')
+    end=time.time() if running else (task or {}).get('finished_at')
+    elapsed=max(0,end-started) if isinstance(started,(int,float)) and isinstance(end,(int,float)) else None
+    return {'state':status,'title':title,'detail':detail,'current_step':current,'completed_steps':len(completed),
+        'retained':retained,'pending':len(pending),'deferred':len(deferred),'eligible_ids':[i['id'] for i in eligible],
+        'can_continue_retained':bool(pending) and len(eligible)==len(pending) and retained>0 and not running,
+        'saved_parts':parts_count,'elapsed_seconds':round(elapsed) if elapsed is not None else None,
+        'last_saved_at':(task or {}).get('last_saved_at'),'source_progress':(task or {}).get('source_progress') if current==2 else None}
+```
+
 ## review_queue.py
 
 ```python
@@ -4242,16 +4389,17 @@ class Reviews:
         path=self.project/'etapes/01.json'
         current=fingerprint(read(path)['data']) if path.exists() else None
         for item in data['items']:
-            if item['status'] in ('pending','retry') and item.get('extraction_hash') and item['extraction_hash']!=current:
+            if item['status'] in ('pending','retry','deferred') and item.get('extraction_hash') and item['extraction_hash']!=current:
                 item['status']='stale';changed=True
         if changed:write(self.path,data)
         return [i for i in data['items'] if i['status']=='pending' and (step is None or i['step']==step)]
 
-    def record(self, step, key, idea, error):
+    def record(self, step, key, idea, error, force=False):
         source = copy.deepcopy(idea)
         identity = fingerprint({'project':self.project.name,'step':step, 'key':key, 'source':source})[:24]
         data = self.data()
         item = next((i for i in data['items'] if i['id']==identity), None)
+        if item is not None and item['status']=='deferred' and not force:return item
         if item is None:
             item = {'id':identity, 'step':step, 'key':key, 'idea_id':source.get('id',''),
                     'source':source, 'created':time.time(), 'attempts':0}
@@ -4260,7 +4408,7 @@ class Reviews:
         if path.exists():item['extraction_hash']=fingerprint(read(path)['data'])
         # Une nouvelle source rend l’ancienne question caduque, sans effacer son historique.
         for old in data['items']:
-            if old['id']!=identity and old['step']==step and old['key']==key and old['status']=='pending':
+            if old['id']!=identity and old['step']==step and old['key']==key and old['status'] in ('pending','deferred','retry'):
                 old['status']='stale'
         item.update(status='pending', category=category(error), reason=str(error), updated=time.time(),
                     attempts=item['attempts']+1)
@@ -4269,10 +4417,10 @@ class Reviews:
         write(self.path,data)
         return item
 
-    def completed(self, step, key):
+    def completed(self, step, key, include_deferred=False):
         data = self.data(); changed=False
         for item in data['items']:
-            if item['step']==step and item['key']==key and item['status'] in ('pending','retry'):
+            if item['step']==step and item['key']==key and item['status'] in (('pending','retry','deferred') if include_deferred else ('pending','retry')):
                 item.update(status='validated', updated=time.time());changed=True
         if changed: write(self.path,data)
 
@@ -4289,6 +4437,30 @@ class Reviews:
                 other.update(status='retry' if action=='retry' else 'resolved',updated=decision['time'])
         write(self.path,data)
         return decision
+
+    def defer(self, identities):
+        data=self.data();wanted=set(identities)
+        if not wanted or len(wanted)!=len(identities):raise ValueError('Sélection de passages invalide.')
+        items=[i for i in data['items'] if i['id'] in wanted and i['status']=='pending']
+        if len(items)!=len(wanted):raise ValueError('La liste des vérifications a changé. Actualisez la page.')
+        moment=time.time()
+        for item in items:
+            item.update(status='deferred',updated=moment)
+            data['decisions'].append({'review_id':item['id'],'idea_id':item['idea_id'],'action':'defer',
+                'note':'Passage non confirmé laissé de côté pour poursuivre avec les seules idées retenues.',
+                'time':moment,'correction':None})
+        write(self.path,data)
+        return len(items)
+
+    def reopen(self, identity):
+        self.pending()  # Vérifier aussi que la source n’a pas changé.
+        data=self.data();item=next((i for i in data['items'] if i['id']==identity),None)
+        if item is None or item['status']!='deferred':raise ValueError('Ce passage n’est plus dans les vérifications mises de côté.')
+        item.update(status='pending',updated=time.time())
+        data['decisions'].append({'review_id':identity,'idea_id':item['idea_id'],'action':'reopen',
+            'note':'Vérification reprise par l’utilisateur.','time':item['updated'],'correction':None})
+        write(self.path,data)
+        return item
 
 
 def apply_corrections(project, data, corrections=None):
@@ -4853,7 +5025,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.locator('#steps button').nth(1).click();page.locator('#run-step').click()
             assert stub.started.wait(10)
             page.wait_for_function('() => current()?.task?.state==="running"')
-            page.locator('#cancel').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
+            page.locator('#cancel-progress').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
             assert read(folder/'etapes/01.json')
             source_before=(folder/'etapes/01.json').read_bytes()
             # Parcours indépendant : ancien dialogue et anciens réglages, sans PDF.
@@ -4953,17 +5125,19 @@ with tempfile.TemporaryDirectory(prefix='podcast-review-browser-') as temporary:
             response=context.request.get(url+f'/sources/{project.name}/PDF1.pdf',headers={'Range':'bytes=0-4'})
             assert response.status==206 and response.body()==b'%PDF-'
             assert response.headers['content-type']=='application/pdf'
-            first=page.locator('.review-item').nth(0);second=page.locator('.review-item').nth(1)
-            first.locator('summary').click();second.locator('summary').click()
-            second.locator('textarea').last.fill('Brouillon conservé pendant la première décision.')
-            first.locator('textarea').last.fill('Citation et idée comparées à la page du PDF.')
-            first.get_by_role('button',name='Valider cette correction de la source',exact=True).click()
+            page.locator('#show-reviews').click()
+            choices=page.locator('#review-list button')
+            choices.nth(1).click()
+            page.locator('.review-item textarea').last.fill('Brouillon conservé pendant la première décision.')
+            choices.nth(0).click()
+            page.locator('.review-item textarea').last.fill('Citation et idée comparées à la page du PDF.')
+            page.get_by_role('button',name='Valider la correction de la source',exact=True).click()
             page.wait_for_function('() => current()?.reviews.length===1')
             assert page.locator('.review-item textarea').last.input_value()=='Brouillon conservé pendant la première décision.'
             assert page.locator('#continue').is_disabled()
             output=Path(os.environ.get('PODCAST_CHECK_OUTPUT',str(root/'screens')));output.mkdir(parents=True,exist_ok=True)
             page.screenshot(path=str(output/'verifications-source.png'),full_page=True)
-            page.get_by_role('button',name='Valider cette correction de la source',exact=True).click()
+            page.get_by_role('button',name='Valider la correction de la source',exact=True).click()
             page.wait_for_function('() => current()?.reviews.length===0&&current()?.next_step===3')
             assert page.locator('#continue').is_enabled()
             page.locator('#continue').click()
@@ -6606,6 +6780,141 @@ class PartTests(unittest.TestCase):
         self.assertEqual(note['archived_counts']['ideas'],200)
         self.assertIn('Terme1',note['definitions'])
         self.assertIn('I199',note['explained_ideas'])
+
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_review_flow.py
+
+```python
+"""Une longue liste d’incertitudes ne doit pas imposer une régénération des sources."""
+import copy
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from app import App
+from fixtures import FakeClient,make_pdf
+from issues import SourceIssue
+from pipeline import Pipeline
+from review_queue import Reviews
+from storage import read,write
+import review_flow
+
+
+class DeferredSourceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.app=App(self.temp.name,FakeClient)
+        self.project=self.app.project(self.app.create({'name':'Quatre-vingt-dix passages à examiner'})['id'])
+        make_pdf(self.project/'sources/a.pdf')
+        meta=read(self.project/'projet.json');meta['pdfs']=[{'file':'a.pdf','name':'Optique.pdf'}]
+        meta['audio_settings']={'voices':{'Sophie':'profil-local-a','Emma':'profil-local-b'}};write(self.project/'projet.json',meta)
+        Pipeline(self.project,FakeClient()).run(1,2)
+        self.saved=read(self.project/'etapes/02.json');self.part=self.saved['data']['documents'][0]['parts'][0]
+        self.store=Reviews(self.project)
+        for number in range(90):
+            idea={'id':f'PDF1-P1-I{900+number}','statement':f'Passage non confirmé numéro {number}.',
+                  'explanation':'La formulation et son appui restent à examiner.','pages':[1],'reason':'À vérifier : formulation non confirmée.'}
+            self.part['excluded_ideas'].append(idea);self.part['uncertain_ideas'].append(idea)
+            self.store.record(2,'Source-'+idea['id'],{**idea,'document':'PDF1'},SourceIssue(idea['reason']))
+        write(self.project/'etapes/02.json',self.saved)
+        partial=self.project/'etapes/parties/02-PDF1-P1.json';packet=read(partial);packet['data']=copy.deepcopy(self.part);write(partial,packet)
+        self.ids=[i['id'] for i in self.store.pending()]
+        self.before={p:p.read_bytes() for p in (self.project/'etapes').glob('0[12].*')}
+        self.voices=read(self.project/'projet.json')['audio_settings']
+    def tearDown(self):self.app.close();self.temp.cleanup()
+
+    def test_overview_explains_why_stage_three_has_not_started(self):
+        state=self.app.summary(self.project)
+        self.assertEqual(state['flow']['state'],'needs_review');self.assertEqual(state['flow']['pending'],90)
+        self.assertIn('calcul est arrêté',state['flow']['title']);self.assertIn('avant l’étape 3',state['flow']['detail'])
+        self.assertTrue(state['flow']['can_continue_retained']);self.assertEqual(set(state['flow']['eligible_ids']),set(self.ids))
+
+    def test_continue_defers_uncertainties_and_queues_stage_three_without_touching_sources(self):
+        with patch.object(self.app,'enqueue',return_value={'first':3}) as enqueue:
+            result=self.app.defer_reviews(self.project,{'ids':self.ids,'continue':True})
+        enqueue.assert_called_once_with(self.project,{'first':3,'until':9})
+        self.assertEqual(result['deferred'],90);self.assertFalse(self.store.pending())
+        self.assertEqual(len([i for i in self.store.data()['items'] if i['status']=='deferred']),90)
+        self.assertTrue(all(p.read_bytes()==raw for p,raw in self.before.items()))
+        self.assertEqual(read(self.project/'projet.json')['audio_settings'],self.voices)
+        self.assertTrue(all(i['status']!='validated' for i in self.store.data()['items']))
+
+    def test_cached_stage_two_does_not_reopen_the_deferred_questions(self):
+        self.app.defer_reviews(self.project,{'ids':self.ids})
+        Pipeline(self.project,FakeClient()).run(2,2)
+        self.assertFalse(self.store.pending());self.assertEqual(len(self.app.summary(self.project)['deferred_reviews']),90)
+        self.assertEqual(len(read(self.project/'etapes/02.json')['data']['documents'][0]['parts'][0]['ideas']),len(self.part['ideas']))
+
+    def test_full_resume_exports_only_retained_ideas_and_keeps_the_deferred_report(self):
+        self.app.defer_reviews(self.project,{'ids':self.ids,'continue':True});self.app.pending.join()
+        state=self.app.summary(self.project)
+        self.assertEqual(state['task']['state'],'done',state['task'])
+        final=read(self.project/'exports/podcast.json')
+        excluded={i['id'] for i in self.part['uncertain_ideas']}
+        self.assertFalse(excluded & set(final['expected_idea_ids']))
+        self.assertEqual(len(final['deferred_source_ideas']),90)
+        self.assertEqual(len(final['source_uncertainties']),90)
+        self.assertTrue(all(p.read_bytes()==raw for p,raw in self.before.items()))
+        self.assertEqual(read(self.project/'projet.json')['audio_settings'],self.voices)
+
+    def test_reopening_a_deferred_question_is_explicit_and_keeps_its_history(self):
+        self.app.defer_reviews(self.project,{'ids':self.ids})
+        self.app.reopen_review(self.project,{'id':self.ids[0]})
+        self.assertEqual(len(self.store.pending()),1)
+        self.assertEqual(len(self.app.summary(self.project)['deferred_reviews']),89)
+        self.assertEqual(self.store.data()['decisions'][-1]['action'],'reopen')
+
+    def test_a_retained_idea_cannot_be_silently_put_aside(self):
+        retained=self.part['ideas'][0]
+        item=self.app.flag_source(self.project,{'id':retained['id']})
+        self.assertFalse(self.app.summary(self.project)['flow']['can_continue_retained'])
+        with self.assertRaises(ValueError):self.app.defer_reviews(self.project,{'ids':self.ids+[item['id']],'continue':True})
+        self.assertEqual(len(self.store.pending()),91)
+        self.assertFalse(any(i['status']=='deferred' for i in self.store.data()['items']))
+
+    def test_stale_selection_does_not_partially_approve_or_defer_anything(self):
+        with self.assertRaises(ValueError):self.app.defer_reviews(self.project,{'ids':self.ids[:-1],'continue':True})
+        self.assertEqual(len(self.store.pending()),90)
+        self.assertFalse(self.store.data()['decisions'])
+
+    def test_an_unread_fragment_cannot_be_hidden_by_the_continue_choice(self):
+        self.part['incomplete_extraction']=True;write(self.project/'etapes/02.json',self.saved)
+        with self.assertRaises(ValueError):self.app.defer_reviews(self.project,{'ids':self.ids,'continue':True})
+        self.assertEqual(len(self.store.pending()),90)
+
+    def test_retry_requested_earlier_is_respected_before_stage_three(self):
+        self.app.resolve_review(self.project,{'id':self.ids[0],'action':'retry'})
+        with patch.object(self.app,'enqueue',return_value={'first':2}) as enqueue:
+            self.app.defer_reviews(self.project,{'ids':self.ids[1:],'continue':True})
+        enqueue.assert_called_once_with(self.project,{'first':2,'until':9})
+
+    def test_changed_source_makes_a_deferred_question_stale(self):
+        self.app.defer_reviews(self.project,{'ids':self.ids})
+        write(self.project/'etapes/01.json',{'data':{'documents':[]}})
+        state=self.app.summary(self.project)
+        self.assertFalse(state['deferred_reviews'])
+        self.assertTrue(all(i['status']=='stale' for i in self.store.data()['items']))
+
+    def test_only_a_newly_retained_idea_clears_its_deferred_status(self):
+        self.app.defer_reviews(self.project,{'ids':self.ids})
+        key=self.store.data()['items'][0]['key']
+        self.store.completed(2,key);self.assertEqual(self.store.data()['items'][0]['status'],'deferred')
+        self.store.completed(2,key,include_deferred=True);self.assertEqual(self.store.data()['items'][0]['status'],'validated')
+
+
+class ProgressClockTests(unittest.TestCase):
+    def test_clock_freezes_when_the_program_waits_for_a_decision(self):
+        task={'state':'needs_review','started_at':10,'finished_at':25}
+        with patch('review_flow.time.time',return_value=36000):
+            result=review_flow.overview({},[1,2],task,[{'step':2,'id':'r','idea_id':'I','source':{}}],[])
+        self.assertEqual(result['elapsed_seconds'],15)
+    def test_running_step_is_visible_even_while_the_model_has_not_saved_a_new_unit(self):
+        task={'state':'running','step':3,'started_at':10}
+        with patch('review_flow.time.time',return_value=25):result=review_flow.overview({},[1,2],task,[],[])
+        self.assertEqual(result['state'],'running');self.assertIn('Étape 3/9',result['title']);self.assertEqual(result['elapsed_seconds'],15)
 
 
 if __name__=='__main__':unittest.main()
@@ -8427,66 +8736,34 @@ const busy=p=>['queued','running'].includes(p?.task?.state);
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message;$('notice').classList.toggle('error',error);}
 async function api(path,body){const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Podcast-Token':state.token},body:body===undefined?undefined:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw Error(value.error||'La requête a échoué.');return value;}
 function node(tag,text){const e=document.createElement(tag);if(text)e.textContent=text;return e;}
-let reviewKey='',reviewDrafts=new Map(),sourceReaderProject=null;
-function renderReviews(p){
- const items=p.reviews||[];$('review-panel').hidden=!items.length;
- const key=JSON.stringify([p.id,items.map(i=>[i.id,i.attempts]),busy(p),p.pdf_readings]);if(key===reviewKey)return;reviewKey=key;
- const holder=$('review-items');holder.replaceChildren();
- for(const item of items){
-  const card=node('details');card.className='review-item';card.open=items.length===1;
-  card.append(node('summary',`Étape ${item.step} · ${item.idea_id} · ${item.category}`),node('p',item.reason));
-  if(item.draft){const rejected=node('details');rejected.append(node('summary','Voir le brouillon refusé'),node('pre',item.draft));card.append(rejected);}
-  const source=item.source||{},page=source.pages?.[0]||1;
-  if(/^PDF[1-9]\d*$/.test(source.document||'')){
-   const link=node('a',`Ouvrir le PDF source, page ${page}`);link.href=`/sources/${p.id}/${source.document}.pdf#page=${page}`;link.target='_blank';link.rel='noopener';card.append(link);
-   const name=`${source.document}-p${page}.md`;
-   if(p.pdf_readings?.includes(name)){const reading=node('a','Télécharger la relecture Docling de cette page');reading.href=`/files/${p.id}/lecture-${name}`;card.append(reading);}
-   if(p.pdf_reread_available){const reread=node('button','Relire cette page avec Docling local');reread.disabled=busy(p);reread.onclick=async()=>{try{await api(`/api/projects/${p.id}/reread`,{id:item.id});await refresh();}catch(e){notice(e.message,true);}};card.append(reread);}
-   else card.append(node('small','Docling est facultatif et absent de cette installation. Aucun modèle ne sera téléchargé automatiquement. La page PDF reste disponible pour vérifier la source.'));
-  }
-  let draft=reviewDrafts.get(item.id);
-  if(!draft){const evidence=source.evidence?.length?source.evidence:source.checked_evidence||[];draft={statement:source.statement||'',explanation:source.explanation||'',note:'',evidence:evidence.map(e=>typeof e==='string'?{page,quote:e}:{page:e.page||page,quote:e.quote||''})};if(!draft.evidence.length)draft.evidence=[{page,quote:''}];reviewDrafts.set(item.id,draft);}
-  const editable=p.completed.includes(2)&&/^PDF\d+-P\d+-I\d+$/.test(item.idea_id)&&!(p.incomplete_source_parts||[]).some(prefix=>item.idea_id.startsWith(prefix+'-'));
-  function field(title,value,update){const label=node('label',title),input=node('textarea');input.value=value;input.rows=3;input.disabled=busy(p);input.oninput=()=>update(input.value);label.append(input);card.append(label);return input;}
-  if(editable){
-   field('Idée à conserver',draft.statement,value=>draft.statement=value);
-   field('Explication et réserves',draft.explanation,value=>draft.explanation=value);
-   const proofs=node('div');card.append(proofs);
-   function proofFields(row){const label=node('label','Citation exacte du PDF'),number=node('input'),quote=node('textarea');number.type='number';number.min=1;number.value=row.page;number.setAttribute('aria-label','Page de la citation');number.oninput=()=>row.page=Number(number.value);quote.value=row.quote;quote.rows=4;quote.oninput=()=>row.quote=quote.value;number.disabled=quote.disabled=busy(p);label.append(number,quote);proofs.append(label);}
-   draft.evidence.forEach(proofFields);
-   const more=node('button','Ajouter une citation');more.type='button';more.disabled=busy(p)||draft.evidence.length>=4;more.onclick=()=>{const row={page,quote:''};draft.evidence.push(row);proofFields(row);more.disabled=draft.evidence.length>=4;};card.append(more);
-   field('Motif de la décision (obligatoire pour écarter)',draft.note,value=>draft.note=value);
-  }
-  const actions=node('div');actions.className='row';card.append(actions);
-  async function decide(action){try{notice('');await api(`/api/projects/${p.id}/review`,{id:item.id,action,...draft});reviewDrafts.delete(item.id);await refresh();notice(action==='retry'?'Nouvelle tentative autorisée : cliquez sur Continuer.':'Décision enregistrée. Les autres passages restent à vérifier.');}catch(e){notice(e.message,true);}}
-  if(editable){for(const [action,label] of [['correct','Valider cette correction de la source'],['exclude','Écarter cette idée avec un motif']]){const button=node('button',label);button.disabled=busy(p);button.onclick=()=>decide(action);actions.append(button);}}
-  const retry=node('button','Réessayer avec le modèle');retry.disabled=busy(p);retry.onclick=()=>decide('retry');actions.append(retry);holder.append(card);
- }
-}
+let sourceReaderProject=null,followProgress=true;
 function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('model').value.trim(),audience:$('audience').value.trim(),minutes:Number($('minutes').value),speakers:$('speakers').value.split(',').map(v=>v.trim()).filter(Boolean),num_ctx:Number($('num-ctx').value),temperature:.3};}
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
- const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v5'||runtime.editorial_mode!=='grounded-editorial-v3';
+ const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v5'||runtime.editorial_mode!=='grounded-editorial-v3'||runtime.review_ui!=='paged-v1';
  document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'mode local'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
  if(outdated){runtimeWarning=true;notice('Une ancienne instance ou une mise à jour incomplète est détectée. Fermez la fenêtre de lancement, puis utilisez Mettre-a-jour.cmd et relancez le programme.',true);}else if(runtimeWarning){runtimeWarning=false;notice('');}
- const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
+ const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;followProgress=true;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
+ if(typeof renderFlow!=='function'||typeof renderReviews!=='function'){notice('Mise à jour incomplète : fermez la fenêtre du programme, appliquez le correctif complet puis relancez.',true);return;}
+ renderFlow(p);
  renderReviews(p);
+ if(followProgress&&(busy(p)||(p.reviews||[]).length)&&p.flow?.current_step!==step){step=p.flow.current_step;previewKey='';}
  if(sourceReaderProject!==p.id){sourceReaderProject=p.id;$('source-reader').open=false;$('retained-ideas').replaceChildren();$('retained-proof').textContent='';}
  $('source-reader').hidden=!p.completed.includes(2);$('flag-source').disabled=busy(p);
- $('project-name').textContent=p.name;$('source-info').textContent=p.pdfs.length?`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`:'Lecture audio d’un dialogue fourni';document.querySelector('.work').hidden=!p.pdfs.length;$('continue').hidden=!p.pdfs.length;
- $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
+ $('project-name').textContent=p.name;$('source-info').textContent=p.pdfs.length?`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`:'Lecture audio d’un dialogue fourni';document.querySelector('.work').hidden=!p.pdfs.length;$('continue').hidden=!p.pdfs.length||Boolean(p.reviews?.length);
+ $('task-box').hidden=!p.task||Boolean(p.pdfs.length&&!p.task?.error);$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
  $('continue').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||p.next_step>9||(p.needs_source_upgrade&&p.next_step!==2)||(p.source_diagnostic?.empty&&p.next_step!==2);$('save-settings').disabled=busy(p);$('continue').textContent=p.source_diagnostic?.empty&&p.next_step!==2?'Réexamen de l’étape 2 nécessaire':p.needs_source_upgrade&&p.next_step!==2?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
- $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p)||Boolean(p.reviews?.length);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
+ $('refine').hidden=!p.completed.includes(2)||(!p.needs_source_upgrade&&!p.source_diagnostic?.empty);$('refine').disabled=outdated||busy(p)||Boolean(p.reviews?.length);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
  $('source-diagnostic').hidden=!p.source_diagnostic?.empty;const reasons=$('source-reasons');reasons.replaceChildren();if(p.source_diagnostic?.empty){$('source-diagnostic-message').textContent='0 idée retenue sur '+p.source_diagnostic.total+' idée(s) examinée(s). La synthèse est bloquée. Réexaminez l’étape 2 avec le nouveau contrôle des citations ; les PDF et leur extraction restent conservés.';for(const [reason,count] of Object.entries(p.source_diagnostic.reasons))reasons.append(node('li',count+' — '+reason));$('source-report').href=`/files/${p.id}/02.md`;}
  $('quality-upgrade').hidden=!p.needs_source_upgrade;
- $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Consultez les vérifications regroupées avant de poursuivre le script.`;
+ $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=p.deferred_reviews?.length&&!p.reviews?.length?`${p.deferred_reviews.length} passages sont mis de côté et restent consultables.`:`${p.summary_warnings||0} idée(s) à examiner dans le rapport de l’étape 2.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
- const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
+ const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{followProgress=false;step=n;previewKey='';render();};steps.append(b);});
  $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
  const parts=(p.parts||[]).filter(name=>Number(name.slice(0,2))===step);$('saved-parts').hidden=!parts.length;const links=$('part-links');links.replaceChildren();for(const file of parts){const a=node('a',file.slice(3));a.href=`/files/${p.id}/partie-${file}`;links.append(a);}
@@ -8495,13 +8772,13 @@ function render(){
  renderAudio(p);
 }
 function markdown(value){const holder=document.createDocumentFragment();let paragraph=[],list=null;const esc=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');function flush(){if(paragraph.length){const p=node('p');p.innerHTML=inline(paragraph.join(' '));holder.append(p);paragraph=[];}list=null;}for(const line of value.split('\n')){if(/^#{1,3} /.test(line)){flush();const level=line.match(/^#+/)[0].length;const h=node(level===1?'h2':level===2?'h2':'h3');h.innerHTML=inline(line.replace(/^#+ /,''));holder.append(h);}else if(line.startsWith('- ')){if(paragraph.length)flush();if(!list){list=node('ul');holder.append(list);}const item=node('li');item.innerHTML=inline(line.slice(2));list.append(item);}else if(!line.trim()){flush();}else if(line==='---'){flush();holder.append(node('hr'));}else{list=null;paragraph.push(line.trim());}}flush();return holder;}
-async function loadPreview(p,n){const serial=++loadSerial;if(!p.completed.includes(n)){$('preview').replaceChildren(node('p','Cette étape n’a pas encore été exécutée.'));return;}$('preview').replaceChildren(node('p','Chargement du résultat…'));try{const value=await api(`/api/projects/${p.id}/stages/${n}`);if(serial!==loadSerial)return;$('preview').replaceChildren(markdown(value.markdown));}catch(e){if(serial===loadSerial)$('preview').replaceChildren(node('p',e.message));}}
+async function loadPreview(p,n){const serial=++loadSerial;if(!p.completed.includes(n)){$('preview').replaceChildren(node('p',busy(p)&&p.flow?.current_step===n?'Cette étape est en cours. Les passages réussis sont enregistrés au fur et à mesure ; le résultat complet apparaîtra à la fin.':'Cette étape n’a pas encore été exécutée.'));return;}$('preview').replaceChildren(node('p','Chargement du résultat…'));try{const value=await api(`/api/projects/${p.id}/stages/${n}${n===2?'?view=summary':''}`);if(serial!==loadSerial)return;$('preview').replaceChildren(n===2&&value.parts?renderSourceSummary(value.parts):markdown(value.markdown));}catch(e){if(serial===loadSerial)$('preview').replaceChildren(node('p',e.message));}}
 $('new').onclick=()=>{selected=null;showSetup=true;step=1;previewKey='';fillSettings(state.defaults);$('name').value='';$('pdfs').value='';notice('');render();};
 $('toggle-settings').onclick=()=>{showSetup=!showSetup;if(showSetup)fillSettings(current().settings);render();};
 $('check-model').onclick=async()=>{const button=$('check-model');button.disabled=true;$('model-status').textContent='Connexion à Ollama…';try{const value=await api('/api/models',{endpoint:$('endpoint').value.trim()});$('models').replaceChildren();for(const m of value.models){const option=node('option');option.value=m;$('models').append(option);}$('model-status').textContent=value.models.length?'Modèles disponibles : '+value.models.join(', '):'Ollama répond, mais aucun modèle n’est téléchargé. Lancez ollama pull mistral.';}catch(e){$('model-status').textContent=e.message;}finally{button.disabled=false;}};
 function upload(id,file,index,total){return new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',`/api/projects/${id}/pdf`);xhr.setRequestHeader('X-Podcast-Token',state.token);xhr.setRequestHeader('X-Filename',encodeURIComponent(file.name));xhr.setRequestHeader('Content-Type','application/pdf');xhr.upload.onprogress=e=>{$('upload-status').textContent=`PDF ${index}/${total} : ${e.lengthComputable?Math.round(e.loaded/e.total*100)+' %':'copie en cours'}`;};xhr.onload=()=>{try{const value=JSON.parse(xhr.responseText);xhr.status<300?resolve(value):reject(Error(value.error));}catch(e){reject(Error('Copie interrompue.'));}};xhr.onerror=()=>reject(Error('Copie du PDF interrompue.'));xhr.send(file);});}
 $('create-form').onsubmit=async e=>{e.preventDefault();if(creating||selected)return;creating=true;$('create').disabled=true;notice('');try{const files=[...$('pdfs').files];if(!files.length)throw Error('Sélectionnez au moins un PDF.');const name=$('name').value.trim()||files[0].name;const created=await api('/api/projects',{name,settings:formSettings()});for(let i=0;i<files.length;i++)await upload(created.id,files[i],i+1,files.length);selected=created.id;step=1;showSetup=false;await refresh();notice('Projet créé. Exécutez le découpage seul, ou continuez jusqu’au script final avec Ollama.');}catch(error){notice(error.message,true);}finally{creating=false;$('create').disabled=false;$('upload-status').textContent='';}};
-async function run(first,until,regenerate=false){try{notice('');await api(`/api/projects/${selected}/run`,{first,until,regenerate});await refresh();}catch(e){notice(e.message,true);}}
+async function run(first,until,regenerate=false){try{followProgress=true;notice('');await api(`/api/projects/${selected}/run`,{first,until,regenerate});await refresh();}catch(e){notice(e.message,true);}}
 $('run-step').onclick=()=>run(step,step,current().completed.includes(step));$('continue').onclick=()=>run(current().next_step,9);
 $('refine').onclick=async()=>{try{step=2;previewKey='';notice('');await api(`/api/projects/${selected}/run`,{first:2,until:2,refine:true});await refresh();}catch(e){notice(e.message,true);}};
 $('cancel').onclick=async()=>{try{await api(`/api/projects/${selected}/cancel`,{});notice('Annulation demandée. Les étapes terminées sont conservées.');}catch(e){notice(e.message,true);}};
@@ -8542,7 +8819,9 @@ $('source-reader').ontoggle=async()=>{
   select.onchange();
  }catch(e){notice(e.message,true);}
 };
-$('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag-source`,{id:$('retained-ideas').value});$('source-reader').open=false;await refresh();$('review-panel').scrollIntoView({behavior:'smooth'});}catch(e){notice(e.message,true);}};
+$('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag-source`,{id:$('retained-ideas').value});$('source-reader').open=false;reviewUi.open=true;await refresh();$('review-panel').scrollIntoView({behavior:'smooth'});}catch(e){notice(e.message,true);}};
+
+if(typeof initReviewUI==='function')initReviewUI();else notice('Mise à jour incomplète : fermez la fenêtre du programme puis relancez après le correctif.',true);
 ```
 
 ## web/index.html
@@ -8559,12 +8838,13 @@ $('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag
 <details id="model-settings"><summary>Mistral et Ollama</summary><div class="row"><label>Adresse locale d’Ollama<input id="endpoint" value="http://127.0.0.1:11434"></label><label>Modèle<input id="model" value="mistral" list="models"><datalist id="models"></datalist></label><label>Contexte<select id="num-ctx"><option value="8192">8 192 tokens</option><option value="16384" selected>16 384 tokens</option><option value="32768">32 768 tokens</option><option value="65536">65 536 tokens</option></select></label></div><button id="check-model" type="button">Vérifier les modèles installés</button><p id="model-status" class="muted"></p><p class="small">Ollama doit être installé et ouvert sur votre PC. Pour télécharger Mistral, exécutez <code>ollama pull mistral</code> dans un terminal. Un contexte plus grand demande davantage de mémoire.</p></details>
 <div class="row"><button id="create" type="submit" class="primary">Créer le projet</button><button id="save-settings" type="button" hidden>Enregistrer les paramètres</button><span id="upload-status" class="muted"></span></div></form></section>
 <section id="project" hidden><div class="project-title"><div><p class="eyebrow">MON ATELIER</p><h1 id="project-name"></h1><p id="source-info" class="muted"></p></div><button id="toggle-settings">Paramètres</button></div>
+<section id="project-progress" class="card project-progress" aria-live="polite"><div class="progress-top"><strong id="progress-title"></strong><span id="progress-clock" class="muted"></span></div><p id="progress-detail"></p><div class="progress-meter"><progress id="stage-progress" value="0" max="9" aria-label="Étapes enregistrées"></progress><span id="progress-stage-count"></span></div><div id="progress-counts" class="progress-counts"></div><p id="progress-source" class="small muted" hidden></p><div class="row progress-actions"><button id="show-reviews" type="button">Examiner les passages</button><button id="cancel-progress" type="button" hidden>Annuler le calcul</button><label class="inline-option"><input id="follow-progress" type="checkbox" checked> Suivre l’étape en cours</label></div><div id="retained-choice" hidden><button id="continue-retained" type="button" class="primary"></button><p id="retained-choice-help" class="small"></p></div></section>
 <div id="task-box" class="card" hidden><div class="row"><strong id="task-message"></strong><button id="cancel">Annuler le traitement</button></div><pre id="task-error" hidden></pre></div>
 <div class="row actions"><button id="continue" class="primary">Continuer jusqu’au script final</button><button id="refine" hidden>Améliorer les résumés existants</button><a id="download-project">Télécharger le dossier complet</a><small>Les anciens résultats sont archivés lorsque vous refaites une étape.</small></div>
 <section id="source-diagnostic" class="card" hidden><h3>Reprendre les idées non confirmées</h3><p id="source-diagnostic-message"></p><ul id="source-reasons"></ul><a id="source-report">Télécharger le rapport de l’étape 2</a></section>
 <p id="quality-upgrade" class="muted" hidden>Cette version réexamine les idées puis réécrit et relit le dialogue à partir des sources. Cliquez sur « Améliorer les résumés existants », attendez la fin du réexamen, puis sur « Continuer ». Les anciens résultats sont archivés ; vos PDF et vos réglages de voix restent conservés.</p>
 <p id="quality-report" class="muted" hidden></p>
-<section id="review-panel" class="card" hidden><h2>Vérifications regroupées</h2><p>Les autres passages validés sont conservés. Vérifiez la page du PDF, puis corrigez l’idée source, écartez-la avec un motif ou demandez une nouvelle tentative au modèle. Une correction sera réutilisée dans les étapes suivantes.</p><div id="review-items"></div></section>
+<section id="review-panel" class="card" hidden><div class="progress-top"><h2>Vérifier les passages</h2><button id="close-reviews" type="button">Fermer les vérifications</button></div><p>Examinez un passage à la fois. La citation et le PDF permettent de corriger l’idée source. Les passages mis de côté restent disponibles pour plus tard.</p><div class="review-filters"><label>Afficher<select id="review-status"><option value="pending">À examiner</option><option value="deferred">Mis de côté</option></select></label><label>Motif<select id="review-category"><option value="">Tous les motifs</option></select></label><label>Rechercher<input id="review-search" type="search" placeholder="Un mot de l’idée, une page ou un identifiant"></label></div><div class="review-workspace"><div class="review-list"><p id="review-range" class="small muted"></p><div id="review-list" role="list" aria-label="Passages à vérifier"></div><div class="row"><button id="review-prev" type="button">Précédents</button><button id="review-next" type="button">Suivants</button></div></div><div id="review-items" aria-live="polite"></div></div></section>
 <details id="source-reader" class="card" hidden><summary>Relire les idées et signaler un doute</summary><p>La relecture automatique peut se tromper. Vous pouvez remettre une idée dans les vérifications regroupées.</p><label>Idée retenue<select id="retained-ideas"></select></label><pre id="retained-proof"></pre><button id="flag-source" type="button">Mettre cette idée à vérifier</button></details>
 <div class="work"><nav id="steps" aria-label="Étapes du podcast"></nav><section class="card result"><div class="row"><h2 id="step-title">Choisissez une étape</h2><button id="run-step">Exécuter cette étape</button></div><p id="step-description" class="muted"></p><div class="row"><a id="download-md" hidden>Télécharger le texte</a><a id="download-json" hidden>Télécharger les données</a></div><details id="saved-parts" hidden><summary>Parties déjà enregistrées en Markdown</summary><p class="small muted">Ces fichiers sont disponibles même si la suite du traitement s’arrête. Continuer reprend les parties manquantes.</p><div id="part-links" class="row"></div></details><article id="preview"><p class="muted">Les résultats apparaîtront ici.</p></article></section></div>
 <section id="final-exports" class="card" hidden><h2>Le script du podcast</h2><p>Relisez le dialogue, puis générez sa version audio avec vos voix VoiceStudio.</p><div id="export-links" class="row"></div><small>La durée du texte reste une estimation. Les passages incertains sont signalés dans les rapports.</small></section>
@@ -8579,7 +8859,141 @@ $('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag
 <p id="audio-help" class="small muted"></p><audio id="voice-preview" controls preload="none" hidden></audio>
 <div id="podcast-audio" hidden><h3>Écouter le podcast</h3><p id="audio-duration" class="muted"></p><audio id="podcast-player" controls preload="metadata"></audio><p><a id="download-mp3">Télécharger le MP3</a></p><p><a id="download-audio-report">Télécharger le rapport des répliques (CSV)</a></p><p id="audio-warnings" class="muted"></p></div>
 </section></section>
-</main></div><script src="/app.js"></script></body></html>
+</main></div><script src="/reviews.js"></script><script src="/app.js"></script></body></html>
+```
+
+## web/reviews.js
+
+```javascript
+/* Navigation et décisions sur une liste longue, sans reconstruire tous les formulaires. */
+const reviewUi={project:null,open:false,mode:'pending',category:'',search:'',page:0,selected:null,key:'',drafts:new Map()};
+const REVIEW_PAGE_SIZE=8;
+
+function renderSourceSummary(parts){
+ const holder=document.createDocumentFragment();holder.append(node('p','L’étape 2 est enregistrée. Ouvrez la synthèse d’une partie pour la lire ; les citations et le registre complet restent dans les fichiers à télécharger.'));
+ for(const part of parts){const section=node('details');section.className='source-summary';section.append(node('summary',`${part.document} — partie ${part.number} · ${part.retained} idées retenues · ${part.unconfirmed} passages non confirmés`),markdown(part.summary));holder.append(section);}
+ return holder;
+}
+
+function elapsedLabel(seconds){
+ if(seconds===null||seconds===undefined)return '';
+ const minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
+ return hours?`${hours} h ${minutes%60} min`:`${minutes} min ${Math.floor(seconds%60)} s`;
+}
+
+function renderFlow(p){
+ $('project-progress').hidden=!p.pdfs.length;
+ const f=p.flow;if(!f)return;
+ $('project-progress').dataset.state=f.state;
+ $('progress-title').textContent=f.title;
+ $('progress-detail').textContent=f.state==='error'&&f.detail.length>350?f.detail.slice(0,350)+'… Voir le détail de l’erreur ci-dessous.':f.detail;
+ $('progress-clock').textContent=f.elapsed_seconds!==null?'Durée de cette exécution : '+elapsedLabel(f.elapsed_seconds):'';
+ $('stage-progress').value=f.completed_steps;
+ $('progress-stage-count').textContent=`${f.completed_steps}/9 étapes enregistrées`;
+ const counts=$('progress-counts');counts.replaceChildren();
+ for(const [value,label,kind] of [[f.retained,'idées retenues','retained'],[f.pending,'à examiner','pending'],[f.deferred,'mis de côté','deferred']]){
+  const item=node('span');item.className='count '+kind;item.append(node('strong',String(value)),document.createTextNode(' '+label));counts.append(item);
+ }
+ const source=f.source_progress;
+ $('progress-source').hidden=!source&&!f.step_saved_parts;
+ if(source)$('progress-source').textContent=`${source.document} · partie ${source.part}/3 · page ${source.page}${source.page_count?' sur '+source.page_count:''}`;
+ else $('progress-source').textContent=`${f.step_saved_parts} points de reprise enregistrés pour cette étape`;
+ $('show-reviews').hidden=!(f.pending+f.deferred);
+ $('show-reviews').textContent=f.pending?`Examiner les ${f.pending} passages`:`Voir les ${f.deferred} passages mis de côté`;
+ $('retained-choice').hidden=!f.can_continue_retained;
+ $('continue-retained').textContent=`Continuer avec les ${f.retained} idées retenues`;
+ $('continue-retained').disabled=busy(p);
+ $('retained-choice-help').textContent=`Les ${f.pending} passages non confirmés seront laissés de côté et conservés dans le dossier. Ils ne seront pas utilisés dans cet épisode. La suite démarrera avec les idées déjà retenues.`;
+ $('follow-progress').checked=followProgress;
+ $('cancel-progress').hidden=!busy(p);
+}
+
+function renderReviews(p){
+ if(reviewUi.project!==p.id){reviewUi.project=p.id;reviewUi.open=false;reviewUi.selected=null;reviewUi.page=0;reviewUi.key='';reviewUi.search='';reviewUi.category='';reviewUi.mode='pending';}
+ $('review-panel').hidden=!reviewUi.open;
+ if(!reviewUi.open)return;
+ const all=reviewUi.mode==='deferred'?(p.deferred_reviews||[]):(p.reviews||[]);
+ const search=reviewUi.search.trim().toLocaleLowerCase('fr');
+ const items=all.filter(i=>(!reviewUi.category||i.label===reviewUi.category)&&(!search||
+  [i.idea_id,i.source.statement,i.source.document,(i.source.pages||[]).join(' '),i.reason].join(' ').toLocaleLowerCase('fr').includes(search)));
+ const labels=[...new Set(all.map(i=>i.label||'Passage à examiner'))].sort();
+ const key=JSON.stringify([p.id,all.map(i=>[i.id,i.attempts]),busy(p),p.pdf_readings,reviewUi.mode,reviewUi.category,reviewUi.search,reviewUi.page,reviewUi.selected]);
+ if(key===reviewUi.key)return;reviewUi.key=key;
+ $('review-status').value=reviewUi.mode;$('review-search').value=reviewUi.search;
+ const category=$('review-category');category.replaceChildren(node('option','Tous les motifs'));category.firstChild.value='';
+ for(const text of labels){const option=node('option',text);option.value=text;category.append(option);}category.value=reviewUi.category;
+ reviewUi.page=Math.max(0,Math.min(reviewUi.page,Math.ceil(items.length/REVIEW_PAGE_SIZE)-1));
+ const start=reviewUi.page*REVIEW_PAGE_SIZE,visible=items.slice(start,start+REVIEW_PAGE_SIZE);
+ if(!visible.some(i=>i.id===reviewUi.selected))reviewUi.selected=visible[0]?.id||null;
+ $('review-range').textContent=items.length?`${start+1}–${start+visible.length} sur ${items.length} passage(s)`:'Aucun passage dans cette sélection.';
+ $('review-prev').disabled=reviewUi.page===0;$('review-next').disabled=start+REVIEW_PAGE_SIZE>=items.length;
+ const list=$('review-list');list.replaceChildren();
+ for(const item of visible){
+  const button=node('button');button.type='button';button.dataset.reviewId=item.id;button.className='review-choice'+(item.id===reviewUi.selected?' selected':'');
+  button.setAttribute('aria-pressed',String(item.id===reviewUi.selected));
+  button.append(node('strong',item.source.statement||'Extrait à réexaminer'),
+   node('small',`${item.label||'Passage à examiner'} · ${item.source.document||''} · page ${(item.source.pages||[]).join(', ')||'à préciser'}`));
+  button.onclick=()=>{reviewUi.selected=item.id;reviewUi.key='';renderReviews(current());};list.append(button);
+ }
+ const holder=$('review-items');holder.replaceChildren();
+ const selectedItem=items.find(i=>i.id===reviewUi.selected);
+ if(selectedItem)renderReviewEditor(p,selectedItem,holder);
+ reviewUi.key=JSON.stringify([p.id,all.map(i=>[i.id,i.attempts]),busy(p),p.pdf_readings,reviewUi.mode,reviewUi.category,reviewUi.search,reviewUi.page,reviewUi.selected]);
+}
+
+function renderReviewEditor(p,item,holder){
+ const source=item.source||{},page=source.pages?.[0]||null,card=node('div');card.className='review-item';holder.append(card);
+ card.append(node('h3',source.statement||'Extrait à réexaminer'),node('small',`Étape ${item.step} · ${item.idea_id}`));
+ const reason=node('details');reason.append(node('summary',item.label||'Pourquoi vérifier ce passage ?'),node('p',item.reason));card.append(reason);
+ if(item.draft){const rejected=node('details');rejected.append(node('summary','Voir le brouillon refusé'),node('pre',item.draft));card.append(rejected);}
+ if(page&&/^PDF[1-9]\d*$/.test(source.document||'')){
+  const link=node('a',`Ouvrir le PDF source, page ${page}`);link.href=`/sources/${p.id}/${source.document}.pdf#page=${page}`;link.target='_blank';link.rel='noopener';card.append(link);
+  const name=`${source.document}-p${page}.md`;
+  if(p.pdf_readings?.includes(name)){const reading=node('a','Lire la relecture structurée de cette page');reading.href=`/files/${p.id}/lecture-${name}`;card.append(reading);}
+  if(p.pdf_reread_available&&item.status!=='deferred'){
+   const reread=node('button','Relire cette page localement');reread.disabled=busy(p);
+   reread.onclick=async()=>{try{await api(`/api/projects/${p.id}/reread`,{id:item.id});await refresh();}catch(e){notice(e.message,true);}};card.append(reread);
+  }
+ }
+ if(item.status==='deferred'){
+  card.append(node('p','Ce passage est conservé pour plus tard et n’est pas utilisé dans le podcast.'),node('p',source.explanation||''));
+  const button=node('button','Reprendre cette vérification');button.disabled=busy(p);
+  button.onclick=async()=>{try{await api(`/api/projects/${p.id}/reopen-review`,{id:item.id});reviewUi.mode='pending';reviewUi.page=0;reviewUi.selected=item.id;reviewUi.key='';await refresh();}catch(e){notice(e.message,true);}};card.append(button);return;
+ }
+ let draft=reviewUi.drafts.get(item.id);
+ if(!draft){const evidence=source.evidence?.length?source.evidence:source.checked_evidence||[];draft={statement:source.statement||'',explanation:source.explanation||'',note:'',evidence:evidence.map(e=>typeof e==='string'?{page,quote:e}:{page:e.page||page,quote:e.quote||''})};if(!draft.evidence.length)draft.evidence=[{page,quote:''}];reviewUi.drafts.set(item.id,draft);}
+ const editable=p.completed.includes(2)&&/^PDF\d+-P\d+-I\d+$/.test(item.idea_id)&&!(p.incomplete_source_parts||[]).some(prefix=>item.idea_id.startsWith(prefix+'-'));
+ function field(title,value,update){const label=node('label',title),input=node('textarea');input.value=value;input.rows=3;input.disabled=busy(p);input.oninput=()=>update(input.value);label.append(input);card.append(label);return input;}
+ if(editable){
+  field('Idée à conserver',draft.statement,value=>draft.statement=value);
+  field('Explication et réserves',draft.explanation,value=>draft.explanation=value);
+  const proofs=node('div');card.append(proofs);
+  function proofFields(row){const label=node('label','Citation exacte du PDF'),number=node('input'),quote=node('textarea');number.type='number';number.min=1;number.value=row.page||'';number.placeholder='Page';number.setAttribute('aria-label','Page de la citation');number.oninput=()=>row.page=Number(number.value);quote.value=row.quote;quote.rows=4;quote.oninput=()=>row.quote=quote.value;number.disabled=quote.disabled=busy(p);label.append(number,quote);proofs.append(label);}
+  draft.evidence.forEach(proofFields);
+  const more=node('button','Ajouter une citation');more.type='button';more.disabled=busy(p)||draft.evidence.length>=4;more.onclick=()=>{const row={page,quote:''};draft.evidence.push(row);proofFields(row);more.disabled=draft.evidence.length>=4;};card.append(more);
+  field('Motif de la décision (obligatoire pour écarter)',draft.note,value=>draft.note=value);
+ }
+ const actions=node('div');actions.className='row';card.append(actions);
+ async function decide(action){try{notice('');await api(`/api/projects/${p.id}/review`,{id:item.id,action,...draft});reviewUi.drafts.delete(item.id);await refresh();notice(action==='retry'?'Nouvelle tentative préparée. Continuez après les choix sur les autres passages.':'Décision enregistrée.');}catch(e){notice(e.message,true);}}
+ if(editable){for(const [action,label] of [['correct','Valider la correction de la source'],['exclude','Écarter cette idée avec un motif']]){const button=node('button',label);button.disabled=busy(p);button.onclick=()=>decide(action);actions.append(button);}}
+ if(p.flow?.eligible_ids.includes(item.id)){
+  const later=node('button','Mettre de côté pour plus tard');later.disabled=busy(p);later.onclick=async()=>{try{await api(`/api/projects/${p.id}/defer-reviews`,{ids:[item.id]});await refresh();}catch(e){notice(e.message,true);}};actions.append(later);
+ }
+ const retry=node('button','Réessayer avec le modèle');retry.disabled=busy(p);retry.onclick=()=>decide('retry');actions.append(retry);
+}
+
+function initReviewUI(){
+ $('cancel-progress').onclick=()=>$('cancel').click();
+ $('show-reviews').onclick=()=>{const p=current();reviewUi.open=!reviewUi.open;if(!p.reviews?.length&&p.deferred_reviews?.length){reviewUi.mode='deferred';reviewUi.page=0;reviewUi.key='';}renderReviews(p);if(reviewUi.open)$('review-panel').scrollIntoView({behavior:'smooth',block:'start'});};
+ $('close-reviews').onclick=()=>{reviewUi.open=false;renderReviews(current());};
+ $('review-status').onchange=()=>{reviewUi.mode=$('review-status').value;reviewUi.page=0;reviewUi.category='';reviewUi.selected=null;reviewUi.key='';renderReviews(current());};
+ $('review-category').onchange=()=>{reviewUi.category=$('review-category').value;reviewUi.page=0;reviewUi.selected=null;reviewUi.key='';renderReviews(current());};
+ $('review-search').oninput=()=>{reviewUi.search=$('review-search').value;reviewUi.page=0;reviewUi.selected=null;reviewUi.key='';renderReviews(current());};
+ $('review-prev').onclick=()=>{reviewUi.page--;reviewUi.selected=null;reviewUi.key='';renderReviews(current());};
+ $('review-next').onclick=()=>{reviewUi.page++;reviewUi.selected=null;reviewUi.key='';renderReviews(current());};
+ $('follow-progress').onchange=()=>{followProgress=$('follow-progress').checked;render();};
+ $('continue-retained').onclick=async()=>{const p=current();try{notice('');await api(`/api/projects/${p.id}/defer-reviews`,{ids:p.flow.eligible_ids,continue:true});reviewUi.open=false;followProgress=true;await refresh();notice('La suite utilise les idées retenues. Les autres passages restent disponibles dans « Mis de côté ».');}catch(e){notice(e.message,true);}};
+}
 ```
 
 ## web/style.css
@@ -8596,6 +9010,7 @@ audio { width: 100%; margin-top: 12px; }
 textarea { width: 100%; border: 1px solid #b8c6bd; border-radius: 7px; padding: 12px; font: 14px/1.6 system-ui; color: var(--ink); background: white; margin: 8px 0 14px; resize: vertical; }
 input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }
 .review-item{padding:16px 0}.review-item>a{display:block;margin:10px 0}.review-item label{margin-top:14px}.review-item textarea{display:block;width:100%;min-height:90px;resize:vertical;padding:12px;border:1px solid #b8c6bd;border-radius:7px;font:400 15px system-ui;color:var(--ink);background:#fff}.review-item input[type=number]{max-width:120px}.review-item textarea:focus-visible{outline:3px solid #dbab58;outline-offset:3px}#retained-proof{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}
+.project-progress{position:sticky;top:0;z-index:4;box-shadow:0 5px 18px #20302d0c;padding:18px 22px}.progress-top{display:flex;gap:16px;align-items:center;justify-content:space-between}.progress-top h2{margin:0}.project-progress[data-state=needs_review]{border-left:5px solid #b17a21}.project-progress[data-state=running]{border-left:5px solid var(--green)}.project-progress p{margin:6px 0 10px}.progress-meter{display:flex;gap:16px;align-items:center;font-size:12px}.progress-meter progress{flex:1;height:9px;accent-color:var(--green)}.progress-counts{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.count{font-size:12px;padding:5px 9px;border-radius:6px;background:#edf1e9}.count.pending{background:#fff0cd}.count.deferred{background:#ecedf2}.progress-actions{margin:10px 0 0;align-items:center;justify-content:space-between}.inline-option{display:flex;align-items:center;gap:7px;flex:0 1 auto;font-size:12px;font-weight:400}.inline-option input[type=checkbox]{width:auto;display:inline;margin:0}.project-progress #retained-choice{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}.review-filters{display:flex;gap:14px;flex-wrap:wrap}.review-workspace{display:grid;grid-template-columns:minmax(210px,30%) minmax(0,1fr);gap:24px}.review-list{min-width:0}#review-list{max-height:440px;overflow:auto;padding-right:5px}.review-choice{display:block;text-align:left;width:100%;margin:0 0 8px;padding:11px;background:#fff;font-weight:400}.review-choice strong{display:block;line-height:1.4;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.review-choice small{margin-top:5px}.review-choice.selected{border:2px solid var(--green);background:#edf4ec}.review-workspace #review-items{max-height:650px;overflow:auto;padding:0 10px 0 16px;border-left:1px solid var(--line);min-width:0}.review-item{margin:0;padding:0;border:0}.review-item h3{margin:0 0 6px;font-size:17px;line-height:1.4}.review-item pre{white-space:pre-wrap;overflow-wrap:anywhere}.review-item details{margin:14px 0}.review-item .row{gap:8px}.review-item .row button{font-size:12px}#review-panel{scroll-margin-top:230px}#task-box{padding:14px 20px}#task-box pre{max-height:180px;overflow:auto}.progress-top #progress-clock{white-space:nowrap;font-size:12px}#source-reader{padding:15px 22px}@media(max-width:1000px){.review-workspace{grid-template-columns:1fr}.review-workspace #review-items{border-left:0;border-top:1px solid var(--line);padding:16px 0 0}#review-list{max-height:235px}.project-progress{position:static}.progress-top{align-items:flex-start;flex-wrap:wrap}#review-panel{scroll-margin-top:10px}}
 ```
 
 ## writing.py

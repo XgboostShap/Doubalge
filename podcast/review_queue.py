@@ -20,16 +20,17 @@ class Reviews:
         path=self.project/'etapes/01.json'
         current=fingerprint(read(path)['data']) if path.exists() else None
         for item in data['items']:
-            if item['status'] in ('pending','retry') and item.get('extraction_hash') and item['extraction_hash']!=current:
+            if item['status'] in ('pending','retry','deferred') and item.get('extraction_hash') and item['extraction_hash']!=current:
                 item['status']='stale';changed=True
         if changed:write(self.path,data)
         return [i for i in data['items'] if i['status']=='pending' and (step is None or i['step']==step)]
 
-    def record(self, step, key, idea, error):
+    def record(self, step, key, idea, error, force=False):
         source = copy.deepcopy(idea)
         identity = fingerprint({'project':self.project.name,'step':step, 'key':key, 'source':source})[:24]
         data = self.data()
         item = next((i for i in data['items'] if i['id']==identity), None)
+        if item is not None and item['status']=='deferred' and not force:return item
         if item is None:
             item = {'id':identity, 'step':step, 'key':key, 'idea_id':source.get('id',''),
                     'source':source, 'created':time.time(), 'attempts':0}
@@ -38,7 +39,7 @@ class Reviews:
         if path.exists():item['extraction_hash']=fingerprint(read(path)['data'])
         # Une nouvelle source rend l’ancienne question caduque, sans effacer son historique.
         for old in data['items']:
-            if old['id']!=identity and old['step']==step and old['key']==key and old['status']=='pending':
+            if old['id']!=identity and old['step']==step and old['key']==key and old['status'] in ('pending','deferred','retry'):
                 old['status']='stale'
         item.update(status='pending', category=category(error), reason=str(error), updated=time.time(),
                     attempts=item['attempts']+1)
@@ -47,10 +48,10 @@ class Reviews:
         write(self.path,data)
         return item
 
-    def completed(self, step, key):
+    def completed(self, step, key, include_deferred=False):
         data = self.data(); changed=False
         for item in data['items']:
-            if item['step']==step and item['key']==key and item['status'] in ('pending','retry'):
+            if item['step']==step and item['key']==key and item['status'] in (('pending','retry','deferred') if include_deferred else ('pending','retry')):
                 item.update(status='validated', updated=time.time());changed=True
         if changed: write(self.path,data)
 
@@ -67,6 +68,30 @@ class Reviews:
                 other.update(status='retry' if action=='retry' else 'resolved',updated=decision['time'])
         write(self.path,data)
         return decision
+
+    def defer(self, identities):
+        data=self.data();wanted=set(identities)
+        if not wanted or len(wanted)!=len(identities):raise ValueError('Sélection de passages invalide.')
+        items=[i for i in data['items'] if i['id'] in wanted and i['status']=='pending']
+        if len(items)!=len(wanted):raise ValueError('La liste des vérifications a changé. Actualisez la page.')
+        moment=time.time()
+        for item in items:
+            item.update(status='deferred',updated=moment)
+            data['decisions'].append({'review_id':item['id'],'idea_id':item['idea_id'],'action':'defer',
+                'note':'Passage non confirmé laissé de côté pour poursuivre avec les seules idées retenues.',
+                'time':moment,'correction':None})
+        write(self.path,data)
+        return len(items)
+
+    def reopen(self, identity):
+        self.pending()  # Vérifier aussi que la source n’a pas changé.
+        data=self.data();item=next((i for i in data['items'] if i['id']==identity),None)
+        if item is None or item['status']!='deferred':raise ValueError('Ce passage n’est plus dans les vérifications mises de côté.')
+        item.update(status='pending',updated=time.time())
+        data['decisions'].append({'review_id':identity,'idea_id':item['idea_id'],'action':'reopen',
+            'note':'Vérification reprise par l’utilisateur.','time':item['updated'],'correction':None})
+        write(self.path,data)
+        return item
 
 
 def apply_corrections(project, data, corrections=None):

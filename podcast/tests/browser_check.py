@@ -114,7 +114,7 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
             page.locator('#steps button').nth(1).click();page.locator('#run-step').click()
             assert stub.started.wait(10)
             page.wait_for_function('() => current()?.task?.state==="running"')
-            page.locator('#cancel').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
+            page.locator('#cancel-progress').click();page.wait_for_function('() => current()?.task?.state==="cancelled"',timeout=10000)
             assert read(folder/'etapes/01.json')
             source_before=(folder/'etapes/01.json').read_bytes()
             # Parcours indépendant : ancien dialogue et anciens réglages, sans PDF.

@@ -1,6 +1,18 @@
-# Podcast pédagogique — version 0.6.0
+# Podcast pédagogique — version 0.6.1
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
+
+## 0.6.1 — suivre le traitement et poursuivre après l’étape 2
+
+Le tableau de bord indique explicitement **Calcul en cours** ou **Un choix est attendu — le calcul est arrêté**. Il conserve l’étape active à l’écran, affiche la durée de l’exécution et les points de reprise enregistrés. Quand le programme attend une décision, attendre plus longtemps ne lance pas la suite.
+
+Les vérifications s’ouvrent à la demande : huit passages par page, recherche, filtre par motif et un seul formulaire à la fois. Le titre montre le texte de l’idée ; son identifiant reste dans le détail. L’aperçu de l’étape 2 présente les synthèses des trois parties ; le registre intégral reste téléchargeable.
+
+Si des candidats non confirmés sont déjà absents des idées retenues, **Continuer avec les idées retenues** permet de les mettre de côté explicitement et de lancer la suite. Ils ne deviennent pas des idées approuvées et ne sont pas utilisés dans le podcast. Ils restent dans **Mis de côté**, dans l’historique et dans le rapport final. **Reprendre cette vérification** permet de revenir dessus plus tard.
+
+Cette poursuite est refusée s’il n’existe aucune idée retenue, si un extrait n’a pas pu être lu ou si la vérification porte sur une idée encore utilisée. Ces cas demandent une décision ou une correction. Les contrôles des chiffres, citations et affirmations restent identiques. Les demandes de nouvelle tentative déjà enregistrées sont respectées.
+
+Pour reprendre le projet existant : fermer l’application, appliquer le correctif, relancer et ouvrir le dernier projet. L’extraction et l’étape 2 restent conservées. Le bouton de poursuite démarre à la première étape manquante, généralement la 3 ; aucune nouvelle extraction du PDF n’est nécessaire.
 
 ## Stabilisation 0.6.0 : traiter, vérifier, reprendre
 
@@ -44,6 +56,7 @@ Docling n’est pas une dépendance obligatoire du correctif. Pour une installat
 | `source_checks.py` | Contraintes explicites de formule, périmètre et appui source. |
 | `review_queue.py` | Questions regroupées, historique et réapplication des corrections. |
 | `source_decisions.py` | Vérification des citations, décisions humaines et reprise du registre. |
+| `review_flow.py`, `web/reviews.js` | État d’avancement, vérifications paginées et poursuite explicite avec les idées retenues. |
 | `pdf_reread.py` | Relecture facultative d’une page avec ressources locales. |
 | `llm.py` | Ollama local, validation des réponses, cache et budget de reprises. |
 | `pipeline.py`, `editorial.py`, `writing.py` | Étapes, unités sauvegardées, registre et rédaction reliée aux preuves. |
@@ -54,7 +67,7 @@ Docling n’est pas une dépendance obligatoire du correctif. Pour une installat
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.6.0** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.6.1** en haut de la page.
 
 Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 

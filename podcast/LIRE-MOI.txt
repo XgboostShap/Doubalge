@@ -1,4 +1,4 @@
-PODCAST PEDAGOGIQUE 0.6.0 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.6.1 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
 2. Ouvrir Installer-Windows.cmd une fois. Il demande votre accord avant
@@ -19,6 +19,12 @@ Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
 Chaque partie est sauvegardee en Markdown avant la suivante.
 Continuer reprend les parties manquantes apres une interruption.
 Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
+
+SUIVRE LE TRAITEMENT
+Le tableau de bord distingue Calcul en cours et Un choix est attendu.
+Si l etape 2 est en attente, attendre ne lance pas l etape 3.
+Continuer avec les idees retenues met les passages non confirmes de cote
+et lance la suite. Ils restent consultables ; ils ne sont pas approuves.
 
 SI UN PASSAGE RESTE A VERIFIER
 Ouvrir les Verifications regroupees, consulter la page du PDF et corriger
