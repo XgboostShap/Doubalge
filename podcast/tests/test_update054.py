@@ -1,3 +1,5 @@
+from issues import ReviewRequired
+from review_queue import Reviews
 """Étape 4 : assembler les passages relus et reprendre les anciens résultats sans les couper."""
 import copy
 from pathlib import Path
@@ -143,7 +145,7 @@ class CommonTextTests(unittest.TestCase):
     def test_rejected_new_paragraph_never_completes_stage4(self):
         self.warm();self.packet().unlink()
         before=(self.root/'etapes/03.json').read_bytes()
-        with self.assertRaises(InvalidResponseError):Pipeline(self.root,Replies(PARAGRAPH,status='uncertain')).run(4,4)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,Replies(PARAGRAPH,status='uncertain')).run(4,4)
         self.assertFalse((self.root/'etapes/04.json').exists());self.assertFalse(self.packet(4).exists())
         self.assertEqual((self.root/'etapes/03.json').read_bytes(),before)
 
@@ -221,7 +223,7 @@ class CommonTextTests(unittest.TestCase):
             evidence=[{'page':2,'quote':'The method anticipates failures to plan early and cost-effective interventions.'}])
         self.idea['source_hash']=editorial.source_hash(self.idea);self.prepare()
         client=Replies('La méthode permet de planifier des interventions coûteuses.',status='uncertain')
-        with self.assertRaises(InvalidResponseError):Pipeline(self.root,client).run(3,3)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,client).run(3,3)
         self.assertFalse(self.packet().exists());self.assertFalse((self.root/'etapes/03.json').exists())
 
     def test_source_bibliographic_markers_stay_in_evidence_and_out_of_reviewed_speech(self):

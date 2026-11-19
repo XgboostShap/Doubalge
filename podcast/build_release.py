@@ -25,7 +25,8 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
-    payload=['app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+    payload=['app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py',
+             'issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
@@ -36,6 +37,8 @@ def main():
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
+    versioned=output/('PodcastPedago-Windows-'+APP_VERSION+'.zip')
+    versioned.write_bytes(target.read_bytes())
     patch=output/('PodcastPedago-Correctif-'+APP_VERSION+'.zip')
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
         for name in payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json']:
@@ -44,7 +47,7 @@ def main():
         assert archive.testzip() is None
         assert set(archive.namelist())==set(payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json'])
     (output/'PodcastPedago-Correctif-Windows.zip').write_bytes(patch.read_bytes())
-    info={'version':APP_VERSION,'file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+    info={'version':APP_VERSION,'file':target.name,'versioned_file':versioned.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
           'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))

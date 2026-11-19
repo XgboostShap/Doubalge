@@ -107,6 +107,9 @@ class StubHandler(BaseHTTPRequestHandler):
         self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_POST(self):
         request=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        if self.path=='/api/show':
+            data=json.dumps(getattr(self.server,'model_info',{'details':{'format':'gguf'}})).encode()
+            self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
         prompt=request['messages'][1]['content']
         task=prompt.splitlines()[0].split(':',1)[1].strip()
         payload=json.loads(prompt.split('DONNÉES :\n',1)[1])

@@ -3,6 +3,8 @@ import re
 from storage import fingerprint,read
 import quality
 import source_review
+import source_checks
+from issues import SourceIssue
 from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 
 VERSION='grounded-writing-v2'
@@ -102,7 +104,7 @@ def common_entry(pipe,idea,terms,original=None):
     return rewrite(pipe,4,key,idea,terms)
 
 
-def validate_text(text,idea,terms,limit=95):
+def _validate_text(text,idea,terms,limit=95):
     identity=idea.get('id','ce passage')
     if not isinstance(text,str):raise TextShapeError('Le champ text doit contenir du texte pour '+identity+' ; il est absent ou non textuel.')
     count=len(text.split())
@@ -124,6 +126,16 @@ def validate_text(text,idea,terms,limit=95):
     if re.search(r'\[\d[\d, –-]*\]|\b(?:Fig\.|voir figure|voir tableau)',text,re.I):raise ValueError('Garder les références bibliographiques et figures dans le dossier, pas dans le texte oral.')
 
 
+def validate_text(text,idea,terms,limit=95):
+    try:return _validate_text(text,idea,terms,limit)
+    except (TextShapeError,WordCountError,quality.AcronymExpansionError,SourceIssue):raise
+    except ValueError as error:raise SourceIssue(str(error)) from error
+
+
+def deferred(pipe,step,key,idea,produce):
+    return pipe.reviewed(step,key,idea,produce) if hasattr(pipe,'reviewed') else produce()
+
+
 def check(pipe,text,idea,terms,final=False,recent=None):
     """La décision est du modèle, la présence et la nature de la preuve sont contrôlées."""
     source=evidence(idea)
@@ -131,7 +143,8 @@ def check(pipe,text,idea,terms,final=False,recent=None):
     rows=source_review.excerpts(source)
     prepared,_=source_wording(idea)
     payload={'text':text,'source_excerpts':rows,'expected_statement':prepared['statement'],
-             'expected_explanation':prepared['explanation'],'glossary':terms,'final_review':final,'recent_texts':recent or []}
+             'expected_explanation':prepared['explanation'],'source_constraints':source_checks.constraints(source),
+             'glossary':terms,'final_review':final,'recent_texts':recent or []}
     def validate(value):
         if not isinstance(value,dict) or value.get('status') not in ('supported','uncertain','contradicted'):raise ValueError('Un verdict supported, uncertain ou contradicted est requis.')
         if not isinstance(value.get('reason'),str) or not value['reason'].strip():raise ValueError('Motiver le verdict de relecture.')
@@ -168,6 +181,7 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     prepared,wording_changes=source_wording(idea)
     payload={'statement':prepared['statement'],'explanation':prepared['explanation'],
              'source':evidence(idea),'glossary':terms,
+             'source_constraints':source_checks.constraints(evidence(idea)),
              'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
              'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
              'kind':kind,'feedback':feedback,'context':context or {},
@@ -210,12 +224,12 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
             before=value['text'];after=prepare_draft(before,idea)
             corrections=[{'field':'draft.text','before':before,'after':after}] if before!=after else []
             return {**value,'text':after,'draft_wording_corrections':corrections}
-        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError,SourceIssue) as error:
             # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
             while cause is not None and not isinstance(cause,(TextShapeError,WordCountError,quality.AcronymExpansionError)):cause=cause.__cause__
+            error.draft_text=seen.get('text')
             if cause is not None:
-                error.draft_text=seen.get('text')
                 if isinstance(cause,quality.AcronymExpansionError):error.terminology_issue=cause
                 else:error.length_issue=True
             raise
@@ -269,7 +283,9 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                         'terminology_corrections':terminology_corrections,
                         'source_wording_corrections':wording_changes+value['draft_wording_corrections']}
             notes=verdict['reason']
-        raise InvalidResponseError('Passage non validé après réécriture : '+notes)
+        error=InvalidResponseError('Passage non validé après réécriture : '+notes)
+        error.draft_text=value['text']
+        raise error from SourceIssue(notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
         rewrite_inputs(idea,terms,kind,feedback,context),produce,lambda value:entry_markdown(value,idea['id']),
         validate_saved=lambda value:validate_cached_entry(value,idea,terms))
@@ -295,7 +311,9 @@ def sentences(pipe):
     for c in plan['chapters']:
         items=[]
         for identity in c['idea_ids']:
-            idea=registry[identity];entry=rewrite(pipe,6,'Phrase-'+identity,idea,terms_for(data,idea),'sentence')
+            idea=registry[identity]
+            entry=deferred(pipe,6,'Phrase-'+identity,idea,lambda:rewrite(pipe,6,'Phrase-'+identity,idea,terms_for(data,idea),'sentence'))
+            if entry is None:continue
             items.append({'idea_id':identity,'sentence':entry['text'],**{k:v for k,v in entry.items() if k!='text'}})
             warnings.extend(entry.get('warnings',[]))
         chapters.append({'id':c['id'],'items':items});notes+=['## '+c['title'],'','\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in items)]
@@ -313,7 +331,8 @@ def explanations(pipe):
             idea=registry[identity]
             try:validate_entry(actual[identity],idea,'sentence')
             except (KeyError,ValueError):raise ValueError('Phrase associée à une autre idée : refaire l’étape 6. '+identity) from None
-            entry=rewrite(pipe,7,'Explication-'+identity,idea,terms_for(data,idea),context={'key_sentence':actual[identity]['sentence'],'previous':entries[-1]['text'] if entries else ''})
+            entry=deferred(pipe,7,'Explication-'+identity,idea,lambda:rewrite(pipe,7,'Explication-'+identity,idea,terms_for(data,idea),context={'key_sentence':actual[identity]['sentence'],'previous':entries[-1]['text'] if entries else ''}))
+            if entry is None:continue
             entries.append({'idea_id':identity,**entry})
             warnings.extend(entry.get('warnings',[]))
         chapters.append({'id':c['id'],'title':c['title'],'transition':'','items':entries})
@@ -342,9 +361,10 @@ def final_pass(pipe,chapters,registry,data):
                 final=check(pipe,text,idea,terms,final=True,recent=recent[-2:])
                 if final['status']!='supported':raise InvalidResponseError('Révision finale non concluante : '+final['reason'])
                 return {'text':text,'review':final,'corrected':True}
-            value=pipe.unit(9,'Relecture-'+idea['id'],'Révision du dialogue — '+idea['id'],
+            value=deferred(pipe,9,'Relecture-'+idea['id'],idea,lambda:pipe.unit(9,'Relecture-'+idea['id'],'Révision du dialogue — '+idea['id'],
                 {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'text':turn['text'],'source':idea,'terms':terms,'recent':recent[-2:]},produce,
-                lambda v:v['text']+'\n\nRelecture : '+v['review']['reason'])
+                lambda v:v['text']+'\n\nRelecture : '+v['review']['reason']))
+            if value is None:continue
             if value['corrected']:corrections.append({'idea_id':idea['id'],'before':turn['text'],'after':value['text'],'reason':value['review']['reason']})
             turn['text']=value['text'];turn['text_hash']=fingerprint(value['text']);turn['final_review']=value['review']
             turn['length_warning']=(idea['id']+' : réponse de '+str(len(turn['text'].split()))+' mots après intégration du lexique.'

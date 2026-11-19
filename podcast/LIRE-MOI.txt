@@ -1,7 +1,8 @@
-PODCAST PEDAGOGIQUE 0.5.4 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.6.0 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
-2. Ouvrir Installer-Windows.cmd une fois.
+2. Ouvrir Installer-Windows.cmd une fois. Il demande votre accord avant
+   les telechargements ; par defaut, les ressources locales sont utilisees.
 3. Ouvrir Lancer-Podcast.cmd.
 
 POUR LIRE UN DIALOGUE DEJA ECRIT
@@ -18,6 +19,12 @@ Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
 Chaque partie est sauvegardee en Markdown avant la suivante.
 Continuer reprend les parties manquantes apres une interruption.
 Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
+
+SI UN PASSAGE RESTE A VERIFIER
+Ouvrir les Verifications regroupees, consulter la page du PDF et corriger
+l idee source avec sa citation, ou ecarter l idee avec un motif. Traiter
+les questions du groupe puis Continuer. Les passages reussis sont conserves.
+Pour une formule ambigue, ne pas deviner un exposant.
 
 Conservez le dossier donnees pour garder vos projets et reglages vocaux.
 Pour une installation PodcastPedago existante, utiliser le ZIP correctif.

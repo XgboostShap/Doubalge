@@ -1,0 +1,24 @@
+{
+  "version": "0.6.0",
+  "file": "PodcastPedago-Windows.zip",
+  "versioned_file": "PodcastPedago-Windows-0.6.0.zip",
+  "bytes": 377943,
+  "sha256": "b27c48e5039b498407190a2258e3c80d665276320705a423013bd449ab0808c4",
+  "source_files": 52,
+  "patch": {
+    "file": "PodcastPedago-Correctif-0.6.0.zip",
+    "bytes": 295029,
+    "sha256": "cccfaf0ca8ebfb175b67a6c70bf693b80e9d71f03a2578efe0cfc8f82213786f"
+  },
+  "source_commit": "f29394e9819d6a666996ce49d5d6aad5e92520b2",
+  "validation": {
+    "tests": 272,
+    "migration_from": "0.5.4",
+    "payload_files": 25,
+    "powershell_platform": "Linux",
+    "browser": "Chromium, simulated model and voice APIs, actual MP3 encoding/playback/download",
+    "real_model": "Mistral 7.2B Q4_K_M, two EUSIPCO ideas, stages 3 and 4, CPU, offline",
+    "docling": "One page, cached models, CPU, offline",
+    "native_windows_and_actual_voice_profiles_tested": false
+  }
+}

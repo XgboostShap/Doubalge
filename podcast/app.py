@@ -24,9 +24,13 @@ from storage import defaults, fingerprint, invalidate, read, write
 import audio_export
 import voice_legacy
 import source_review
+import source_decisions
+import pdf_reread
+from issues import ReviewRequired, DownloadConsentRequired, SourceIssue
+from review_queue import Reviews
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.4'
+APP_VERSION = '0.6.0'
 
 
 def settings(value):
@@ -109,6 +113,7 @@ class App:
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         source_data=read(folder/'etapes/02.json')['data'] if 2 in completed else {}
+        review_store=Reviews(folder);pending_reviews=review_store.pending();review_data=review_store.data()
         source_diagnostic=source_review.diagnostic(source_data)
         needs_upgrade=2 in completed and source_data.get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
@@ -117,14 +122,60 @@ class App:
                   'from_previous_version':True}
             if source_diagnostic['empty']:task['message']='Ancien échec — réexaminer l’étape 2 avec le nouveau contrôle des citations'
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
-        if needs_upgrade or source_diagnostic['empty']:exports=[]
+        if needs_upgrade or source_diagnostic['empty'] or pending_reviews:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
-                'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty']),
+                'pdf_reread_available':pdf_reread.available(),
+                'pdf_readings':[p.name for p in (folder/'lectures_pdf').glob('*.md') if p.with_suffix('.json').exists()],
+                'reviews':pending_reviews,'review_history':len(review_data['decisions']),
+                'incomplete_source_parts':[d['id']+'-P'+str(p['number']) for d in source_data.get('documents',[]) for p in d['parts'] if p.get('incomplete_extraction')],
+                'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty'] or bool(pending_reviews)),
                 'source_diagnostic':source_diagnostic,
                 'needs_source_upgrade':needs_upgrade,
-                'next_step':next((n for n in range(1,10) if n not in completed),10)}
+                'next_step':min([next((n for n in range(1,10) if n not in completed),10)]+
+                    [i['step'] for i in review_data['items'] if i['status']=='retry'])}
+
+    def enqueue_reread(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            item=next((i for i in Reviews(folder).pending() if i['id']==body.get('id')),None)
+            if item is None:raise ValueError('Vérification absente.')
+            if not pdf_reread.available():raise ValueError('Docling local n’est pas préparé. Aucun téléchargement automatique ; vérifiez la page du PDF.')
+            source=item['source'];match=re.fullmatch(r'PDF([1-9]\d*)',source.get('document',''))
+            if not match or not source.get('pages'):raise ValueError('Page source inconnue.')
+            meta=read(folder/'projet.json');index=int(match[1])-1
+            if index>=len(meta['pdfs']):raise ValueError('PDF inconnu.')
+            page=min(source['pages'])
+            task={'id':uuid.uuid4().hex,'kind':'pdf_reading','document':source['document'],'page':page,
+                'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
+            cancel=threading.Event();self.cancels[task['id']]=cancel
+            write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
+            self.pending.put((folder,task,cancel));return task
+
+    def resolve_review(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            result=source_decisions.resolve(folder,body,
+                lambda path:self.preserve_summaries(path,read(path/'projet.json')),pipeline_module.part_markdown)
+            self.review_status(folder,'Nouvelle tentative demandée : cliquez sur Continuer.' if body.get('action')=='retry'
+                else 'Décision enregistrée : cliquez sur Continuer après les vérifications restantes.')
+            return result
+
+    def review_status(self,folder,message):
+        path=folder/'tache.json'
+        task=read(path) if path.exists() else {'id':uuid.uuid4().hex,'app_version':APP_VERSION}
+        task.update(state='needs_review' if Reviews(folder).pending() else 'done',message=message,error=None)
+        write(path,task)
+
+    def flag_source(self,folder,body):
+        with self.lock:
+            self.idle(folder);data=read(folder/'etapes/02.json')['data']
+            idea=next((i for d in data['documents'] for p in d['parts'] for i in p['ideas']+p.get('excluded_ideas',[]) if i['id']==body.get('id')),None)
+            if idea is None:raise ValueError('Idée source inconnue.')
+            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'))
+            self.review_status(folder,'Une idée a été ajoutée aux vérifications regroupées.')
+            return item
 
     def audio_input(self,folder,meta):
         mode=meta.get('audio_source_mode','project')
@@ -214,8 +265,14 @@ class App:
             self.idle(folder)
             action=body.get('action','generate')
             if action not in ('generate','preview','prepare'):raise ValueError('Commande audio inconnue.')
+            if action=='prepare':
+                try:audio_export.encoder()
+                except ValueError:
+                    if body.get('allow_download') is not True:
+                        raise DownloadConsentRequired('Autorisation requise : télécharger imageio-ffmpeg 0.6.0 depuis PyPI et files.pythonhosted.org pour encoder le MP3. Aucun PDF ni dialogue n’est envoyé.')
             meta=read(folder/'projet.json');value,speakers,mode=self.audio_input(folder,meta)
             if action=='generate':
+                if mode=='project' and Reviews(folder).pending():raise ValueError('Terminez les vérifications des sources avant de générer l’audio du projet.')
                 if not value:raise ValueError('Terminez le script ou enregistrez un dialogue TXT avant de générer le MP3.')
                 audio_export.validate_script(value)
                 if mode=='project' and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:
@@ -226,6 +283,7 @@ class App:
             speaker=body.get('speaker')
             if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
+                  'allow_download':body.get('allow_download') is True,
                   'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
@@ -252,6 +310,8 @@ class App:
             first, until = body.get('first',1), body.get('until',9)
             if type(first) is not int or type(until) is not int or not 1<=first<=until<=9:
                 raise ValueError('Étapes invalides.')
+            if Reviews(folder).pending():
+                raise ValueError('Traitez les vérifications regroupées ou choisissez « Réessayer avec le modèle » avant de continuer.')
             if first>1 and not (folder/'etapes'/f'{first-1:02}.json').exists():
                 raise ValueError('L’étape précédente doit être terminée.')
             if first>2 and (folder/'etapes/02.json').exists() and source_review.diagnostic(read(folder/'etapes/02.json')['data'])['empty']:
@@ -289,17 +349,24 @@ class App:
                     meta['cache_generation'] = uuid.uuid4().hex
                     write(folder/'projet.json',meta)
                 config = {**meta['settings'],'_generation':meta.get('cache_generation','initial')}
+                if any(i['status']=='retry' for i in Reviews(folder).data()['items']):
+                    config['_review_retry']=task['id']
                 def progress(message):
                     task['message'] = message
                     match=re.match(r'Étape (\d+)/9',message)
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
+                if task.get('kind')=='pdf_reading':
+                    index=int(task['document'][3:])-1;pdf=folder/'sources'/meta['pdfs'][index]['file']
+                    pdf_reread.run(pdf,task['page'],folder/'lectures_pdf'/f'{task["document"]}-p{task["page"]}.md',cancel,progress)
+                    task.update(state='needs_review',message='Relecture locale enregistrée : comparez-la visuellement avec le PDF.',error=None)
+                    continue
                 if task.get('kind')=='audio':
                     audio_input,audio_speakers,_=self.audio_input(folder,meta)
                     client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),audio_speakers,cancel,progress)
                     self.active=(task['id'],client)
-                    if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress)
+                    if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress,allow_download=task.get('allow_download',False))
                     elif task['action']=='preview':client.preview(task['speaker'])
                     else:client.render(audio_input)
                     task.update(state='done',message='Moteur MP3 prêt' if task['action']=='prepare' else 'Aperçu vocal prêt' if task['action']=='preview' else 'Podcast MP3 prêt à écouter et télécharger')
@@ -315,6 +382,8 @@ class App:
                     task.update(state='needs_review',message='Rapport enregistré — aucune idée confirmée ; consulter les motifs et réexaminer l’étape 2')
             except Cancelled:
                 task.update(state='cancelled',message='Annulé. Les répliques audio terminées sont conservées pour la reprise.' if task.get('kind')=='audio' else 'Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
+            except ReviewRequired as error:
+                task.update(state='needs_review',message=str(error),error=None,step=error.step)
             except Exception as error:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
@@ -364,6 +433,7 @@ class App:
 
     def close(self):
         self.stop.set()
+        for event in list(self.cancels.values()):event.set()
         if self.active:
             self.active[1].cancel()
         self.worker.join(timeout=5)
@@ -433,6 +503,14 @@ class Handler(BaseHTTPRequestHandler):
             parts=path.split('/')
             if len(parts)==5 and parts[1:3]==['api','projects'] and parts[4]=='audio-text':
                 self.json(self.app.audio_text(self.app.project(parts[3])));return
+            if len(parts)==4 and parts[1]=='sources':
+                folder=self.app.project(parts[2]);match=re.fullmatch(r'PDF([1-9]\d*)\.pdf',parts[3])
+                if not match:raise FileNotFoundError('PDF inconnu.')
+                sources=read(folder/'projet.json')['pdfs'];index=int(match[1])-1
+                if index>=len(sources):raise FileNotFoundError('PDF inconnu.')
+                file=(folder/'sources'/sources[index]['file']).resolve()
+                if file.parent!=(folder/'sources').resolve():raise FileNotFoundError('PDF invalide.')
+                self.send_media(file,'application/pdf');return
             if len(parts)==4 and parts[1]=='media':
                 folder=self.app.project(parts[2]);name=parts[3]
                 state=self.app.summary(folder)['audio']
@@ -450,7 +528,14 @@ class Handler(BaseHTTPRequestHandler):
                 elif re.fullmatch(r'partie-0[1-9]-[A-Za-z0-9-]+\.md',name):
                     file=folder/'etapes'/'parties'/name.removeprefix('partie-')
                     if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
-                elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
+                elif re.fullmatch(r'lecture-PDF[1-9]\d*-p[1-9]\d*\.md',name):
+                    file=folder/'lectures_pdf'/name.removeprefix('lecture-')
+                    record=read(file.with_suffix('.json'));index=int(name.split('-')[1][3:])-1
+                    sources=read(folder/'projet.json')['pdfs']
+                    if index>=len(sources) or sources[index].get('sha256')!=record['sha256']:raise FileNotFoundError('Cette lecture ne correspond plus au PDF actuel.')
+                elif name in ('podcast.md','podcast.txt','podcast.json'):
+                    if name not in self.app.summary(folder)['exports']:raise FileNotFoundError('Le script attend la résolution des vérifications ou la reprise des étapes.')
+                    file=folder/'exports'/name
                 elif name in ('podcast.mp3','essai-3min.mp3','essai-5min.mp3','rapport_audio.csv','rapport_essai-3min.csv','rapport_essai-5min.csv'):
                     audio=self.app.summary(folder)['audio']
                     if not audio['available'] or name not in (audio['filename'],audio['report_file']):raise FileNotFoundError('Ce résultat audio ne correspond pas à la sélection actuelle.')
@@ -460,7 +545,9 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'dossier.zip'
                     with zipfile.ZipFile(file,'w',zipfile.ZIP_DEFLATED) as archive:
                         archive.write(folder/'projet.json','projet.json')
-                        for sub in ('sources','etapes','memoire','exports','reprises','lecture'):
+                        for name in ('verifications.json','corrections.json'):
+                            if (folder/name).exists():archive.write(folder/name,name)
+                        for sub in ('sources','etapes','memoire','exports','reprises','lecture','lectures_pdf'):
                             for f in (folder/sub).rglob('*'):
                                 if f.is_file():archive.write(f,f.relative_to(folder))
                 else:raise FileNotFoundError('Fichier inconnu.')
@@ -481,7 +568,7 @@ class Handler(BaseHTTPRequestHandler):
         with path.open('rb') as f:
             while chunk:=f.read(256*1024):self.wfile.write(chunk)
 
-    def send_media(self,path):
+    def send_media(self,path,mime='audio/mpeg'):
         total=path.stat().st_size;start=0;end=total-1;status=200
         header=self.headers.get('Range')
         if header:
@@ -492,9 +579,10 @@ class Handler(BaseHTTPRequestHandler):
                 else:start=max(0,total-int(match[2]))
                 if start>end or start>=total:raise ValueError()
             except ValueError:
-                self.respond(416,b'','audio/mpeg',[('Content-Range','bytes */'+str(total))]);return
+                self.respond(416,b'',mime,[('Content-Range','bytes */'+str(total))]);return
             status=206
-        self.send_response(status);self.send_header('Content-Type','audio/mpeg');self.send_header('Accept-Ranges','bytes')
+        self.send_response(status);self.send_header('Content-Type',mime);self.send_header('Accept-Ranges','bytes')
+        self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(end-start+1))
         if status==206:self.send_header('Content-Range',f'bytes {start}-{end}/{total}')
         self.end_headers()
@@ -521,6 +609,9 @@ class Handler(BaseHTTPRequestHandler):
             if action=='run':self.json(self.app.enqueue(folder,body),202)
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
+            elif action=='review':self.json(self.app.resolve_review(folder,body))
+            elif action=='flag-source':self.json(self.app.flag_source(folder,body))
+            elif action=='reread':self.json(self.app.enqueue_reread(folder,body),202)
             elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))
             elif action=='audio-import':self.json(self.app.import_audio_settings(folder,body))
             elif action=='audio-settings':self.json(self.app.save_audio_settings(folder,body))

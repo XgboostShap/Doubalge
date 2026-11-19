@@ -1,13 +1,60 @@
-# Podcast pédagogique — version 0.5.4
+# Podcast pédagogique — version 0.6.0
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
+
+## Stabilisation 0.6.0 : traiter, vérifier, reprendre
+
+Rouvrez votre dernier projet après la mise à jour. Les PDF, les références vocales et les unités compatibles déjà validées sont conservés. Un problème scientifique persistant apparaît dans **Vérifications regroupées** : le programme traite les autres passages de l’étape, enregistre leurs fichiers, puis attend vos décisions. L’étape incomplète et le podcast final ne sont pas déclarés terminés.
+
+1. Ouvrez la vérification, puis la page du PDF original.
+2. Corrigez l’idée, son explication et les citations exactes avec leurs pages. **Valider cette correction de la source** enregistre une décision humaine ; elle sera appliquée aux étapes suivantes, y compris après réutilisation d’anciens caches.
+3. Une idée sans preuve peut être écartée avec un motif. Elle reste dans le rapport et dans l’historique.
+4. **Réessayer avec le modèle** prépare une tentative neuve pour le passage concerné. Les unités validées restent disponibles. Cliquez sur **Continuer** après avoir traité les vérifications du groupe.
+5. **Relire les idées et signaler un doute** permet de remettre en vérification un contresens accepté par la relecture automatique.
+
+Le programme distingue format JSON, longueur, terminologie, source, formule et périmètre d’un résultat. Les corrections automatiques d’un passage sont limitées à six générations nouvelles, relecture comprise. Une panne Ollama, une annulation ou un problème de fichier garde son diagnostic propre. Une formule comme `2d` n’est jamais convertie automatiquement en `2^d` ; une explication qualitative peut éviter de deviner l’exposant. Les contrôles de sens restent conservateurs et incomplets : une citation exacte et deux lectures par le même modèle ne garantissent pas une conclusion scientifique juste.
+
+Les décisions sont enregistrées dans `verifications.json` et `corrections.json`, dans le projet local. Une correction dépend de l’empreinte de l’extraction ; elle n’est pas transférée à un autre PDF. Les agrégats dépendants sont archivés et reconstruits ; les unités sans changement gardent leurs empreintes et leur contenu. Le dossier ZIP du projet inclut ces décisions pour la reprise.
+
+## Mode local et autorisations réseau
+
+Le fonctionnement normal utilise les fichiers du PC, Ollama et VoiceStudio sur localhost. Le programme n’a pas de connecteur de recherche Internet ni de téléchargement de modèle pendant la génération.
+
+| Opération | Accès prévu et décision |
+| --- | --- |
+| Extraction PDF et rédaction | Local ; le modèle Ollama doit être installé. `/api/show`, appelé localement sans le PDF, refuse les alias cloud avant l’envoi des sources au chat. |
+| Voix et MP3 | API VoiceStudio locale et FFmpeg local. Gardez un moteur de synthèse local dans VoiceStudio ; sa configuration interne reste gérée par ce logiciel. |
+| Première installation | Hors connexion si les ressources sont en cache. L’installateur demande une autorisation avant de récupérer uv/Python sur GitHub et les dépendances sur PyPI. Refuser ne lance aucun téléchargement. |
+| Préparation MP3 manquante | Autorisation séparée pour `imageio-ffmpeg==0.6.0`, sur PyPI/files.pythonhosted.org ; aucun document transmis. |
+| Publication ou transfert vers Git | Aucune opération de ce type dans l’application. |
+
+Les modèles disponibles se choisissent avec **Vérifier les modèles installés**. Un modèle plus grand déjà présent peut mieux relire certains passages ; augmenter le contexte seul ne corrige ni un contresens ni une boucle de répétition.
+
+## Relecture PDF structurée facultative
+
+Le bouton **Relire cette page avec Docling local** utilise uniquement une installation Docling et des modèles déjà disponibles. Il relit la page concernée avec tableaux et formules, sans service distant ni OCR automatique, et sauvegarde une aide Markdown séparée. L’extraction originale et les citations restent inchangées. Comparez ce résultat avec la page visuelle : Docling peut aussi perdre un exposant ou mal placer une cellule de tableau.
+
+Docling n’est pas une dépendance obligatoire du correctif. Pour une installation déjà préparée, les modèles sont recherchés dans `modeles/docling/artifacts` ou dans le dossier local `DOCLING_ARTIFACTS_PATH`. Sinon le bouton est absent, la vérification visuelle reste accessible et aucun téléchargement n’est tenté. Une préparation des bibliothèques et modèles demanderait une autorisation réseau distincte. PaperQA n’est pas ajouté au parcours : les essais ont montré qu’une référence retrouvée pouvait encore soutenir une mauvaise interprétation.
+
+## Modules de la stabilisation
+
+| Module | Responsabilité |
+| --- | --- |
+| `issues.py` | Catégories d’erreurs et consignes de reprise adaptées. |
+| `source_checks.py` | Contraintes explicites de formule, périmètre et appui source. |
+| `review_queue.py` | Questions regroupées, historique et réapplication des corrections. |
+| `source_decisions.py` | Vérification des citations, décisions humaines et reprise du registre. |
+| `pdf_reread.py` | Relecture facultative d’une page avec ressources locales. |
+| `llm.py` | Ollama local, validation des réponses, cache et budget de reprises. |
+| `pipeline.py`, `editorial.py`, `writing.py` | Étapes, unités sauvegardées, registre et rédaction reliée aux preuves. |
+| `app.py`, `web/` | Serveur local, interface de vérification et orchestration des tâches. |
 
 ## Mettre à jour une installation existante
 
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.4** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.6.0** en haut de la page.
 
 Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 
@@ -46,7 +93,7 @@ Dans **Voix et podcast MP3**, conserver **Script du projet (neuf étapes)**, pui
 
 Pour charger les profils directement, vérifier l’adresse API (`http://127.0.0.1:3900` par défaut), cliquer sur **Charger mes voix VoiceStudio**, choisir une référence pour chaque intervenant et **Enregistrer les voix**. Aucun profil n’est recréé. Une référence absente est signalée.
 
-Si **Préparer le MP3** apparaît, cliquer une fois pour utiliser FFmpeg déjà disponible ou télécharger `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes sont locales. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
+Si **Préparer le MP3** apparaît, le programme explique le téléchargement de `imageio-ffmpeg==0.6.0` depuis PyPI/files.pythonhosted.org et demande une autorisation propre à cette opération. Refuser conserve le mode hors connexion ; aucun PDF ou dialogue n’est envoyé. Avec FFmpeg déjà présent, aucune préparation réseau n’est nécessaire. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
 
 ## Compatibilité VoiceStudio et contrôles audio
 
@@ -154,7 +201,7 @@ Le registre, les citations, les pages, les décisions incertaines et les anciens
 
 **Les relectures du modèle restent faillibles.** Une citation exacte ne suffit pas à prouver une interprétation correcte, et deux appels au même modèle ne sont pas deux experts indépendants. Un petit modèle peut encore refuser une correction ou confirmer une mauvaise lecture. Les nouveaux contrôles corrigent des défaillances observées et rendent les refus visibles ; ils ne constituent pas une certification scientifique. Relire le nouveau dialogue et essayer un court audio avec les voix réelles avant de produire le podcast complet.
 
-Les figures, équations et tableaux complexes ne sont pas interprétés visuellement. Les pages scannées nécessitent un OCR externe. Les contradictions ou ambiguïtés du PDF peuvent demander une vérification humaine ; la simple copie d’une phrase du PDF ne les résout pas.
+Les figures, équations et tableaux complexes ne sont pas validés automatiquement. La page PDF peut être ouverte et Docling, déjà préparé, peut fournir une aide séparée. Les pages scannées nécessitent un OCR externe. Les contradictions ou ambiguïtés du PDF peuvent demander une vérification humaine ; la simple copie d’une phrase du PDF ne les résout pas.
 
 ## Vérification et distribution
 

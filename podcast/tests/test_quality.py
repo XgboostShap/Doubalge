@@ -1,3 +1,5 @@
+from issues import ReviewRequired
+from review_queue import Reviews
 """Tri des contenus, appui aux sources et découpage des longs registres."""
 import copy
 from pathlib import Path
@@ -124,7 +126,7 @@ class QualityPipelineTests(unittest.TestCase):
         from storage import fingerprint
         write(self.project/'reprises/02.json',{'source':fingerprint({'documents':[doc]}),'generation':'initial','data':previous})
         # Une explication invalide est isolée sans arrêter les autres parties.
-        Pipeline(self.project,FakeClient()).run(2,2)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,FakeClient()).run(2,2)
         parts=read(self.project/'etapes/02.json')['data']['documents'][0]['parts']
         self.assertTrue(all(not p['ideas'] and p['uncertain_ideas'] for p in parts))
     def test_inconclusive_review_is_reported_without_accepting_invalid_facts(self):
@@ -133,7 +135,7 @@ class QualityPipelineTests(unittest.TestCase):
             def ask(self,task,*args,**kwargs):
                 if task=='review_facts':raise InvalidResponseError('Citation absente après correction')
                 return super().ask(task,*args,**kwargs)
-        Pipeline(self.project,Uncertain()).run(2,2)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,Uncertain()).run(2,2)
         result=read(self.project/'etapes/02.json')['data']
         parts=result['documents'][0]['parts']
         self.assertTrue(all(not p['ideas'] and p['uncertain_ideas'] for p in parts))

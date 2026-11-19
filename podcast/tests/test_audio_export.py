@@ -130,7 +130,7 @@ class AudioTests(unittest.TestCase):
     def test_preparation_uses_the_bundled_uv_in_an_unseeded_environment(self):
         with patch('audio_export.encoder',side_effect=[ValueError('absent'),'ffmpeg-ready']), \
              patch('audio_export.Path.exists',return_value=True),patch('audio_export.run_process') as run:
-            result=audio_export.prepare_encoder(threading.Event(),lambda _:None)
+            result=audio_export.prepare_encoder(threading.Event(),lambda _:None,allow_download=True)
         self.assertEqual(result,'ffmpeg-ready')
         command=run.call_args.args[0]
         self.assertIn('uv',Path(command[0]).name);self.assertEqual(command[1:4],['pip','install','--python'])

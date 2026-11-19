@@ -8,3 +8,4 @@ audio { width: 100%; margin-top: 12px; }
 #new-audio { margin-top: 10px; }
 textarea { width: 100%; border: 1px solid #b8c6bd; border-radius: 7px; padding: 12px; font: 14px/1.6 system-ui; color: var(--ink); background: white; margin: 8px 0 14px; resize: vertical; }
 input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }
+.review-item{padding:16px 0}.review-item>a{display:block;margin:10px 0}.review-item label{margin-top:14px}.review-item textarea{display:block;width:100%;min-height:90px;resize:vertical;padding:12px;border:1px solid #b8c6bd;border-radius:7px;font:400 15px system-ui;color:var(--ink);background:#fff}.review-item input[type=number]{max-width:120px}.review-item textarea:focus-visible{outline:3px solid #dbab58;outline-offset:3px}#retained-proof{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}

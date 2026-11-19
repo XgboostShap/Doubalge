@@ -528,11 +528,11 @@ def validate_review(value, candidates, source, terms=None):
 
 def validate_evidence_details(text, evidence):
     """Refuser les erreurs concrètes observées sans reconstruire une formule PDF."""
+    from source_checks import validate
+    validate(text,evidence)
     for marker in re.findall(r'\bE\d+\b',text):
         if not re.search(r'\b'+re.escape(marker)+r'\b',evidence):
             raise ValueError('Les numéros de passages comme '+marker+' restent dans les références, pas dans le texte à lire.')
-    if re.search(r'\b2d\s+param',text,re.I) and re.search(r'fully correlated.*Bernoulli|Bernoulli.*fully correlated',evidence,re.I|re.S):
-        raise ValueError('La transcription « 2d paramètres » est ambiguë : expliquer la complexité sans interpréter un exposant perdu lors de l’extraction PDF.')
     wording=re.sub(r'(?<=[A-Za-z])-\s+(?=[a-z])','',evidence)
     if (re.search(r'\bjeux?\s+de\s+données(?:\s+[\wÀ-ÿ-]+){0,5}\s+publi(?:c|que)s?\b',text,re.I)
         and not re.search(r'\bpublic(?:ly)?\b|\bpubli(?:c|que)s?\b|en accès libre|librement accessibles?|\bopen(?:ly)?\s+(?:available|data)|\bfreely\s+available|\bopen[- ](?:access|source)',wording,re.I)):

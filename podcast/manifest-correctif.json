@@ -1,9 +1,9 @@
 {
-  "version": "0.5.4",
+  "version": "0.6.0",
   "files": [
     {
       "path": "app.py",
-      "sha256": "595275951e4ccaddecd3b19f057185420df702d5f62a12a5dde3c454ed151613"
+      "sha256": "c1fac03bebb8c3e2ed7b51e2f2c233a421f6717423f7fdc1ebf86f0ffa206d7b"
     },
     {
       "path": "storage.py",
@@ -11,11 +11,11 @@
     },
     {
       "path": "pipeline.py",
-      "sha256": "12e7667006fba4060f090914500dfe09fcc93dab189507cbaeebcb5c7589bdd1"
+      "sha256": "f0194a5de289f9b7940133a1eaac0635ab939a10485f89a065fe61cc54c3c8d4"
     },
     {
       "path": "quality.py",
-      "sha256": "95dd856723ec505d6dd5eaa358ac3a1b98f01e13ef8a6d5d219360970232a1fb"
+      "sha256": "4d9abb0ae791fe71aa397768a869d68827822c58141609260038866be184f249"
     },
     {
       "path": "source_review.py",
@@ -23,11 +23,11 @@
     },
     {
       "path": "editorial.py",
-      "sha256": "17a0ce861876fcd92800b84cef93dfa2f76fce5bf4aa9294fe1d46ac88c34a7c"
+      "sha256": "42cb30179dbb846c4234a0ea1f7ee9ca4f1536c94b609875425601b5eaa3d6be"
     },
     {
       "path": "writing.py",
-      "sha256": "47f543596b3638d6c697d89b8e34a4edb91d688d0a4732fa7ba54aad96a3c34a"
+      "sha256": "4b76e4a8cbc262367c591dce47f9ef6e470eaca9d53537dfa15a53ffac9ff401"
     },
     {
       "path": "spoken.py",
@@ -35,7 +35,7 @@
     },
     {
       "path": "audio_export.py",
-      "sha256": "a5acca93297ee2de3f82cabde5f534f96d04d3bece330d999c4e77251c5bbf4e"
+      "sha256": "908fb886057fde6377658411e1350ed4915a8ac5045f700e7f128fa86d3da42b"
     },
     {
       "path": "voice_legacy.py",
@@ -43,23 +43,47 @@
     },
     {
       "path": "llm.py",
-      "sha256": "a1c3cb28e0b02bb5a3831a3879dd58c3b81b7d97be4e4ac87761cfc1411863f1"
+      "sha256": "44db77c2ab4ece950a1c2669b6049909fa8d6bdc1ebd0b7549197ab4f79c2917"
     },
     {
       "path": "pdfs.py",
       "sha256": "0094072d5f57b858e5d279999476b21c4e0d58e3a189512a8fd7b9dbf97ce946"
     },
     {
+      "path": "issues.py",
+      "sha256": "62275cabbae3952c25ddf3388d1e16e07f2dabe7466e184e2e0269ded8f10101"
+    },
+    {
+      "path": "review_queue.py",
+      "sha256": "a373a951ba54174f2c10bac64ad547ef779e74a6ab2898e951013b6d8e0d7c4d"
+    },
+    {
+      "path": "source_decisions.py",
+      "sha256": "d03b6164b0870bbb425e189b7975e3a9d1ee666574625ebec18a45216978c176"
+    },
+    {
+      "path": "source_checks.py",
+      "sha256": "e61245c6b91c2e4fa5d44d6a775489356738bf26d420743dc58a8b242b47059b"
+    },
+    {
+      "path": "pdf_reread.py",
+      "sha256": "c5ca15044038d5fe9cd2ab4a0dd0e9271102d3bc8adee5c11654ad7abac61d9f"
+    },
+    {
+      "path": "installer.ps1",
+      "sha256": "be394166a8464791ef5c710868e122e3ef388bb51d1eff45209833ab1fd61d6f"
+    },
+    {
       "path": "web/index.html",
-      "sha256": "0de02155720c2f27953f3cd5a2fdf1132d420b6f9b1b8bb32cf529a19e5bb5c1"
+      "sha256": "2e0ce98380e1a98b2581b4ed085ee347f5bc3435c59a07e641b9dc647792eb1b"
     },
     {
       "path": "web/app.js",
-      "sha256": "59b341605304f323b46a21ca0cda171a05aa1677cd534eff5c5a8eaad2e32eba"
+      "sha256": "320533a0ad4ba85375f52bf27bfac13a733499301ed0a48bd366b82e72f78474"
     },
     {
       "path": "web/style.css",
-      "sha256": "1b2a2566b04843c6c8fa23a687cde29543b7399b110f81bdf56ed65e509dbc98"
+      "sha256": "5d59ee340b0f9bfc60205c1a6198286823cc34180b73b1dc8a8774b25dc63c2a"
     },
     {
       "path": "Lancer-Podcast.cmd",
@@ -67,15 +91,15 @@
     },
     {
       "path": "README.md",
-      "sha256": "8465304be3335c771c84104098b241cf408f6432924e7f4f81929408cecd7113"
+      "sha256": "78e829319e7ef0d51fa12d2cba77775d25c972ed714fe5c481f24f03c311fcdb"
     },
     {
       "path": "README-CORRECTIF.txt",
-      "sha256": "0a35f9c8e23947e555b02b1dd5edf1022c6dccdf4ebb17de68293c5215861c63"
+      "sha256": "9249315dadc7510a2f07c35b5680df4083d457fc9e94138ac5702af98425b34a"
     },
     {
       "path": "SOURCE-COMPLET.md",
-      "sha256": "69f756d11f1bd3eb2a04c3d6560821b048b7988be01cb6d48d5fb1f9f62d3351"
+      "sha256": "9cf96746a54473213f78959fe15fdf3531681e7204c277f6603504f9a8e91e7c"
     }
   ]
 }

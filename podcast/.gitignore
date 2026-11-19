@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 dist/
 mises-a-jour/
+modeles/

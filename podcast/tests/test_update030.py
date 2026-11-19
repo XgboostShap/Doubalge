@@ -1,3 +1,5 @@
+from issues import ReviewRequired
+from review_queue import Reviews
 """Défauts observés dans l'export utilisateur : glossaire, sens et progression."""
 import copy
 import unittest
@@ -77,7 +79,8 @@ class PedagogyTests(unittest.TestCase):
         from pipeline import Pipeline
         source=facts(1);source[0]['statement']='Le DT (Data Transfer) représente le réseau.'
         self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]})
-        with self.assertRaisesRegex(InvalidResponseError,'Développement non confirmé'):self.generate(until=8)
+        with self.assertRaises(ReviewRequired):self.generate(until=8)
+        self.assertIn('Développement non confirmé',Reviews(self.project).pending()[0]['reason'])
         self.assertFalse((self.project/'etapes/06.json').exists())
         self.assertFalse((self.project/'exports/podcast.json').exists())
 

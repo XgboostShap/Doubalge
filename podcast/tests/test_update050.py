@@ -1,3 +1,5 @@
+from issues import ReviewRequired
+from review_queue import Reviews
 """Régressions du résultat utilisateur : rédaction, vérification et oralisation."""
 import copy
 from pathlib import Path
@@ -79,7 +81,7 @@ class WritingFlow(unittest.TestCase):
             def ask(self,task,payload,instructions,validate,budget=4000):
                 if task=='writing_check':return {'status':'uncertain','quote':'','reason':'Le mécanisme ne figure pas dans la preuve.'}
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaises(InvalidResponseError):self.generate(Reject(),until=6)
+        with self.assertRaises(ReviewRequired):self.generate(Reject(),until=6)
         self.assertFalse((self.project/'etapes/06.json').exists());self.assertFalse((self.project/'exports/podcast.json').exists())
     def test_final_review_can_repair_a_readability_problem_and_records_the_change(self):
         self.prepare(facts(1));self.generate(until=8)
@@ -99,7 +101,7 @@ class WritingFlow(unittest.TestCase):
             def ask(self,task,payload,*args,**kwargs):
                 if task=='writing_check' and payload.get('final_review'):return {'status':'uncertain','quote':'','reason':'Le passage reste insuffisamment clair.'}
                 return super().ask(task,payload,*args,**kwargs)
-        with self.assertRaises(InvalidResponseError):Pipeline(self.project,RejectFinal()).run(9,9)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,RejectFinal()).run(9,9)
         self.assertFalse((self.project/'exports/podcast.json').exists())
     def test_a_method_cannot_be_classified_as_a_prerequisite_by_accident(self):
         source=facts(1);source[0]['statement']='Une stratégie multi-étapes optimise la configuration.'

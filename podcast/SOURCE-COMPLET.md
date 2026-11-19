@@ -1,4 +1,4 @@
-# Sources complètes — Podcast pédagogique 0.5.4
+# Sources complètes — Podcast pédagogique 0.6.0
 
 Application indépendante du dépôt de doublage. Voir README.md pour le fonctionnement et les limites.
 Voir README.md pour la portée des essais automatisés et Mistral. La relecture scientifique et Windows natif restent à vérifier.
@@ -13,6 +13,7 @@ __pycache__/
 *.pyc
 dist/
 mises-a-jour/
+modeles/
 ```
 
 ## Installer-Windows.cmd
@@ -37,10 +38,11 @@ pause
 ## LIRE-MOI.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.4 — WINDOWS 10 / 11 X64
+PODCAST PEDAGOGIQUE 0.6.0 — WINDOWS 10 / 11 X64
 
 1. Clic droit sur le ZIP > Extraire tout.
-2. Ouvrir Installer-Windows.cmd une fois.
+2. Ouvrir Installer-Windows.cmd une fois. Il demande votre accord avant
+   les telechargements ; par defaut, les ressources locales sont utilisees.
 3. Ouvrir Lancer-Podcast.cmd.
 
 POUR LIRE UN DIALOGUE DEJA ECRIT
@@ -57,6 +59,12 @@ Creer un projet avec les PDF, verifier le modele, puis lancer les neuf etapes.
 Chaque partie est sauvegardee en Markdown avant la suivante.
 Continuer reprend les parties manquantes apres une interruption.
 Les modeles peuvent occuper plusieurs Go ; ensuite le traitement reste local.
+
+SI UN PASSAGE RESTE A VERIFIER
+Ouvrir les Verifications regroupees, consulter la page du PDF et corriger
+l idee source avec sa citation, ou ecarter l idee avec un motif. Traiter
+les questions du groupe puis Continuer. Les passages reussis sont conserves.
+Pour une formule ambigue, ne pas deviner un exposant.
 
 Conservez le dossier donnees pour garder vos projets et reglages vocaux.
 Pour une installation PodcastPedago existante, utiliser le ZIP correctif.
@@ -113,76 +121,99 @@ if errorlevel 1 (
 ## README-CORRECTIF.txt
 
 ```text
-PODCAST PEDAGOGIQUE 0.5.4 — CORRECTIF ASSEMBLAGE DU TEXTE COMMUN
+PODCAST PEDAGOGIQUE 0.6.0 — REPRISE ET VERIFICATION DES SOURCES
 
-1. Fermer l’application et sa fenetre de lancement.
+1. Fermer l application et sa fenetre de lancement.
 2. Extraire TOUT le ZIP correctif dans un dossier temporaire.
 3. Ouvrir Mettre-a-jour.cmd et choisir le dossier INSTALLE contenant
    Lancer-Podcast.cmd et donnees. Ne pas choisir le dossier du correctif.
-4. Relancer depuis le dossier installe et verifier Version 0.5.4.
-5. Ouvrir le DERNIER PROJET puis Continuer jusqu’au script final.
-   Les etapes 1 a 3 et les passages deja termines sont reutilises.
-   Ne pas reimporter le PDF ni reexaminer l’etape 2 pour l’erreur
-   de redaction « 70 mots pour une limite de 60 » de l’etape 4.
-6. Relire le dialogue puis essayer un audio court avec les voix existantes.
+4. Relancer depuis le dossier installe et verifier Version 0.6.0.
+5. Rouvrir le DERNIER PROJET puis Continuer. Ne pas reimporter les PDF.
+6. Si Verifications regroupees apparait : ouvrir la page du PDF, corriger
+   l idee et ses citations, ou ecarter l idee avec un motif. Traiter le
+   groupe puis Continuer. La correction sert aux etapes suivantes.
+7. Relire le dialogue puis essayer un audio court avec les voix existantes.
 
-LES PDF, LEUR EXTRACTION, LES PROJETS ET LES VOIX SONT CONSERVES.
-Les resultats remplaces sont archives. Aucun PDF n’est a reimporter.
-Si aucune idee n’est retenue a l’etape 2, utiliser Reexaminer l’etape 2.
-Pour un ancien controle signale par l’application, utiliser Ameliorer les
-resumes existants avant de continuer.
+LES PDF, PROJETS, REFERENCES VOCALES ET UNITES COMPATIBLES SONT CONSERVES.
+Les resultats remplaces sont archives. Les refus persistants n empechent
+plus d enregistrer les autres passages de l etape. Une etape incomplete
+ne produit pas un script final declare valide.
 
-L’etape 4 rassemble les redactions deja relues au lieu de demander a nouveau
-une phrase tres courte pour chaque idee. Les idees restantes recoivent un
-paragraphe et une relecture. Les empreintes, preuves et controles actuels
-sont verifies avant la reutilisation d’un ancien passage.
-
-Quand PM signifie Predictive Maintenance dans le PDF, la redaction propose
-maintenance predictive. Maintenance previsionnelle et entretien predictif
-sont aussi reconnus. Un autre sens de PM ne recoit pas ces traductions.
-Une correction ciblee recoit le libelle refuse et les definitions autorisees.
-Le resultat est relu contre les citations ; les faits et unites restent controles.
-
-La redaction vise un texte plus court. Si le brouillon est trop long,
-une demande ciblee le reformule avec son compte de mots et ses sources.
-Un depassement modere peut rester avec une note editoriale apres relecture
-automatique favorable. Aucun texte n’est coupe pour atteindre 85 mots.
-Les faits, nombres, unites et citations sont toujours controles.
-
-Le contresens observe sur cost-effective est corrige lorsque la citation
-source le justifie : rapport cout/efficacite, interventions rentables.
-La correction est tracee hors du texte parle et soumise a relecture.
-Les citations et le registre original restent conserves.
-Un marqueur bibliographique isole comme [1], deja present dans la source,
-reste dans les preuves et est retire de la copie du brouillon a lire.
-Ce retrait est trace et le passage corrige doit aussi passer la relecture.
+Le mode normal est local. L application refuse les adresses Ollama et
+VoiceStudio distantes et les alias Ollama cloud. Un telechargement du
+moteur MP3 absent demande une autorisation separee, apres explication.
+Docling est facultatif, avec modeles deja en cache ; aucun telechargement
+automatique. Il ne garantit pas la restauration des formules.
 
 Si Windows refuse Mettre-a-jour.cmd, ouvrir PowerShell dans le dossier du
 correctif puis lancer :
 powershell -NoProfile -ExecutionPolicy Bypass -File .\mettre-a-jour.ps1
 
-Pour lire un dialogue TXT deja corrige : ouvrir VoiceStudio, puis Lire un
-dialogue TXT dans l’application, enregistrer le texte et importer les anciens
-reglages podcast_interface.py si necessaire. Aucune voix n’est recreee.
-
-Si votre ancien app.py lance Streamlit V7, utiliser le ZIP complet dans un
-nouveau dossier ; ce correctif vise PodcastPedago avec ses neuf etapes.
-Consulter README.md pour les limites des controles, de Windows et des voix.
+Cette mise a jour ne remplace ni VoiceStudio ni les profils vocaux existants.
+Les validations scientifiques, Windows natif et vos voix reelles restent a
+controler sur votre PC. Voir README.md et SOURCE-COMPLET.md.
 ```
 
 ## README.md
 
 ```text
-# Podcast pédagogique — version 0.5.4
+# Podcast pédagogique — version 0.6.0
 
 Application locale Windows 10/11 pour transformer plusieurs PDF en un dialogue pédagogique en français, puis en **podcast MP3 avec les voix déjà créées dans VoiceStudio**. Ollama rédige le texte ; VoiceStudio réalise la synthèse vocale sur le même PC.
+
+## Stabilisation 0.6.0 : traiter, vérifier, reprendre
+
+Rouvrez votre dernier projet après la mise à jour. Les PDF, les références vocales et les unités compatibles déjà validées sont conservés. Un problème scientifique persistant apparaît dans **Vérifications regroupées** : le programme traite les autres passages de l’étape, enregistre leurs fichiers, puis attend vos décisions. L’étape incomplète et le podcast final ne sont pas déclarés terminés.
+
+1. Ouvrez la vérification, puis la page du PDF original.
+2. Corrigez l’idée, son explication et les citations exactes avec leurs pages. **Valider cette correction de la source** enregistre une décision humaine ; elle sera appliquée aux étapes suivantes, y compris après réutilisation d’anciens caches.
+3. Une idée sans preuve peut être écartée avec un motif. Elle reste dans le rapport et dans l’historique.
+4. **Réessayer avec le modèle** prépare une tentative neuve pour le passage concerné. Les unités validées restent disponibles. Cliquez sur **Continuer** après avoir traité les vérifications du groupe.
+5. **Relire les idées et signaler un doute** permet de remettre en vérification un contresens accepté par la relecture automatique.
+
+Le programme distingue format JSON, longueur, terminologie, source, formule et périmètre d’un résultat. Les corrections automatiques d’un passage sont limitées à six générations nouvelles, relecture comprise. Une panne Ollama, une annulation ou un problème de fichier garde son diagnostic propre. Une formule comme `2d` n’est jamais convertie automatiquement en `2^d` ; une explication qualitative peut éviter de deviner l’exposant. Les contrôles de sens restent conservateurs et incomplets : une citation exacte et deux lectures par le même modèle ne garantissent pas une conclusion scientifique juste.
+
+Les décisions sont enregistrées dans `verifications.json` et `corrections.json`, dans le projet local. Une correction dépend de l’empreinte de l’extraction ; elle n’est pas transférée à un autre PDF. Les agrégats dépendants sont archivés et reconstruits ; les unités sans changement gardent leurs empreintes et leur contenu. Le dossier ZIP du projet inclut ces décisions pour la reprise.
+
+## Mode local et autorisations réseau
+
+Le fonctionnement normal utilise les fichiers du PC, Ollama et VoiceStudio sur localhost. Le programme n’a pas de connecteur de recherche Internet ni de téléchargement de modèle pendant la génération.
+
+| Opération | Accès prévu et décision |
+| --- | --- |
+| Extraction PDF et rédaction | Local ; le modèle Ollama doit être installé. `/api/show`, appelé localement sans le PDF, refuse les alias cloud avant l’envoi des sources au chat. |
+| Voix et MP3 | API VoiceStudio locale et FFmpeg local. Gardez un moteur de synthèse local dans VoiceStudio ; sa configuration interne reste gérée par ce logiciel. |
+| Première installation | Hors connexion si les ressources sont en cache. L’installateur demande une autorisation avant de récupérer uv/Python sur GitHub et les dépendances sur PyPI. Refuser ne lance aucun téléchargement. |
+| Préparation MP3 manquante | Autorisation séparée pour `imageio-ffmpeg==0.6.0`, sur PyPI/files.pythonhosted.org ; aucun document transmis. |
+| Publication ou transfert vers Git | Aucune opération de ce type dans l’application. |
+
+Les modèles disponibles se choisissent avec **Vérifier les modèles installés**. Un modèle plus grand déjà présent peut mieux relire certains passages ; augmenter le contexte seul ne corrige ni un contresens ni une boucle de répétition.
+
+## Relecture PDF structurée facultative
+
+Le bouton **Relire cette page avec Docling local** utilise uniquement une installation Docling et des modèles déjà disponibles. Il relit la page concernée avec tableaux et formules, sans service distant ni OCR automatique, et sauvegarde une aide Markdown séparée. L’extraction originale et les citations restent inchangées. Comparez ce résultat avec la page visuelle : Docling peut aussi perdre un exposant ou mal placer une cellule de tableau.
+
+Docling n’est pas une dépendance obligatoire du correctif. Pour une installation déjà préparée, les modèles sont recherchés dans `modeles/docling/artifacts` ou dans le dossier local `DOCLING_ARTIFACTS_PATH`. Sinon le bouton est absent, la vérification visuelle reste accessible et aucun téléchargement n’est tenté. Une préparation des bibliothèques et modèles demanderait une autorisation réseau distincte. PaperQA n’est pas ajouté au parcours : les essais ont montré qu’une référence retrouvée pouvait encore soutenir une mauvaise interprétation.
+
+## Modules de la stabilisation
+
+| Module | Responsabilité |
+| --- | --- |
+| `issues.py` | Catégories d’erreurs et consignes de reprise adaptées. |
+| `source_checks.py` | Contraintes explicites de formule, périmètre et appui source. |
+| `review_queue.py` | Questions regroupées, historique et réapplication des corrections. |
+| `source_decisions.py` | Vérification des citations, décisions humaines et reprise du registre. |
+| `pdf_reread.py` | Relecture facultative d’une page avec ressources locales. |
+| `llm.py` | Ollama local, validation des réponses, cache et budget de reprises. |
+| `pipeline.py`, `editorial.py`, `writing.py` | Étapes, unités sauvegardées, registre et rédaction reliée aux preuves. |
+| `app.py`, `web/` | Serveur local, interface de vérification et orchestration des tâches. |
 
 ## Mettre à jour une installation existante
 
 1. Fermer la fenêtre de lancement de PodcastPedago.
 2. Extraire **tout** le ZIP correctif dans un dossier temporaire.
 3. Ouvrir **Mettre-a-jour.cmd**, puis choisir le dossier contenant votre `Lancer-Podcast.cmd`.
-4. Relancer l’application et vérifier **Version 0.5.4** en haut de la page.
+4. Relancer l’application et vérifier **Version 0.6.0** en haut de la page.
 
 Pour le blocage de l’étape 4 « 70 mots reçus pour une limite de 60 » : ouvrir **le dernier projet** puis cliquer sur **Continuer jusqu’au script final**. Les étapes 1 à 3 et les passages déjà terminés à l’étape 4 restent conservés. L’assemblage réutilise les rédactions relues qui sont compatibles ; les idées restantes sont rédigées comme des paragraphes.
 
@@ -221,7 +252,7 @@ Dans **Voix et podcast MP3**, conserver **Script du projet (neuf étapes)**, pui
 
 Pour charger les profils directement, vérifier l’adresse API (`http://127.0.0.1:3900` par défaut), cliquer sur **Charger mes voix VoiceStudio**, choisir une référence pour chaque intervenant et **Enregistrer les voix**. Aucun profil n’est recréé. Une référence absente est signalée.
 
-Si **Préparer le MP3** apparaît, cliquer une fois pour utiliser FFmpeg déjà disponible ou télécharger `imageio-ffmpeg==0.6.0` dans l’environnement Python de l’application. Cette préparation demande Internet ; les générations suivantes sont locales. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
+Si **Préparer le MP3** apparaît, le programme explique le téléchargement de `imageio-ffmpeg==0.6.0` depuis PyPI/files.pythonhosted.org et demande une autorisation propre à cette opération. Refuser conserve le mode hors connexion ; aucun PDF ou dialogue n’est envoyé. Avec FFmpeg déjà présent, aucune préparation réseau n’est nécessaire. Utiliser ensuite un aperçu, un essai court ou le podcast complet.
 
 ## Compatibilité VoiceStudio et contrôles audio
 
@@ -329,7 +360,7 @@ Le registre, les citations, les pages, les décisions incertaines et les anciens
 
 **Les relectures du modèle restent faillibles.** Une citation exacte ne suffit pas à prouver une interprétation correcte, et deux appels au même modèle ne sont pas deux experts indépendants. Un petit modèle peut encore refuser une correction ou confirmer une mauvaise lecture. Les nouveaux contrôles corrigent des défaillances observées et rendent les refus visibles ; ils ne constituent pas une certification scientifique. Relire le nouveau dialogue et essayer un court audio avec les voix réelles avant de produire le podcast complet.
 
-Les figures, équations et tableaux complexes ne sont pas interprétés visuellement. Les pages scannées nécessitent un OCR externe. Les contradictions ou ambiguïtés du PDF peuvent demander une vérification humaine ; la simple copie d’une phrase du PDF ne les résout pas.
+Les figures, équations et tableaux complexes ne sont pas validés automatiquement. La page PDF peut être ouverte et Docling, déjà préparé, peut fournir une aide séparée. Les pages scannées nécessitent un OCR externe. Les contradictions ou ambiguïtés du PDF peuvent demander une vérification humaine ; la simple copie d’une phrase du PDF ne les résout pas.
 
 ## Vérification et distribution
 
@@ -369,9 +400,13 @@ from storage import defaults, fingerprint, invalidate, read, write
 import audio_export
 import voice_legacy
 import source_review
+import source_decisions
+import pdf_reread
+from issues import ReviewRequired, DownloadConsentRequired, SourceIssue
+from review_queue import Reviews
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.5.4'
+APP_VERSION = '0.6.0'
 
 
 def settings(value):
@@ -454,6 +489,7 @@ class App:
         meta = read(folder/'projet.json')
         completed = [n for n in range(1,10) if (folder/'etapes'/f'{n:02}.json').exists()]
         source_data=read(folder/'etapes/02.json')['data'] if 2 in completed else {}
+        review_store=Reviews(folder);pending_reviews=review_store.pending();review_data=review_store.data()
         source_diagnostic=source_review.diagnostic(source_data)
         needs_upgrade=2 in completed and source_data.get('quality_version')!='source-review-v5'
         task = self.task_errors.get(folder.name) or (read(folder/'tache.json') if (folder/'tache.json').exists() else None)
@@ -462,14 +498,60 @@ class App:
                   'from_previous_version':True}
             if source_diagnostic['empty']:task['message']='Ancien échec — réexaminer l’étape 2 avec le nouveau contrôle des citations'
         exports = [p.name for p in (folder/'exports').glob('podcast.*') if p.suffix in ('.md','.txt','.json')]
-        if needs_upgrade or source_diagnostic['empty']:exports=[]
+        if needs_upgrade or source_diagnostic['empty'] or pending_reviews:exports=[]
         parts = [p.name for p in sorted((folder/'etapes'/'parties').glob('*.md'))
                  if re.fullmatch(r'0[1-9]-[A-Za-z0-9-]+\.md',p.name) and p.with_suffix('.json').exists()]
         return {**meta,'completed':completed,'task':task,'exports':exports,'parts':parts,
-                'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty']),
+                'pdf_reread_available':pdf_reread.available(),
+                'pdf_readings':[p.name for p in (folder/'lectures_pdf').glob('*.md') if p.with_suffix('.json').exists()],
+                'reviews':pending_reviews,'review_history':len(review_data['decisions']),
+                'incomplete_source_parts':[d['id']+'-P'+str(p['number']) for d in source_data.get('documents',[]) for p in d['parts'] if p.get('incomplete_extraction')],
+                'audio':self.audio_summary(folder,meta,needs_upgrade or source_diagnostic['empty'] or bool(pending_reviews)),
                 'source_diagnostic':source_diagnostic,
                 'needs_source_upgrade':needs_upgrade,
-                'next_step':next((n for n in range(1,10) if n not in completed),10)}
+                'next_step':min([next((n for n in range(1,10) if n not in completed),10)]+
+                    [i['step'] for i in review_data['items'] if i['status']=='retry'])}
+
+    def enqueue_reread(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            item=next((i for i in Reviews(folder).pending() if i['id']==body.get('id')),None)
+            if item is None:raise ValueError('Vérification absente.')
+            if not pdf_reread.available():raise ValueError('Docling local n’est pas préparé. Aucun téléchargement automatique ; vérifiez la page du PDF.')
+            source=item['source'];match=re.fullmatch(r'PDF([1-9]\d*)',source.get('document',''))
+            if not match or not source.get('pages'):raise ValueError('Page source inconnue.')
+            meta=read(folder/'projet.json');index=int(match[1])-1
+            if index>=len(meta['pdfs']):raise ValueError('PDF inconnu.')
+            page=min(source['pages'])
+            task={'id':uuid.uuid4().hex,'kind':'pdf_reading','document':source['document'],'page':page,
+                'state':'queued','message':'Relecture locale en attente','error':None,'app_version':APP_VERSION}
+            cancel=threading.Event();self.cancels[task['id']]=cancel
+            write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
+            self.pending.put((folder,task,cancel));return task
+
+    def resolve_review(self,folder,body):
+        with self.lock:
+            self.idle(folder)
+            result=source_decisions.resolve(folder,body,
+                lambda path:self.preserve_summaries(path,read(path/'projet.json')),pipeline_module.part_markdown)
+            self.review_status(folder,'Nouvelle tentative demandée : cliquez sur Continuer.' if body.get('action')=='retry'
+                else 'Décision enregistrée : cliquez sur Continuer après les vérifications restantes.')
+            return result
+
+    def review_status(self,folder,message):
+        path=folder/'tache.json'
+        task=read(path) if path.exists() else {'id':uuid.uuid4().hex,'app_version':APP_VERSION}
+        task.update(state='needs_review' if Reviews(folder).pending() else 'done',message=message,error=None)
+        write(path,task)
+
+    def flag_source(self,folder,body):
+        with self.lock:
+            self.idle(folder);data=read(folder/'etapes/02.json')['data']
+            idea=next((i for d in data['documents'] for p in d['parts'] for i in p['ideas']+p.get('excluded_ideas',[]) if i['id']==body.get('id')),None)
+            if idea is None:raise ValueError('Idée source inconnue.')
+            item=Reviews(folder).record(2,'Source-'+idea['id'],idea,SourceIssue('Vérification demandée par l’utilisateur : relire l’idée et ses preuves avant de poursuivre.'))
+            self.review_status(folder,'Une idée a été ajoutée aux vérifications regroupées.')
+            return item
 
     def audio_input(self,folder,meta):
         mode=meta.get('audio_source_mode','project')
@@ -559,8 +641,14 @@ class App:
             self.idle(folder)
             action=body.get('action','generate')
             if action not in ('generate','preview','prepare'):raise ValueError('Commande audio inconnue.')
+            if action=='prepare':
+                try:audio_export.encoder()
+                except ValueError:
+                    if body.get('allow_download') is not True:
+                        raise DownloadConsentRequired('Autorisation requise : télécharger imageio-ffmpeg 0.6.0 depuis PyPI et files.pythonhosted.org pour encoder le MP3. Aucun PDF ni dialogue n’est envoyé.')
             meta=read(folder/'projet.json');value,speakers,mode=self.audio_input(folder,meta)
             if action=='generate':
+                if mode=='project' and Reviews(folder).pending():raise ValueError('Terminez les vérifications des sources avant de générer l’audio du projet.')
                 if not value:raise ValueError('Terminez le script ou enregistrez un dialogue TXT avant de générer le MP3.')
                 audio_export.validate_script(value)
                 if mode=='project' and (folder/'etapes/02.json').exists() and read(folder/'etapes/02.json')['data'].get('quality_version')!=pipeline_module.SUMMARY_QUALITY_MODE:
@@ -571,6 +659,7 @@ class App:
             speaker=body.get('speaker')
             if action=='preview' and speaker not in speakers:raise ValueError('Choisissez un intervenant pour écouter sa voix.')
             task={'id':uuid.uuid4().hex,'kind':'audio','action':action,'speaker':speaker,'state':'queued',
+                  'allow_download':body.get('allow_download') is True,
                   'message':'Audio en attente','error':None,'app_version':APP_VERSION}
             cancel=threading.Event();self.cancels[task['id']]=cancel
             write(folder/'tache.json',task);self.task_errors.pop(folder.name,None)
@@ -597,6 +686,8 @@ class App:
             first, until = body.get('first',1), body.get('until',9)
             if type(first) is not int or type(until) is not int or not 1<=first<=until<=9:
                 raise ValueError('Étapes invalides.')
+            if Reviews(folder).pending():
+                raise ValueError('Traitez les vérifications regroupées ou choisissez « Réessayer avec le modèle » avant de continuer.')
             if first>1 and not (folder/'etapes'/f'{first-1:02}.json').exists():
                 raise ValueError('L’étape précédente doit être terminée.')
             if first>2 and (folder/'etapes/02.json').exists() and source_review.diagnostic(read(folder/'etapes/02.json')['data'])['empty']:
@@ -634,17 +725,24 @@ class App:
                     meta['cache_generation'] = uuid.uuid4().hex
                     write(folder/'projet.json',meta)
                 config = {**meta['settings'],'_generation':meta.get('cache_generation','initial')}
+                if any(i['status']=='retry' for i in Reviews(folder).data()['items']):
+                    config['_review_retry']=task['id']
                 def progress(message):
                     task['message'] = message
                     match=re.match(r'Étape (\d+)/9',message)
                     if match:task['step']=int(match.group(1))
                     write(folder/'tache.json',task)
                 task['state']='running';progress('Préparation du traitement')
+                if task.get('kind')=='pdf_reading':
+                    index=int(task['document'][3:])-1;pdf=folder/'sources'/meta['pdfs'][index]['file']
+                    pdf_reread.run(pdf,task['page'],folder/'lectures_pdf'/f'{task["document"]}-p{task["page"]}.md',cancel,progress)
+                    task.update(state='needs_review',message='Relecture locale enregistrée : comparez-la visuellement avec le PDF.',error=None)
+                    continue
                 if task.get('kind')=='audio':
                     audio_input,audio_speakers,_=self.audio_input(folder,meta)
                     client=audio_export.AudioRenderer(folder,meta.get('audio_settings',{}),audio_speakers,cancel,progress)
                     self.active=(task['id'],client)
-                    if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress)
+                    if task['action']=='prepare':audio_export.prepare_encoder(cancel,progress,allow_download=task.get('allow_download',False))
                     elif task['action']=='preview':client.preview(task['speaker'])
                     else:client.render(audio_input)
                     task.update(state='done',message='Moteur MP3 prêt' if task['action']=='prepare' else 'Aperçu vocal prêt' if task['action']=='preview' else 'Podcast MP3 prêt à écouter et télécharger')
@@ -660,6 +758,8 @@ class App:
                     task.update(state='needs_review',message='Rapport enregistré — aucune idée confirmée ; consulter les motifs et réexaminer l’étape 2')
             except Cancelled:
                 task.update(state='cancelled',message='Annulé. Les répliques audio terminées sont conservées pour la reprise.' if task.get('kind')=='audio' else 'Annulé. Les parties Markdown terminées et les réponses en cache sont conservées.')
+            except ReviewRequired as error:
+                task.update(state='needs_review',message=str(error),error=None,step=error.step)
             except Exception as error:
                 task.update(state='error',message='Traitement arrêté',error=str(error)[-5000:])
             finally:
@@ -709,6 +809,7 @@ class App:
 
     def close(self):
         self.stop.set()
+        for event in list(self.cancels.values()):event.set()
         if self.active:
             self.active[1].cancel()
         self.worker.join(timeout=5)
@@ -778,6 +879,14 @@ class Handler(BaseHTTPRequestHandler):
             parts=path.split('/')
             if len(parts)==5 and parts[1:3]==['api','projects'] and parts[4]=='audio-text':
                 self.json(self.app.audio_text(self.app.project(parts[3])));return
+            if len(parts)==4 and parts[1]=='sources':
+                folder=self.app.project(parts[2]);match=re.fullmatch(r'PDF([1-9]\d*)\.pdf',parts[3])
+                if not match:raise FileNotFoundError('PDF inconnu.')
+                sources=read(folder/'projet.json')['pdfs'];index=int(match[1])-1
+                if index>=len(sources):raise FileNotFoundError('PDF inconnu.')
+                file=(folder/'sources'/sources[index]['file']).resolve()
+                if file.parent!=(folder/'sources').resolve():raise FileNotFoundError('PDF invalide.')
+                self.send_media(file,'application/pdf');return
             if len(parts)==4 and parts[1]=='media':
                 folder=self.app.project(parts[2]);name=parts[3]
                 state=self.app.summary(folder)['audio']
@@ -795,7 +904,14 @@ class Handler(BaseHTTPRequestHandler):
                 elif re.fullmatch(r'partie-0[1-9]-[A-Za-z0-9-]+\.md',name):
                     file=folder/'etapes'/'parties'/name.removeprefix('partie-')
                     if not file.with_suffix('.json').exists():raise FileNotFoundError('Partie non terminée.')
-                elif name in ('podcast.md','podcast.txt','podcast.json'):file=folder/'exports'/name
+                elif re.fullmatch(r'lecture-PDF[1-9]\d*-p[1-9]\d*\.md',name):
+                    file=folder/'lectures_pdf'/name.removeprefix('lecture-')
+                    record=read(file.with_suffix('.json'));index=int(name.split('-')[1][3:])-1
+                    sources=read(folder/'projet.json')['pdfs']
+                    if index>=len(sources) or sources[index].get('sha256')!=record['sha256']:raise FileNotFoundError('Cette lecture ne correspond plus au PDF actuel.')
+                elif name in ('podcast.md','podcast.txt','podcast.json'):
+                    if name not in self.app.summary(folder)['exports']:raise FileNotFoundError('Le script attend la résolution des vérifications ou la reprise des étapes.')
+                    file=folder/'exports'/name
                 elif name in ('podcast.mp3','essai-3min.mp3','essai-5min.mp3','rapport_audio.csv','rapport_essai-3min.csv','rapport_essai-5min.csv'):
                     audio=self.app.summary(folder)['audio']
                     if not audio['available'] or name not in (audio['filename'],audio['report_file']):raise FileNotFoundError('Ce résultat audio ne correspond pas à la sélection actuelle.')
@@ -805,7 +921,9 @@ class Handler(BaseHTTPRequestHandler):
                     file=folder/'dossier.zip'
                     with zipfile.ZipFile(file,'w',zipfile.ZIP_DEFLATED) as archive:
                         archive.write(folder/'projet.json','projet.json')
-                        for sub in ('sources','etapes','memoire','exports','reprises','lecture'):
+                        for name in ('verifications.json','corrections.json'):
+                            if (folder/name).exists():archive.write(folder/name,name)
+                        for sub in ('sources','etapes','memoire','exports','reprises','lecture','lectures_pdf'):
                             for f in (folder/sub).rglob('*'):
                                 if f.is_file():archive.write(f,f.relative_to(folder))
                 else:raise FileNotFoundError('Fichier inconnu.')
@@ -826,7 +944,7 @@ class Handler(BaseHTTPRequestHandler):
         with path.open('rb') as f:
             while chunk:=f.read(256*1024):self.wfile.write(chunk)
 
-    def send_media(self,path):
+    def send_media(self,path,mime='audio/mpeg'):
         total=path.stat().st_size;start=0;end=total-1;status=200
         header=self.headers.get('Range')
         if header:
@@ -837,9 +955,10 @@ class Handler(BaseHTTPRequestHandler):
                 else:start=max(0,total-int(match[2]))
                 if start>end or start>=total:raise ValueError()
             except ValueError:
-                self.respond(416,b'','audio/mpeg',[('Content-Range','bytes */'+str(total))]);return
+                self.respond(416,b'',mime,[('Content-Range','bytes */'+str(total))]);return
             status=206
-        self.send_response(status);self.send_header('Content-Type','audio/mpeg');self.send_header('Accept-Ranges','bytes')
+        self.send_response(status);self.send_header('Content-Type',mime);self.send_header('Accept-Ranges','bytes')
+        self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(end-start+1))
         if status==206:self.send_header('Content-Range',f'bytes {start}-{end}/{total}')
         self.end_headers()
@@ -866,6 +985,9 @@ class Handler(BaseHTTPRequestHandler):
             if action=='run':self.json(self.app.enqueue(folder,body),202)
             elif action=='cancel':self.json(self.app.cancel(folder))
             elif action=='settings':self.json(self.app.update_settings(folder,body))
+            elif action=='review':self.json(self.app.resolve_review(folder,body))
+            elif action=='flag-source':self.json(self.app.flag_source(folder,body))
+            elif action=='reread':self.json(self.app.enqueue_reread(folder,body),202)
             elif action=='audio-text':self.json(self.app.save_audio_text(folder,body))
             elif action=='audio-import':self.json(self.app.import_audio_settings(folder,body))
             elif action=='audio-settings':self.json(self.app.save_audio_settings(folder,body))
@@ -1154,16 +1276,19 @@ def run_process(command,cancelled):
             if proc.poll() is None:proc.kill();proc.wait()
 
 
-def prepare_encoder(cancelled,progress):
+def prepare_encoder(cancelled,progress,allow_download=False):
     try:return encoder()
     except ValueError:pass
+    if allow_download is not True:
+        from issues import DownloadConsentRequired
+        raise DownloadConsentRequired('Le moteur MP3 est absent. Autorisez explicitement le téléchargement de imageio-ffmpeg 0.6.0 depuis PyPI ; aucun document ne sera envoyé.')
     progress('Installation du moteur MP3 — premier téléchargement')
     uv=Path(__file__).resolve().parent/'.runtime'/('uv.exe' if os.name=='nt' else 'uv')
-    if uv.exists():command=[str(uv),'pip','install','--python',sys.executable,'imageio-ffmpeg==0.6.0']
+    if uv.exists():command=[str(uv),'pip','install','--python',sys.executable,'--no-deps','--index-url','https://pypi.org/simple','imageio-ffmpeg==0.6.0']
     else:
         if importlib.util.find_spec('pip') is None:
             run_process([sys.executable,'-m','ensurepip','--upgrade'],cancelled)
-        command=[sys.executable,'-m','pip','install','--disable-pip-version-check','imageio-ffmpeg==0.6.0']
+        command=[sys.executable,'-m','pip','install','--disable-pip-version-check','--no-deps','--index-url','https://pypi.org/simple','imageio-ffmpeg==0.6.0']
     run_process(command,cancelled)
     return encoder()
 
@@ -1298,7 +1423,8 @@ def main():
         document.extend(['## '+name,'',fence+language,text.rstrip(),fence,''])
     source=ROOT/'SOURCE-COMPLET.md';source.write_text('\n'.join(document),encoding='utf-8')
     checksum=ROOT/'SHA256SUMS.txt';checksum.write_text('\n'.join(v+'  '+n for n,v in manifest.items())+'\n',encoding='utf-8')
-    payload=['app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css',
+    payload=['app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py',
+             'issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css',
              'Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md']
     update_manifest=ROOT/'manifest-correctif.json'
     update_manifest.write_text(json.dumps({'version':APP_VERSION,'files':[{'path':name,'sha256':hashlib.sha256((ROOT/name).read_bytes()).hexdigest()} for name in payload]},indent=2)+'\n')
@@ -1309,6 +1435,8 @@ def main():
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert not any('/donnees/' in n or '/.venv/' in n or '/.runtime/' in n for n in archive.namelist())
+    versioned=output/('PodcastPedago-Windows-'+APP_VERSION+'.zip')
+    versioned.write_bytes(target.read_bytes())
     patch=output/('PodcastPedago-Correctif-'+APP_VERSION+'.zip')
     with zipfile.ZipFile(patch,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
         for name in payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json']:
@@ -1317,7 +1445,7 @@ def main():
         assert archive.testzip() is None
         assert set(archive.namelist())==set(payload+['Mettre-a-jour.cmd','mettre-a-jour.ps1','manifest-correctif.json'])
     (output/'PodcastPedago-Correctif-Windows.zip').write_bytes(patch.read_bytes())
-    info={'version':APP_VERSION,'file':target.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
+    info={'version':APP_VERSION,'file':target.name,'versioned_file':versioned.name,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'source_files':len(files),
           'patch':{'file':patch.name,'bytes':patch.stat().st_size,'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}}
     (output/'release.json').write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps(info))
@@ -1368,7 +1496,9 @@ def neutral_question(role, recent):
     return next(q for q in (QUESTIONS[role],)+QUESTION_VARIANTS[role] if quality.definition_key(q) not in used)
 
 def source_hash(idea):
-    return fingerprint({k:idea.get(k) for k in ('id','statement','explanation','document','pages','evidence')})
+    value={k:idea.get(k) for k in ('id','statement','explanation','document','pages','evidence')}
+    if idea.get('human_review'):value['human_review']=idea['human_review']
+    return fingerprint(value)
 
 def passage(idea):
     statement=idea['statement'].strip()
@@ -1500,7 +1630,9 @@ def compile_documents(pipe):
             selected_ideas=[i for i in part['ideas'] if i['id'] in ids]
             paragraphs=[]
             for idea in selected_ideas:
-                packet=writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{}))
+                packet=writing.deferred(pipe,3,'Synthese-'+idea['id'],idea,
+                    lambda:writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{})))
+                if packet is None:continue
                 paragraphs.append(packet['text']+' ['+idea['id']+']')
                 length_warnings.extend(packet.get('warnings',[]))
             text='\n\n'.join(paragraphs) or 'Aucune idée explicative retenue dans cette partie.'
@@ -1519,6 +1651,7 @@ def compile_documents(pipe):
 def registry_markdown(ideas):
     return '\n\n'.join('- **['+i['id']+']** '+i['statement']+'\n  '+i.get('explanation','')+
         '\n  Source : '+i.get('document','PDF')+', pages '+', '.join(map(str,i.get('pages',[])))+
+        ('\n  Validation humaine : '+i['human_review'].get('note','Source vérifiée par l’utilisateur.') if i.get('human_review') else '')+
         ('\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i.get('evidence',[]))
          if i.get('evidence') else '') for i in ideas)
 
@@ -1539,8 +1672,9 @@ def common(pipe):
         if not entries:continue
         paragraphs=[]
         for idea in entries:
-            packet=writing.common_entry(pipe,idea,
-                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']])
+            packet=writing.deferred(pipe,4,'Commun-'+idea['id'],idea,lambda:writing.common_entry(pipe,idea,
+                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']]))
+            if packet is None:continue
             paragraphs.append(packet['text']+' ['+idea['id']+']')
             length_warnings.extend(packet.get('warnings',[]))
         text='\n\n'.join(paragraphs)
@@ -2016,6 +2150,7 @@ def review(pipe):
 ## installer.ps1
 
 ```powershell
+param([switch]$AutoriserTelechargement)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -2026,7 +2161,17 @@ $appDir = $PSScriptRoot
 $runtime = Join-Path $appDir '.runtime'
 New-Item -ItemType Directory -Force $runtime | Out-Null
 $uv = Join-Path $runtime 'uv.exe'
+$allowDownload = $AutoriserTelechargement.IsPresent
+if (-not $allowDownload) {
+    Write-Host 'Par defaut, installation hors connexion avec les ressources deja en cache.'
+    Write-Host 'Internet peut servir a recuperer uv/Python depuis GitHub et pypdf depuis PyPI/files.pythonhosted.org.'
+    Write-Host 'Aucun PDF, texte de podcast ou reglage vocal ne sera envoye. Cette autorisation concerne cette installation uniquement.'
+    $answer = Read-Host 'Autoriser ces telechargements maintenant ? [o/N]'
+    $allowDownload = $answer -match '^(o|oui)$'
+}
+$env:UV_OFFLINE = if ($allowDownload) { 'false' } else { 'true' }
 if (-not (Test-Path $uv)) {
+    if (-not $allowDownload) { throw 'uv est absent. Aucun acces Internet effectue. Relancez Installer-Windows.cmd et autorisez la preparation si vous souhaitez telecharger les ressources.' }
     Write-Host 'Telechargement du gestionnaire Python officiel uv.'
     $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/astral-sh/uv/releases/tags/0.13.7' -Headers @{'User-Agent'='PodcastPedago-Installer'}
     $asset = $release.assets | Where-Object { $_.name -eq 'uv-x86_64-pc-windows-msvc.zip' } | Select-Object -First 1
@@ -2048,7 +2193,10 @@ $env:UV_CACHE_DIR = Join-Path $runtime 'cache'
 $env:UV_PYTHON_BIN_DIR = Join-Path $runtime 'bin'
 Write-Host 'Installation de Python 3.12 dans le dossier de l application.'
 & $uv python install 3.12 --no-bin --no-registry
-if ($LASTEXITCODE -ne 0) { throw 'Installation de Python interrompue. Verifiez la connexion puis relancez.' }
+if ($LASTEXITCODE -ne 0) {
+    if (-not $allowDownload) { throw 'Python est absent du cache local. Aucun telechargement autorise. Relancez l installateur et autorisez la preparation pour recuperer cette ressource.' }
+    throw 'Installation de Python interrompue. Verifiez la connexion puis relancez.'
+}
 $venv = Join-Path $appDir '.venv'
 $python = Join-Path $venv 'Scripts\python.exe'
 if (-not (Test-Path $python)) {
@@ -2056,13 +2204,70 @@ if (-not (Test-Path $python)) {
     if ($LASTEXITCODE -ne 0) { throw 'Creation de l environnement Python impossible.' }
 }
 & $uv pip install --python $python -r (Join-Path $appDir 'requirements.txt')
-if ($LASTEXITCODE -ne 0) { throw 'Installation des dependances impossible. Relancez pour reprendre.' }
+if ($LASTEXITCODE -ne 0) {
+    if (-not $allowDownload) { throw 'Les dependances ne sont pas toutes en cache. Aucun telechargement autorise. Relancez l installateur et autorisez la preparation pour recuperer les ressources manquantes.' }
+    throw 'Installation des dependances impossible. Relancez pour reprendre.'
+}
 & $uv pip check --python $python
 if ($LASTEXITCODE -ne 0) { throw 'Les dependances ne sont pas coherentes.' }
 & $python -c "from pypdf import PdfReader; import app; print('Programme importe correctement.')"
 if ($LASTEXITCODE -ne 0) { throw 'La verification du programme a echoue.' }
 Write-Host 'Pret. Ouvrez Lancer-Podcast.cmd.' -ForegroundColor Green
 Write-Host 'Pour la redaction, Ollama doit etre ouvert avec un modele Mistral installe.'
+```
+
+## issues.py
+
+```python
+"""Erreurs de validation : séparer le format, les sources et les ressources."""
+import json
+
+
+class SourceIssue(ValueError):
+    def __init__(self, message, category='source'):
+        super().__init__(message)
+        self.category = category
+
+
+class ReviewRequired(RuntimeError):
+    def __init__(self, step, count):
+        self.step, self.count = step, count
+        super().__init__(f'{count} passage(s) à vérifier à l’étape {step}. '
+                         'Les parties validées sont conservées ; ouvrez les vérifications regroupées.')
+
+
+class DownloadConsentRequired(ValueError):
+    pass
+
+
+def category(error):
+    """Conserver la cause précise, y compris après encapsulation par le client."""
+    chain = []
+    while error is not None and id(error) not in {id(e) for e in chain}:
+        chain.append(error)
+        error = error.__cause__
+    for item in reversed(chain):
+        if isinstance(item, SourceIssue):
+            return item.category
+        name = type(item).__name__
+        if name == 'AcronymExpansionError': return 'terminology'
+        if name == 'WordCountError': return 'length'
+        if name in ('RepetitionError', 'ResponseLimitError', 'RequestBudgetError'): return 'generation'
+        if isinstance(item, json.JSONDecodeError) or name == 'TextShapeError': return 'format'
+    return 'validation'
+
+
+def repair_message(error):
+    kind = category(error)
+    advice = {
+        'format': 'Corrige uniquement la structure et renvoie un objet JSON complet.',
+        'length': 'Reformule plus brièvement sans couper le texte ni perdre les conditions et réserves.',
+        'terminology': 'Reprends le libellé exact du glossaire ou conserve le sigle seul.',
+        'formula': 'La transcription de la formule est incertaine. Explique qualitativement le mécanisme sans deviner un exposant.',
+        'scope': 'Conserve les limites et le périmètre exacts de la citation ; ne généralise pas le résultat.',
+        'source': 'Corrige le sens à partir des seuls extraits fournis. Ne complète pas une preuve absente.',
+    }.get(kind, 'Corrige le point signalé en conservant les identifiants, les preuves et la structure demandés.')
+    return kind, 'Contrôle refusé : '+str(error)+'. '+advice
 ```
 
 ## llm.py
@@ -2074,10 +2279,12 @@ import json
 from pathlib import Path
 import socket
 import threading
+from contextlib import contextmanager
 from urllib.parse import urlsplit
 
 from storage import fingerprint, read, write
 from quality import response_schema
+from issues import repair_message
 
 
 class Cancelled(Exception):
@@ -2098,6 +2305,10 @@ class ResponseLimitError(ModelError):
 
 class RepetitionError(ModelError):
     """Arrêt de génération répétitive, distinct d'une panne réseau ou d'un 404."""
+
+
+class RequestBudgetError(InvalidResponseError):
+    """Arrêt borné d’un passage ; les autres passages peuvent continuer."""
 
 
 def model_error(detail):
@@ -2149,8 +2360,44 @@ class Ollama:
         self.progress = progress or (lambda text:None)
         self.active = None
         self.active_socket = None
+        self._budgets = []
+        self._local_model_checked = None
         self.cache.mkdir(parents=True, exist_ok=True)
         endpoint_parts(config['endpoint'])
+
+    @contextmanager
+    def request_scope(self, maximum=6):
+        counter={'remaining':maximum}
+        self._budgets.append(counter)
+        try: yield
+        finally: self._budgets.remove(counter)
+
+    def ensure_local_model(self):
+        """Interroger uniquement Ollama local avant de lui transmettre des sources."""
+        name=self.config['model']
+        target=(self.config['endpoint'],name)
+        if self._local_model_checked==target:return
+        if name.lower().endswith((':cloud','-cloud')):
+            raise ModelError('Mode local : choisissez un modèle installé sur ce PC ; les modèles cloud sont désactivés.')
+        conn=connection(self.config['endpoint'],timeout=10)
+        try:
+            conn.request('POST','/api/show',json.dumps({'model':name}).encode(),{'Content-Type':'application/json'})
+            response=conn.getresponse();raw=response.read(1024*1024)
+            if response.status!=200:
+                raise ModelError(f'Ollama répond HTTP {response.status} : '+raw[:2000].decode(errors='replace'))
+            value=json.loads(raw)
+            if not isinstance(value,dict) or not isinstance(value.get('details',{}),dict):
+                raise ModelError('Métadonnées Ollama non exploitables : impossible de confirmer le modèle local.')
+            if value.get('remote_host') or value.get('remote_model') or value.get('details',{}).get('remote_host'):
+                raise ModelError('Mode local : ce modèle délègue le calcul à un serveur distant. Choisissez un modèle local.')
+            if not value.get('details',{}).get('format'):
+                raise ModelError('Impossible de confirmer que ce modèle est local avec /api/show. Mettez Ollama à jour ou choisissez un modèle local installé.')
+            self._local_model_checked=target
+        except (OSError,http.client.HTTPException) as error:
+            raise ModelError('Vérification du modèle local impossible : '+str(error)) from error
+        except (ValueError,TypeError) as error:
+            raise ModelError('Métadonnées Ollama non exploitables : impossible de confirmer le modèle local.') from error
+        finally:conn.close()
 
     def cancel(self):
         self.cancelled.set()
@@ -2187,6 +2434,9 @@ class Ollama:
             if self.cancelled.is_set():
                 raise Cancelled()
             try:
+                if any(c['remaining']<=0 for c in self._budgets):
+                    raise RequestBudgetError('Budget de reprises atteint pour ce passage. Les autres parties validées sont conservées.')
+                for counter in self._budgets:counter['remaining']-=1
                 text = self._request(messages,budget,recovery=bool(repeat_retries),schema=schema,temperature=review_temperature)
                 value = json.loads(text)
                 validate(value)
@@ -2209,10 +2459,12 @@ class Ollama:
                 if repairs:
                     raise InvalidResponseError('La réponse du modèle reste invalide : '+str(error)) from error
                 repairs += 1
-                self.progress('Correction du format de réponse du modèle : '+str(error)[:250])
-                messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
+                kind,feedback=repair_message(error)
+                self.progress('Reprise ciblée ('+kind+') : '+str(error)[:250])
+                messages = messages[:2] + [{'role':'user','content':feedback}]
 
     def _request(self, messages, budget, recovery=False, schema=None,temperature=None):
+        self.ensure_local_model()
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
@@ -2272,7 +2524,7 @@ $sourceDir = $PSScriptRoot
 $manifestPath = Join-Path $sourceDir 'manifest-correctif.json'
 if (-not (Test-Path -LiteralPath $manifestPath)) { throw 'Extraire tout le ZIP correctif avant de lancer Mettre-a-jour.cmd.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
+$allowed = @('app.py','storage.py','pipeline.py','quality.py','source_review.py','editorial.py','writing.py','spoken.py','audio_export.py','voice_legacy.py','llm.py','pdfs.py','issues.py','review_queue.py','source_decisions.py','source_checks.py','pdf_reread.py','installer.ps1','web/index.html','web/app.js','web/style.css','Lancer-Podcast.cmd','README.md','README-CORRECTIF.txt','SOURCE-COMPLET.md')
 if (-not $manifest.files -or $manifest.files.Count -ne $allowed.Count) { throw 'Le correctif ne contient pas tous les fichiers attendus.' }
 $seen = @{}
 foreach ($item in $manifest.files) {
@@ -2341,9 +2593,97 @@ if ($SansLancement) {
     Write-Output ('Mise a jour ' + $manifest.version + ' terminee : ' + $targetDir)
 } else {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets et voix sont conserves. Pour le blocage de redaction de l etape 4, ouvrir le dernier projet puis Continuer jusqu au script final. Les etapes 1 a 3 et les passages termines restent conserves. Si aucune idee n est retenue a l etape 2, utiliser Reexaminer l etape 2. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show(('Mise a jour ' + $manifest.version + ' terminee. Vos PDF, projets, voix et passages compatibles sont conserves. Rouvrez le dernier projet puis Continuer. Les refus persistants sont regroupes dans Verifications regroupees : corrigez la source, ecartez l idee avec un motif ou demandez une nouvelle tentative. Les autres passages termines restent conserves. Aucun PDF n est a reimporter.'), 'PodcastPedago') | Out-Null
     Start-Process -FilePath (Join-Path $targetDir 'Lancer-Podcast.cmd') -WorkingDirectory $targetDir
 }
+```
+
+## pdf_reread.py
+
+```python
+"""Relecture Docling d’une page, facultative, avec ressources déjà présentes."""
+import hashlib
+import importlib.util
+import ipaddress
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+
+from llm import Cancelled
+from storage import write, write_text
+
+
+def artifacts():
+    return Path(os.environ.get('DOCLING_ARTIFACTS_PATH',str(Path(__file__).resolve().parent/'modeles/docling/artifacts')))
+
+
+def available():
+    return importlib.util.find_spec('docling') is not None and artifacts().is_dir()
+
+
+def run(pdf,page,target,cancelled,progress):
+    if not available():
+        raise ValueError('Docling local et ses modèles doivent être préparés séparément. Aucun téléchargement automatique : ouvrez le PDF pour la vérification visuelle.')
+    progress('Relecture locale Docling — page '+str(page)+' ; aucun téléchargement')
+    target=Path(target);target.parent.mkdir(parents=True,exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='lecture-',dir=target.parent) as temporary:
+        output=Path(temporary)/'result.json';log=Path(temporary)/'journal.txt'
+        env={**os.environ,'HF_HUB_OFFLINE':'1','TRANSFORMERS_OFFLINE':'1','HF_HUB_DISABLE_TELEMETRY':'1',
+             'DO_NOT_TRACK':'1','OTEL_SDK_DISABLED':'true','PYTHONDONTWRITEBYTECODE':'1'}
+        command=[sys.executable,str(Path(__file__).resolve()),'--worker',str(pdf),str(page),str(artifacts()),str(output)]
+        with log.open('wb') as stream:
+            process=subprocess.Popen(command,stdout=stream,stderr=stream,env=env)
+            try:
+                while process.poll() is None:
+                    if cancelled.wait(.2):raise Cancelled()
+                if process.returncode:
+                    raise ValueError('Relecture locale impossible : modèles absents, incompatibles ou page non lisible. Aucun téléchargement autorisé. Détail : '+log.read_text(errors='replace')[-1800:])
+                value=json.loads(output.read_text(encoding='utf-8'))
+            finally:
+                if process.poll() is None:process.kill();process.wait()
+        write(target.with_suffix('.json'),value)
+        write_text(target,'# Relecture locale — page '+str(page)+'\n\n'+
+            'Aide à comparer visuellement avec le PDF. Les formules peuvent rester ambiguës ; cette lecture ne valide aucune idée automatiquement.\n\n'+value['markdown'])
+        return value
+
+
+def offline_worker(pdf,page,models,output):
+    """Bloquer les accès Python extérieurs avant d’importer les bibliothèques."""
+    os.environ.update(HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1',HF_HUB_DISABLE_TELEMETRY='1',
+                      DO_NOT_TRACK='1',OTEL_SDK_DISABLED='true')
+    def audit(event,args):
+        if event=='socket.getaddrinfo':host=args[0]
+        elif event=='socket.connect' and args[0].family in (socket.AF_INET,socket.AF_INET6):host=args[1][0]
+        else:return
+        if isinstance(host,bytes):host=host.decode()
+        try:local=host=='localhost' or ipaddress.ip_address(host).is_loopback
+        except ValueError:local=False
+        if not local:raise PermissionError('Relecture PDF hors connexion : accès réseau extérieur interdit.')
+    sys.addaudithook(audit)
+    from docling.datamodel.accelerator_options import AcceleratorDevice,AcceleratorOptions
+    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.document_converter import DocumentConverter,PdfFormatOption
+    options=PdfPipelineOptions(artifacts_path=Path(models),do_ocr=False,do_table_structure=True,
+        do_formula_enrichment=True,enable_remote_services=False,
+        accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CPU,num_threads=4))
+    start=time.monotonic()
+    converter=DocumentConverter(format_options={InputFormat.PDF:PdfFormatOption(pipeline_options=options)})
+    document=converter.convert(Path(pdf),page_range=(page,page),raises_on_error=True).document
+    text=document.export_to_markdown(page_no=page)
+    if not text.strip():raise ValueError('Aucun texte obtenu pour cette page.')
+    write(Path(output),{'engine':'docling','page':page,'sha256':hashlib.sha256(Path(pdf).read_bytes()).hexdigest(),
+                        'markdown':text,'seconds':round(time.monotonic()-start,2)})
+
+
+if __name__=='__main__':
+    if len(sys.argv)!=6 or sys.argv[1]!='--worker':raise SystemExit('Commande de relecture interne uniquement.')
+    offline_worker(sys.argv[2],int(sys.argv[3]),sys.argv[4],sys.argv[5])
 ```
 
 ## pdfs.py
@@ -2422,6 +2762,7 @@ from itertools import groupby
 from pathlib import Path
 import re
 import time
+from contextlib import nullcontext
 
 from llm import Cancelled, InvalidResponseError, ModelError, RepetitionError, ResponseLimitError
 from pdfs import extract, fragments
@@ -2429,6 +2770,8 @@ import quality
 import editorial
 import source_review
 from storage import fingerprint, read, write, write_text
+from issues import ReviewRequired, SourceIssue
+from review_queue import Reviews, apply_corrections
 
 SOURCE_PAGE_MODE = 'pdf-page-v1'
 SUMMARY_QUALITY_MODE = quality.VERSION
@@ -2441,6 +2784,11 @@ STEPS = [
     'Relier les idées en explications', 'Rédiger le dialogue avec mémoire',
     'Réviser le script complet',
 ]
+
+
+def validate_complete_extraction(value):
+    if value.get('incomplete_extraction'):
+        raise ValueError('Des fragments restent à extraire ; reprise des réponses déjà enregistrées.')
 
 
 def text(value, key):
@@ -2532,6 +2880,19 @@ class Pipeline:
         self.progress = progress or (lambda message:None)
         self.meta = read(self.project/'projet.json')
         self.config = self.meta['settings']
+        self.reviews = Reviews(self.project)
+
+    def reviewed(self, step, key, idea, produce):
+        """Un refus de contenu ne perd pas les autres unités de cette étape."""
+        try:
+            scope=self.client.request_scope(6) if hasattr(self.client,'request_scope') else nullcontext()
+            with scope: value=produce()
+        except (InvalidResponseError,RepetitionError,ResponseLimitError,SourceIssue) as error:
+            self.reviews.record(step,key,idea,error)
+            self.progress('Passage à vérifier — '+idea.get('id',key)+' ; poursuite des autres parties')
+            return None
+        self.reviews.completed(step,key)
+        return value
 
     def saved(self, step):
         return read(self.project/'etapes'/f'{step:02}.json')['data']
@@ -2587,6 +2948,9 @@ class Pipeline:
                 data, markdown = getattr(self,f'step{number}')()
             except ModelError as error:
                 raise type(error)(f'Étape {number}/9 — {STEPS[number-1]} : '+str(error)) from error
+            pending=self.reviews.pending(number)
+            if pending and number!=2:
+                raise ReviewRequired(number,len(pending))
             if self.cancelled.is_set():
                 raise Cancelled()
             write_text(self.project/'etapes'/f'{number:02}.md','# '+STEPS[number-1]+'\n\n'+markdown)
@@ -2596,6 +2960,7 @@ class Pipeline:
                 self.meta['summary_quality']=quality.VERSION
                 self.meta['summary_warnings']=sum(len(p.get('uncertain_ideas',[])) for d in data['documents'] for p in d['parts'])
                 write(self.project/'projet.json',self.meta)
+                if pending:raise ReviewRequired(number,len(pending))
                 if until>2 and source_review.diagnostic(data)['empty']:
                     raise ModelError('Étape 2/9 — '+source_review.empty_message(data))
         if until==9:
@@ -2801,7 +3166,14 @@ class Pipeline:
                 continue
             candidates=old.get(page)
             if candidates is None:
-                value=self.summary_excerpt(doc['id'],part['number'],page,chunk)
+                key=f'{doc["id"]}-P{part["number"]}-F{index}'
+                value=self.reviewed(2,key,{'id':key,'document':doc['id'],'pages':[page],
+                    'statement':'Extraction des idées à vérifier','explanation':'','unextracted':True,
+                    'evidence':[{'page':page,'quote':' '.join(b['text'] for b in chunk)}]},
+                    lambda:self.summary_excerpt(doc['id'],part['number'],page,chunk))
+                if value is None:
+                    empty_excerpts.append({'page':page,'summary':'Extraction à réessayer : voir les vérifications regroupées.','pending':True})
+                    continue
                 if not value['ideas']:empty_excerpts.append({'page':page,'summary':value['summary']})
                 candidates=[]
                 for idea in value['ideas']:
@@ -2818,9 +3190,15 @@ class Pipeline:
                 payload={'source_page':page,'source_text':raw,
                          'candidates':[{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in batch],
                          'glossary':terms if len(json.dumps(terms,ensure_ascii=False))<=5000 else quality.relevant_terms(terms,raw)}
-                reviewed=self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
+                review_key='Source-'+batch[0]['id']
+                reviewed=self.reviewed(2,review_key,{**batch[0],'document':doc['id'],
+                    'evidence':[{'page':page,'quote':raw}]},lambda:self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
                     f'{doc["id"]} — contrôle page {page}',{'protocol':source_review.PROTOCOL,'quality':quality.VERSION,'payload':payload,'prompt':source_review.REVIEW_PROMPT},
-                    lambda:self.review_candidates(payload,batch,raw,terms),review_markdown)
+                    lambda:self.review_candidates(payload,batch,raw,terms),review_markdown))
+                if reviewed is None:
+                    reason=next(i['reason'] for i in self.reviews.pending(2) if i['key']==review_key)
+                    excluded.extend({**i,'reason':'À vérifier : '+reason,'checked_evidence':[raw]} for i in batch)
+                    continue
                 originals={i['id']:i for i in batch}
                 for fact in reviewed['kept']:
                     fact=quality.normalize_terminology(fact,raw)
@@ -2851,6 +3229,7 @@ class Pipeline:
         return {'number':part['number'],'summary':summary['text'],'synthesis_warnings':summary['warnings'],
                 'editorial_warnings':editorial_warnings,
                 'ideas':ideas,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,
+                'incomplete_extraction':any(e.get('pending') for e in empty_excerpts),
                 'excerpts_without_ideas':empty_excerpts,'excluded_ideas':excluded,'page_notes':page_notes,
                 'uncertain_ideas':uncertain,
                 'quality_note':'Citations exactes et seconde lecture automatique de leur appui aux idées. Ces contrôles ne garantissent pas la fidélité scientifique ; une relecture reste nécessaire.'}
@@ -2865,9 +3244,11 @@ class Pipeline:
             for part in doc['parts']:
                 title = f'{doc["id"]} — partie {part["number"]}'
                 previous=self.previous_part(doc,part,source_signature)
+                if previous and previous.get('incomplete_extraction'):previous=None
                 value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,
                                   {'source':part,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,'glossary':terms},
-                                  lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown)
+                                  lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown,
+                                  validate_saved=lambda v:validate_complete_extraction(v))
                 parts.append(value)
                 notes.append('## '+title+'\n\n'+part_markdown(value))
             if terms:
@@ -2875,7 +3256,18 @@ class Pipeline:
                     '- **'+term+'** : '+' / '.join(e['definition']+' (page '+str(e['page'])+')' for e in entries)
                     for term,entries in sorted(terms.items())))
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts,'glossary':terms})
-        result={'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL}
+        result=apply_corrections(self.project,{'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL})
+        for doc in result['documents']:
+            for part in doc['parts']:
+                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'])
+                for idea in part.get('uncertain_ideas',[]):
+                    candidate={**idea,'document':doc['id']}
+                    # La relecture rejetée reste visible, sans devenir une preuve acceptée.
+                    candidate['statement']=candidate.get('checked_statement') or candidate.get('statement','')
+                    candidate['explanation']=candidate.get('checked_explanation') or candidate.get('explanation','')
+                    self.reviews.record(2,'Source-'+idea['id'],candidate,SourceIssue(idea['reason']))
+        if (self.project/'corrections.json').exists():
+            notes=['## '+d['id']+' — partie '+str(p['number'])+'\n\n'+part_markdown(p) for d in result['documents'] for p in d['parts']]
         result['source_diagnostic']=source_review.diagnostic(result)
         return result,'\n\n'.join(notes)
 
@@ -2973,7 +3365,7 @@ def part_markdown(part):
     if part.get('excluded_ideas'):
         result+='\n\n### Idées écartées ou regroupées — motifs\n\n'+'\n'.join(
             '- ['+i['id']+'] '+i['statement']+' — '+i['reason'] for i in part['excluded_ideas'])
-    if part['excerpts_without_ideas']:
+    if part.get('excerpts_without_ideas'):
         result += '\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(
             f'- Page {e["page"]} : '+e['summary'] for e in part['excerpts_without_ideas'])
     if part.get('quality_note'):result+='\n\n'+part['quality_note']
@@ -3027,7 +3419,7 @@ def idea_markdown(ideas):
         if i.get('evidence'):
             line+='\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i['evidence'])
         if i.get('status')=='corrected':line+='\n  Correction proposée : '+i['review_reason']
-        if i.get('support_reason'):line+='\n  Seconde lecture automatique : '+i['support_reason']
+        if i.get('support_reason'):line+=('\n  Validation humaine : ' if i.get('human_review') else '\n  Seconde lecture automatique : ')+i['support_reason']
         lines.append(line)
     return '\n\n'.join(lines)
 
@@ -3592,11 +3984,11 @@ def validate_review(value, candidates, source, terms=None):
 
 def validate_evidence_details(text, evidence):
     """Refuser les erreurs concrètes observées sans reconstruire une formule PDF."""
+    from source_checks import validate
+    validate(text,evidence)
     for marker in re.findall(r'\bE\d+\b',text):
         if not re.search(r'\b'+re.escape(marker)+r'\b',evidence):
             raise ValueError('Les numéros de passages comme '+marker+' restent dans les références, pas dans le texte à lire.')
-    if re.search(r'\b2d\s+param',text,re.I) and re.search(r'fully correlated.*Bernoulli|Bernoulli.*fully correlated',evidence,re.I|re.S):
-        raise ValueError('La transcription « 2d paramètres » est ambiguë : expliquer la complexité sans interpréter un exposant perdu lors de l’extraction PDF.')
     wording=re.sub(r'(?<=[A-Za-z])-\s+(?=[a-z])','',evidence)
     if (re.search(r'\bjeux?\s+de\s+données(?:\s+[\wÀ-ÿ-]+){0,5}\s+publi(?:c|que)s?\b',text,re.I)
         and not re.search(r'\bpublic(?:ly)?\b|\bpubli(?:c|que)s?\b|en accès libre|librement accessibles?|\bopen(?:ly)?\s+(?:available|data)|\bfreely\s+available|\bopen[- ](?:access|source)',wording,re.I)):
@@ -3823,6 +4215,242 @@ Une rubrique absente des sources doit être une chaîne vide. Aucune autre clé.
 
 ```text
 pypdf==6.21.4
+```
+
+## review_queue.py
+
+```python
+"""Dossier local de vérification, décisions humaines et corrections réutilisables."""
+import copy
+import time
+from pathlib import Path
+
+from storage import fingerprint, read, write
+from issues import category
+
+
+class Reviews:
+    def __init__(self, project):
+        self.project = Path(project)
+        self.path = self.project/'verifications.json'
+
+    def data(self):
+        return read(self.path) if self.path.exists() else {'version':1, 'items':[], 'decisions':[]}
+
+    def pending(self, step=None):
+        data=self.data();changed=False
+        path=self.project/'etapes/01.json'
+        current=fingerprint(read(path)['data']) if path.exists() else None
+        for item in data['items']:
+            if item['status'] in ('pending','retry') and item.get('extraction_hash') and item['extraction_hash']!=current:
+                item['status']='stale';changed=True
+        if changed:write(self.path,data)
+        return [i for i in data['items'] if i['status']=='pending' and (step is None or i['step']==step)]
+
+    def record(self, step, key, idea, error):
+        source = copy.deepcopy(idea)
+        identity = fingerprint({'project':self.project.name,'step':step, 'key':key, 'source':source})[:24]
+        data = self.data()
+        item = next((i for i in data['items'] if i['id']==identity), None)
+        if item is None:
+            item = {'id':identity, 'step':step, 'key':key, 'idea_id':source.get('id',''),
+                    'source':source, 'created':time.time(), 'attempts':0}
+            data['items'].append(item)
+        path=self.project/'etapes/01.json'
+        if path.exists():item['extraction_hash']=fingerprint(read(path)['data'])
+        # Une nouvelle source rend l’ancienne question caduque, sans effacer son historique.
+        for old in data['items']:
+            if old['id']!=identity and old['step']==step and old['key']==key and old['status']=='pending':
+                old['status']='stale'
+        item.update(status='pending', category=category(error), reason=str(error), updated=time.time(),
+                    attempts=item['attempts']+1)
+        draft = getattr(error, 'draft_text', None)
+        if isinstance(draft,str): item['draft']=draft
+        write(self.path,data)
+        return item
+
+    def completed(self, step, key):
+        data = self.data(); changed=False
+        for item in data['items']:
+            if item['step']==step and item['key']==key and item['status'] in ('pending','retry'):
+                item.update(status='validated', updated=time.time());changed=True
+        if changed: write(self.path,data)
+
+    def decide(self, identity, action, note='', correction=None):
+        data=self.data()
+        item=next((i for i in data['items'] if i['id']==identity),None)
+        if item is None or item['status']!='pending': raise ValueError('Vérification absente ou déjà traitée.')
+        if action not in ('correct','exclude','retry'): raise ValueError('Décision inconnue.')
+        decision={'review_id':identity,'idea_id':item['idea_id'],'action':action,'note':note,
+                  'time':time.time(),'correction':correction}
+        data['decisions'].append(decision)
+        for other in data['items']:
+            if other['id']==identity or (action!='retry' and other['idea_id']==item['idea_id'] and other['status']=='pending'):
+                other.update(status='retry' if action=='retry' else 'resolved',updated=decision['time'])
+        write(self.path,data)
+        return decision
+
+
+def apply_corrections(project, data, corrections=None):
+    """Appliquer après lecture des parties en cache, jamais à l’intérieur du cache."""
+    path=Path(project)/'corrections.json'
+    if corrections is None:
+        if not path.exists(): return data
+        corrections=read(path)
+    source=read(Path(project)/'etapes/01.json')['data']
+    signature=fingerprint(source)
+    from editorial import source_hash, summary
+    for doc in data['documents']:
+        for part in doc['parts']:
+            for identity,record in corrections.items():
+                if record['extraction_hash']!=signature: continue
+                candidates=part.get('ideas',[])+part.get('excluded_ideas',[])
+                if not any(i['id']==identity for i in candidates): continue
+                position=next((index for index,i in enumerate(part['ideas']) if i['id']==identity),len(part['ideas']))
+                part['ideas']=[i for i in part['ideas'] if i['id']!=identity]
+                part['excluded_ideas']=[i for i in part.get('excluded_ideas',[]) if i['id']!=identity]
+                value=copy.deepcopy(record['idea'])
+                if record['action']=='correct':
+                    value['source_hash']=source_hash(value)
+                    part['ideas'].insert(position,value)
+                else: part['excluded_ideas'].append({**value,'reason':record['note'],'human_excluded':True})
+                part['uncertain_ideas']=[i for i in part.get('uncertain_ideas',[]) if i['id']!=identity]
+            part['summary']=summary(part['ideas'])[0] if part['ideas'] else 'Aucune idée explicative retenue dans cette partie.'
+    return data
+```
+
+## source_checks.py
+
+```python
+"""Contraintes conservatrices : signaler une ambiguïté, jamais reconstruire un fait."""
+import re
+import unicodedata
+from issues import SourceIssue
+
+
+def plain(text):
+    return ''.join(c for c in unicodedata.normalize('NFKD',text.lower()) if not unicodedata.combining(c))
+
+
+def constraints(evidence):
+    raw=plain(evidence)
+    found=[]
+    if (re.search(r'\b2\s*d\s+param',raw) or re.search(r'\bo\s*\(\s*n\s*(?:[x×*]\s*)?2\s*d\s*\)',raw)):
+        found.append({'kind':'formula','instruction':'Exposant possiblement perdu : ne pas interpréter 2d, n2d ou inventer une puissance. Vérifier visuellement le PDF ou expliquer sans formule.'})
+    if re.search(r'\b(?:almost|nearly) all\b|\bpresque tou',raw):
+        found.append({'kind':'scope','instruction':'Le résultat porte sur presque tous les cas, pas sur tous les cas.'})
+    if re.search(r'\bclassifiers?\b',raw) and re.search(r'\b(?:compar|versus|outperform|evaluat)',raw):
+        found.append({'kind':'comparison','instruction':'Une comparaison entre classifieurs ne prouve pas une combinaison de leurs sorties.'})
+    if re.match(r'\s*table\s+(?:[ivxlcdm]+|\d+)\b',raw) and len(re.findall(r'\b\d+(?:[.,]\d+)?\b',raw))>=10:
+        found.append({'kind':'table','instruction':'Une table de mesures seule ne prouve ni un mécanisme ni une combinaison des résultats. Citer le passage explicatif correspondant.'})
+    if re.search(r'\blow computational cost\b',raw):
+        found.append({'kind':'cost','instruction':'La méthode proposée est décrite à faible coût de calcul ; ne pas inverser le sens de son effet.'})
+    return found
+
+
+def validate(text,evidence):
+    claim=plain(text);source=plain(evidence)
+    for rule in constraints(evidence):
+        if rule['kind']=='formula' and re.search(
+            r'\b2\s*d\b|\bn\s*2\s*d\b|\bdeux\s+(?:fois|multiplie|puissance)|\b2\s*(?:\^|\*\*)\s*d|\bo\s*\(|\b(?:puissance|exposant)\s+d\b',claim):
+            raise SourceIssue('La transcription « 2d paramètres » est ambiguë : expliquer la complexité sans interpréter un exposant perdu lors de l’extraction PDF.','formula')
+        if rule['kind']=='scope' and re.search(r'\b(?:tous les|toutes les|chaque)\s+(?:jeux?|donnees|cas|experiences|tests|configurations|classif\w*)',claim):
+            if not re.search(r'\b(?:presque|quasiment|pratiquement|pas|sauf)\b',claim):
+                raise SourceIssue('La source dit « presque tous » : conserver cette réserve dans le résultat.','scope')
+        if rule['kind']=='table' and re.search(r'\bcombin\w*|\bpour ameliorer\b|\bce qui (?:explique|permet|entraine)',claim):
+            raise SourceIssue('Une table de mesures seule ne soutient pas cette explication ou combinaison : citer le passage explicatif correspondant.','source')
+        if rule['kind']=='cost' and re.search(r'\bredu\w*.{0,95}\btests?\b.{0,65}\b(?:ce qui|donc|ainsi).{0,65}\bplus couteu',claim):
+            raise SourceIssue('Le passage inverse le coût : la réduction des tests n’est pas présentée comme rendant la méthode proposée plus coûteuse.','source')
+        if (rule['kind']=='comparison' and re.search(r'\bcombin\w*.{0,70}\b(?:classif\w*|sorties|predictions)',claim)
+            and not re.search(r'\b(?:combin\w*|ensemble\s+of)\b',source)):
+            raise SourceIssue('Les citations comparent des classifieurs ; elles ne démontrent pas la combinaison de leurs sorties.','source')
+```
+
+## source_decisions.py
+
+```python
+"""Décisions humaines : valider la preuve, corriger le registre et préserver les unités."""
+import json
+import re
+import time
+import uuid
+
+import editorial
+import quality
+import source_review
+from review_queue import Reviews, apply_corrections
+from storage import fingerprint, invalidate, read, write, write_text
+
+
+def resolve(folder,body,preserve_summaries,render_part):
+    reviews=Reviews(folder)
+    item=next((i for i in reviews.pending() if i['id']==body.get('id')),None)
+    if item is None:raise ValueError('Vérification absente ou déjà traitée.')
+    action=body.get('action');note=body.get('note','')
+    if not isinstance(note,str) or len(note)>4000:raise ValueError('Motif de décision invalide.')
+    if action=='retry':
+        if item['step']==2:
+            if (folder/'etapes/02.json').exists():preserve_summaries(folder)
+            part_key=re.match(r'(PDF\d+-P\d+)',item['idea_id'])
+            archive=folder/'versions'/('verification-'+uuid.uuid4().hex[:12])
+            from storage import replace
+            for path in (folder/'etapes/parties').glob('02-*.json'):
+                saved=read(path)
+                if (part_key and path.stem=='02-'+part_key[0]) or item['idea_id'] in json.dumps(saved.get('data',{}),ensure_ascii=False):
+                    archive.mkdir(parents=True,exist_ok=True)
+                    for file in (path,path.with_suffix('.md')):
+                        if file.exists():replace(file,archive/file.name)
+        decision=reviews.decide(item['id'],action,note)
+        return decision
+    if action not in ('correct','exclude'):raise ValueError('Décision inconnue.')
+    path=folder/'etapes/02.json'
+    if not path.exists():raise ValueError('Terminez le rapport des sources avant de corriger une idée.')
+    saved=read(path);data=saved['data'];source=read(folder/'etapes/01.json')['data']
+    original=next((i for d in data['documents'] for p in d['parts']
+        for i in p.get('ideas',[])+p.get('excluded_ideas',[]) if i['id']==item['idea_id']),None)
+    if original is None:raise ValueError('Cette idée ne figure plus dans le registre. Réessayez le passage avec le modèle.')
+    doc=next(d for d in data['documents'] if any(original['id']==i['id'] for p in d['parts'] for i in p.get('ideas',[])+p.get('excluded_ideas',[])))
+    if any(p.get('incomplete_extraction') and any(i['id']==original['id'] for i in p.get('ideas',[])+p.get('excluded_ideas',[])) for p in doc['parts']):
+        raise ValueError('Réessayez d’abord les fragments non extraits de cette partie ; leurs identifiants doivent être stabilisés avant correction.')
+    value={**original,'document':doc['id']}
+    if action=='correct':
+        for field in ('statement','explanation'):
+            text=body.get(field)
+            if not isinstance(text,str) or not text.strip() or len(text)>5000:raise ValueError('Renseignez un énoncé et une explication pour cette idée.')
+            value[field]=text.strip()
+        proof=body.get('evidence')
+        if not isinstance(proof,list) or not 1<=len(proof)<=4:raise ValueError('Sélectionnez une à quatre citations exactes avec leurs pages.')
+        source_doc=next(d for d in source['documents'] if d['id']==doc['id'])
+        pages=quality.catalog(source_doc)
+        for row in proof:
+            if not isinstance(row,dict) or type(row.get('page')) is not int or row['page'] not in pages or not isinstance(row.get('quote'),str):raise ValueError('Page ou citation source invalide.')
+            if len(row['quote'].strip())<20:raise ValueError('Choisissez une citation explicative d’au moins 20 caractères.')
+            quality.explanatory_quote(row['quote'])
+            if quality.normalized(row['quote']) not in quality.normalized(pages[row['page']]['text']):raise ValueError('La citation doit figurer exactement sur la page indiquée du PDF.')
+        evidence=' '.join(row['quote'] for row in proof);text=value['statement']+' '+value['explanation']
+        quality.validate_acronyms(text,doc.get('glossary',{}))
+        quality.validate_evidence_details(text,evidence);quality.validate_technical_wording(text,evidence)
+        value.pop('human_excluded',None)
+        value.update(evidence=proof,pages=sorted({r['page'] for r in proof}),status='corrected',
+            review_reason='Correction et appui aux sources validés par l’utilisateur.',
+            support_reason=note or 'Appui vérifié manuellement.',human_review={'time':time.time(),'note':note})
+        if value.get('role') not in editorial.ROLES:value.update(editorial.role_fallback(value))
+        value['source_hash']=editorial.source_hash(value)
+    elif not note.strip():raise ValueError('Indiquez pourquoi cette idée est écartée ; elle restera dans le dossier.')
+    correction={'extraction_hash':fingerprint(source),'action':action,'idea':value,'note':note,'time':time.time()}
+    corrections=read(folder/'corrections.json') if (folder/'corrections.json').exists() else {}
+    corrections[value['id']]=correction
+    data=apply_corrections(folder,data,corrections);data['source_diagnostic']=source_review.diagnostic(data)
+    markdown='# Résumer les trois parties\n\n'+'\n\n'.join(
+        '## '+d['id']+' — partie '+str(p['number'])+'\n\n'+render_part(p) for d in data['documents'] for p in d['parts'])
+    write(folder/'corrections.json',corrections)
+    # Archiver les agrégats dépendants, garder les unités inchangées et toutes les voix.
+    invalidate(folder,2,partials=False)
+    write_text(folder/'etapes/02.md',markdown)
+    write(folder/'etapes/02.json',{**saved,'created':time.time(),'data':data})
+    decision=reviews.decide(item['id'],action,note,correction)
+    meta=read(folder/'projet.json');meta['summary_warnings']=sum(len(p.get('uncertain_ideas',[])) for d in data['documents'] for p in d['parts']);write(folder/'projet.json',meta)
+    return {'saved':True,'decision':decision,'resume_from':3}
 ```
 
 ## source_review.py
@@ -4277,6 +4905,104 @@ with tempfile.TemporaryDirectory(prefix='podcast-browser-') as temp:
         stub.close();voices.close();server.shutdown();server.server_close();app.close();thread.join()
 ```
 
+## tests/browser_reviews_check.py
+
+```python
+"""Parcours réel de vérification dans Chromium ; génération simulée explicitement."""
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+import threading
+
+ROOT=Path(__file__).resolve().parent.parent
+sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
+from playwright.sync_api import sync_playwright
+from app import App,Server
+from fixtures import FakeClient,make_pdf
+from pipeline import Pipeline
+from issues import ReviewRequired
+from storage import read,write
+
+
+with tempfile.TemporaryDirectory(prefix='podcast-review-browser-') as temporary:
+    root=Path(temporary);app=App(root/'data',FakeClient);server=Server(('127.0.0.1',0),app)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    try:
+        project=app.project(app.create({'name':'Vérification des sources'})['id'])
+        make_pdf(project/'sources/a.pdf')
+        meta=read(project/'projet.json');meta['pdfs']=[{'file':'a.pdf','name':'Optique.pdf'}]
+        meta['audio_settings']={'voices':{'Sophie':'local-a','Emma':'local-b'}};write(project/'projet.json',meta)
+        Pipeline(project,FakeClient()).run(1,9)
+        ideas=[i for d in read(project/'etapes/02.json')['data']['documents'] for p in d['parts'] for i in p['ideas']]
+        app.flag_source(project,{'id':ideas[0]['id']});app.flag_source(project,{'id':ideas[1]['id']})
+        with sync_playwright() as browser_tools:
+            browser=browser_tools.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium'),headless=True,args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1100},accept_downloads=True)
+            page=context.new_page();errors=[];external=[]
+            page.on('pageerror',lambda error:errors.append(str(error)))
+            page.on('request',lambda request:external.append(request.url) if not request.url.startswith(('http://127.0.0.1:','data:','blob:')) else None)
+            url=f'http://127.0.0.1:{server.server_port}'
+            page.goto(url);page.locator('#projects button').click()
+            page.wait_for_function('() => current()?.reviews.length===2')
+            assert page.locator('#continue').is_disabled()
+            assert not app.summary(project)['exports']
+            assert context.request.get(url+f'/files/{project.name}/podcast.txt').status==404
+            response=context.request.get(url+f'/sources/{project.name}/PDF1.pdf',headers={'Range':'bytes=0-4'})
+            assert response.status==206 and response.body()==b'%PDF-'
+            assert response.headers['content-type']=='application/pdf'
+            first=page.locator('.review-item').nth(0);second=page.locator('.review-item').nth(1)
+            first.locator('summary').click();second.locator('summary').click()
+            second.locator('textarea').last.fill('Brouillon conservé pendant la première décision.')
+            first.locator('textarea').last.fill('Citation et idée comparées à la page du PDF.')
+            first.get_by_role('button',name='Valider cette correction de la source',exact=True).click()
+            page.wait_for_function('() => current()?.reviews.length===1')
+            assert page.locator('.review-item textarea').last.input_value()=='Brouillon conservé pendant la première décision.'
+            assert page.locator('#continue').is_disabled()
+            output=Path(os.environ.get('PODCAST_CHECK_OUTPUT',str(root/'screens')));output.mkdir(parents=True,exist_ok=True)
+            page.screenshot(path=str(output/'verifications-source.png'),full_page=True)
+            page.get_by_role('button',name='Valider cette correction de la source',exact=True).click()
+            page.wait_for_function('() => current()?.reviews.length===0&&current()?.next_step===3')
+            assert page.locator('#continue').is_enabled()
+            page.locator('#continue').click()
+            page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            assert read(project/'projet.json')['audio_settings']['voices']==meta['audio_settings']['voices']
+            page.locator('#source-reader summary').click()
+            page.wait_for_function('() => document.querySelector("#retained-ideas").options.length>0')
+            page.locator('#flag-source').click();page.wait_for_function('() => current()?.reviews.length===1')
+            assert page.locator('#review-panel').is_visible()
+            # Un projet sans idée retenue doit pouvoir reprendre l’étape 2 après le groupe de décisions.
+            empty_project=app.project(app.create({'name':'Sources à réexaminer'})['id'])
+            make_pdf(empty_project/'sources/a.pdf');empty_meta=read(empty_project/'projet.json')
+            empty_meta['pdfs']=[{'file':'a.pdf','name':'Optique.pdf'}];write(empty_project/'projet.json',empty_meta)
+            class RejectAll(FakeClient):
+                def ask(self,task,payload,*args,**kwargs):
+                    if task=='review_facts':return {'decisions':{i['id']:{'status':'uncertain','reason':'Appui incertain à réexaminer.'} for i in payload['candidates']}}
+                    return super().ask(task,payload,*args,**kwargs)
+            try:Pipeline(empty_project,RejectAll()).run(1,2)
+            except ReviewRequired:pass
+            else:raise AssertionError('Les sources doivent attendre une vérification.')
+            for item in app.summary(empty_project)['reviews']:app.resolve_review(empty_project,{'id':item['id'],'action':'retry'})
+            page.evaluate('() => refresh()');page.wait_for_function('() => state.projects.length===2')
+            page.locator('#projects button').filter(has_text='Sources à réexaminer').click()
+            page.wait_for_function('() => current()?.source_diagnostic.empty&&current()?.next_step===2')
+            assert page.locator('#continue').is_enabled()
+            page.locator('#continue').click()
+            page.wait_for_function('() => current()?.task.state==="done"&&current()?.completed.length===9',timeout=60000)
+            assert not external and not errors,(external,errors)
+            result={'interface':'Chromium réel','generation':'Fournisseur simulé, aucune validation scientifique implicite',
+                    'grouped_reviews':True,'draft_preserved_between_decisions':True,'source_pdf_ranges':True,
+                    'blocked_unverified_export':True,'resume_3_to_9':True,'voices_preserved':True,
+                    'manual_flag_after_automatic_acceptance':True,'external_page_requests':external,'javascript_errors':errors}
+            result['zero_retained_source_retry_from_interface']=True
+            (output/'parcours-verifications.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
+            print(json.dumps(result,ensure_ascii=False));browser.close()
+    finally:
+        app.close();server.shutdown();server.server_close();thread.join()
+```
+
 ## tests/fixtures.py
 
 ```python
@@ -4389,6 +5115,9 @@ class StubHandler(BaseHTTPRequestHandler):
         self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_POST(self):
         request=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+        if self.path=='/api/show':
+            data=json.dumps(getattr(self.server,'model_info',{'details':{'format':'gguf'}})).encode()
+            self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
         prompt=request['messages'][1]['content']
         task=prompt.splitlines()[0].split(':',1)[1].strip()
         payload=json.loads(prompt.split('DONNÉES :\n',1)[1])
@@ -4558,7 +5287,7 @@ class AudioTests(unittest.TestCase):
     def test_preparation_uses_the_bundled_uv_in_an_unseeded_environment(self):
         with patch('audio_export.encoder',side_effect=[ValueError('absent'),'ffmpeg-ready']), \
              patch('audio_export.Path.exists',return_value=True),patch('audio_export.run_process') as run:
-            result=audio_export.prepare_encoder(threading.Event(),lambda _:None)
+            result=audio_export.prepare_encoder(threading.Event(),lambda _:None,allow_download=True)
         self.assertEqual(result,'ffmpeg-ready')
         command=run.call_args.args[0]
         self.assertIn('uv',Path(command[0]).name);self.assertEqual(command[1:4],['pip','install','--python'])
@@ -5493,6 +6222,8 @@ if __name__=='__main__':unittest.main()
 ## tests/test_quality.py
 
 ```python
+from issues import ReviewRequired
+from review_queue import Reviews
 """Tri des contenus, appui aux sources et découpage des longs registres."""
 import copy
 from pathlib import Path
@@ -5619,7 +6350,7 @@ class QualityPipelineTests(unittest.TestCase):
         from storage import fingerprint
         write(self.project/'reprises/02.json',{'source':fingerprint({'documents':[doc]}),'generation':'initial','data':previous})
         # Une explication invalide est isolée sans arrêter les autres parties.
-        Pipeline(self.project,FakeClient()).run(2,2)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,FakeClient()).run(2,2)
         parts=read(self.project/'etapes/02.json')['data']['documents'][0]['parts']
         self.assertTrue(all(not p['ideas'] and p['uncertain_ideas'] for p in parts))
     def test_inconclusive_review_is_reported_without_accepting_invalid_facts(self):
@@ -5628,7 +6359,7 @@ class QualityPipelineTests(unittest.TestCase):
             def ask(self,task,*args,**kwargs):
                 if task=='review_facts':raise InvalidResponseError('Citation absente après correction')
                 return super().ask(task,*args,**kwargs)
-        Pipeline(self.project,Uncertain()).run(2,2)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,Uncertain()).run(2,2)
         result=read(self.project/'etapes/02.json')['data']
         parts=result['documents'][0]['parts']
         self.assertTrue(all(not p['ideas'] and p['uncertain_ideas'] for p in parts))
@@ -6021,6 +6752,310 @@ class ReferenceHTTPTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_stabilisation.py
+
+```python
+"""Reprises, décisions de source et absence de transfert externe implicite."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import threading
+import unittest
+from unittest.mock import patch
+
+from app import App
+from fixtures import FakeClient, StubServer, make_pdf
+from issues import DownloadConsentRequired, ReviewRequired, SourceIssue, repair_message
+from llm import InvalidResponseError, ModelError, Ollama, RequestBudgetError
+from pipeline import Pipeline
+from review_queue import Reviews, apply_corrections
+from storage import defaults, fingerprint, read, write
+import audio_export
+import editorial
+import quality
+import source_checks
+
+
+QUOTE='Frequent patterns depend on a threshold in the data. The threshold determines retained patterns under the stated conditions.'
+TEXT='Les motifs fréquents dépendent du seuil choisi. Ce seuil fixe les motifs retenus dans les conditions décrites.'
+
+
+def fact(number=1):
+    value={'id':f'PDF1-P1-I{number:03}','statement':'Les motifs fréquents dépendent du seuil dans les données.',
+        'explanation':'Le seuil doit être indiqué avec ses conditions.','document':'PDF1','pages':[1],
+        'role':'concept','importance':'essential','evidence':[{'page':1,'quote':QUOTE}]}
+    value['source_hash']=editorial.source_hash(value)
+    return value
+
+
+class Replies(FakeClient):
+    def ask(self,task,payload,instructions,validate,budget=4000):
+        if task=='grounded_text':
+            self.calls.append((task,copy.deepcopy(payload)));value={'text':TEXT};validate(value);return value
+        return super().ask(task,payload,instructions,validate,budget)
+
+
+class SourceConstraints(unittest.TestCase):
+    def test_lost_exponent_cannot_be_interpreted_in_digits_or_words(self):
+        evidence='A fully correlated Bernoulli distribution requires 2d parameters.'
+        for text in ('Le modèle nécessite 2d paramètres.', 'Le modèle nécessite deux fois d paramètres.',
+                     'Le modèle nécessite deux puissance d paramètres.', 'Le modèle nécessite 2^d paramètres.'):
+            with self.subTest(text=text),self.assertRaises(SourceIssue) as error:source_checks.validate(text,evidence)
+            self.assertEqual(error.exception.category,'formula')
+        source_checks.validate('Le nombre de paramètres dépend de la dimension et devient difficile à gérer.',evidence)
+
+    def test_a_legible_power_is_not_treated_as_a_lost_exponent(self):
+        source_checks.validate('Le modèle nécessite 2^d paramètres.','The model requires 2^d parameters.')
+
+    def test_comparison_does_not_prove_combination(self):
+        with self.assertRaises(SourceIssue):source_checks.validate('La méthode combine les sorties des classifieurs.',
+            'We compare three classifiers. Table II reports the accuracy for the evaluated classifiers.')
+        source_checks.validate('La méthode combine les sorties des classifieurs.',
+            'We compare classifiers, including an ensemble combining their predictions.')
+
+    def test_result_keeps_almost_all_reserve(self):
+        evidence='Our method performs better for almost all data sets.'
+        with self.assertRaises(SourceIssue):source_checks.validate('Les résultats sont meilleurs sur tous les jeux de données.',evidence)
+        source_checks.validate('Les résultats sont meilleurs sur presque tous les jeux de données.',evidence)
+        source_checks.validate('Les résultats ne sont pas meilleurs dans tous les cas.',evidence)
+
+    def test_feedback_for_a_formula_does_not_claim_json_is_wrong(self):
+        kind,message=repair_message(SourceIssue('Exposant perdu.','formula'))
+        self.assertEqual(kind,'formula');self.assertIn('qualitativement',message);self.assertNotIn('structure',message)
+        try:json.loads('incomplet')
+        except ValueError as error:kind,message=repair_message(error)
+        self.assertEqual(kind,'format');self.assertIn('JSON',message)
+
+    def test_lower_computation_cost_does_not_become_a_higher_cost(self):
+        source='Many older methods are computationally intensive. We propose a model to infer the patterns with a low computational cost.'
+        with self.assertRaises(SourceIssue):source_checks.validate('Cette approche permet de réduire le nombre de tests statistiques, ce qui rend la méthode plus coûteuse en calcul.',source)
+        source_checks.validate('La nouvelle approche détermine les motifs à faible coût de calcul.',source)
+
+    def test_flat_measurement_table_does_not_prove_a_combination(self):
+        source='TABLE II TEST ACCURACY OF CLASSIFIERS: '+ ' '.join(str(n/100) for n in range(20))
+        with self.assertRaises(SourceIssue):source_checks.validate('Les résultats obtenus pour chaque jeu de données ont ensuite été combinés.',source)
+        source_checks.validate('Les classifieurs sont évalués selon leur précision dans les expériences.',source)
+
+
+class LocalClient(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.stub=StubServer()
+        self.client=Ollama({**defaults(),'endpoint':self.stub.endpoint},self.temp.name)
+    def tearDown(self):self.stub.close();self.temp.cleanup()
+    def ask(self):return self.client.ask('global_text',{'ideas':[{'id':'I1','statement':'Un fait.'}]},'texte',lambda value:None)
+
+    def test_cloud_model_is_rejected_before_a_source_chat(self):
+        self.client.config['model']='mistral:cloud'
+        with self.assertRaisesRegex(ModelError,'cloud'):self.ask()
+        self.assertFalse(self.stub.calls)
+
+    def test_ollama_remote_alias_is_rejected_before_a_source_chat(self):
+        self.stub.model_info={'remote_host':'https://example.invalid','remote_model':'alias','details':{'format':'gguf'}}
+        with self.assertRaisesRegex(ModelError,'distant'):self.ask()
+        self.assertFalse(self.stub.calls)
+
+    def test_unidentified_model_is_not_assumed_to_be_local(self):
+        self.stub.model_info={}
+        with self.assertRaisesRegex(ModelError,'confirmer'):self.ask()
+        self.assertFalse(self.stub.calls)
+
+    def test_local_model_works_and_cached_response_needs_no_server(self):
+        first=self.ask();self.assertEqual(len(self.stub.calls),1)
+        with patch.object(self.client,'_request',side_effect=AssertionError('Un cache validé ne contacte pas le serveur.')):
+            self.assertEqual(first,self.ask())
+
+    def test_request_budget_applies_across_nested_corrections(self):
+        with self.client.request_scope(2):
+            self.ask()
+            self.client.ask('global_text',{'ideas':[]},'autre texte',lambda value:None)
+            with self.assertRaises(RequestBudgetError):
+                self.client.ask('global_text',{'ideas':[]},'encore une tentative',lambda value:None)
+        self.assertEqual(len(self.stub.calls),2)
+
+    def test_no_automatic_mp3_installation_without_scoped_consent(self):
+        with patch('audio_export.encoder',side_effect=ValueError('absent')),patch('audio_export.run_process') as run:
+            with self.assertRaises(DownloadConsentRequired):audio_export.prepare_encoder(threading.Event(),lambda _:None)
+            run.assert_not_called()
+
+    def test_existing_mp3_encoder_needs_no_permission_or_download(self):
+        with patch('audio_export.encoder',return_value='already-local'),patch('audio_export.run_process') as run:
+            self.assertEqual(audio_export.prepare_encoder(threading.Event(),lambda _:None),'already-local')
+            run.assert_not_called()
+
+
+class SourceDecisions(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.app=App(Path(self.temp.name)/'data',FakeClient)
+        identifier=self.app.create({'name':'Reprise'})['id'];self.root=self.app.project(identifier)
+        make_pdf(self.root/'sources/p.pdf')
+        meta=read(self.root/'projet.json');meta['pdfs']=[{'file':'p.pdf','name':'Essai.pdf'}];write(self.root/'projet.json',meta)
+        self.ideas=[fact(1),fact(2)]
+        source={'documents':[{'id':'PDF1','name':'Essai.pdf','parts':[{'number':1,'pages':[1],
+            'blocks':[{'page':1,'text':QUOTE}]}]}]}
+        write(self.root/'etapes/01.json',{'data':source})
+        self.data={'quality_version':quality.VERSION,'documents':[{'id':'PDF1','name':'Essai.pdf','glossary':{},
+            'parts':[{'number':1,'ideas':self.ideas,'excluded_ideas':[],'uncertain_ideas':[],'summary':TEXT}]}]}
+        write(self.root/'etapes/02.json',{'data':self.data});self.reviews=Reviews(self.root)
+    def tearDown(self):self.app.close();self.temp.cleanup()
+    def record(self,number=1,step=3):
+        return self.reviews.record(step,'Synthese-'+self.ideas[number-1]['id'],self.ideas[number-1],SourceIssue('Vérifier la réserve.','scope'))
+    def correction(self,item,**extra):
+        return {'id':item['id'],'action':'correct','statement':'Les motifs retenus dépendent du seuil choisi.',
+                'explanation':'Le résultat reste lié aux conditions décrites dans les données.',
+                'evidence':[{'page':1,'quote':QUOTE}],'note':'Page relue et réserve conservée.',**extra}
+
+    def test_repeated_question_is_grouped_and_old_source_is_marked_stale(self):
+        first=self.record();self.record()
+        self.assertEqual(len(self.reviews.pending()),1);self.assertEqual(self.reviews.pending()[0]['attempts'],2)
+        changed=copy.deepcopy(self.ideas[0]);changed['statement']='Autre formulation de la source.'
+        self.reviews.record(3,first['key'],changed,SourceIssue('Vérifier.'))
+        self.assertEqual(len(self.reviews.pending()),1)
+        self.assertEqual(self.reviews.data()['items'][0]['status'],'stale')
+
+    def test_a_new_extraction_invalidates_pending_questions(self):
+        self.record();write(self.root/'etapes/01.json',{'data':{'documents':[]}})
+        self.assertFalse(self.reviews.pending());self.assertEqual(self.reviews.data()['items'][0]['status'],'stale')
+
+    def test_one_refusal_keeps_other_valid_passages_and_blocks_incomplete_stage(self):
+        class RejectOne(Replies):
+            def ask(inner,task,payload,*args,**kwargs):
+                if task=='writing_check' and payload['expected_statement']==self.ideas[0]['statement']:
+                    # Les deux idées sont distinguées pour ce test.
+                    if 'premier' in payload['expected_explanation']:return {'status':'uncertain','reason':'La réserve est absente.'}
+                return super().ask(task,payload,*args,**kwargs)
+        self.ideas[0]['explanation']='Le premier seuil doit garder ses conditions.'
+        self.ideas[0]['source_hash']=editorial.source_hash(self.ideas[0]);write(self.root/'etapes/02.json',{'data':self.data})
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,RejectOne()).run(3,3)
+        self.assertEqual(len(self.reviews.pending()),1)
+        self.assertFalse((self.root/'etapes/03.json').exists())
+        good=self.root/'etapes/parties/03-Synthese-PDF1-P1-I002.json'
+        self.assertTrue(good.exists());before=good.read_bytes()
+        self.app.resolve_review(self.root,self.correction(self.reviews.pending()[0]))
+        Pipeline(self.root,Replies()).run(3,3)
+        self.assertEqual(good.read_bytes(),before);self.assertFalse(self.reviews.pending())
+
+    def test_manual_correction_reuses_source_everywhere_and_keeps_voices_and_other_units(self):
+        Pipeline(self.root,Replies()).run(3,3)
+        good=self.root/'etapes/parties/03-Synthese-PDF1-P1-I002.json';before=good.read_bytes()
+        meta=read(self.root/'projet.json');meta['audio_settings']={'voices':{'Sophie':'local-test-reference'}};write(self.root/'projet.json',meta)
+        item=self.record();answer=self.app.resolve_review(self.root,self.correction(item))
+        self.assertEqual(answer['resume_from'],3);self.assertFalse((self.root/'etapes/03.json').exists())
+        self.assertEqual(good.read_bytes(),before)
+        fixed=read(self.root/'etapes/02.json')['data']['documents'][0]['parts'][0]['ideas']
+        idea=next(i for i in fixed if i['id']==self.ideas[0]['id'])
+        self.assertEqual(idea['statement'],'Les motifs retenus dépendent du seuil choisi.')
+        self.assertEqual(idea['source_hash'],editorial.source_hash(idea));self.assertIn('human_review',idea)
+        self.assertEqual(read(self.root/'projet.json')['audio_settings'],meta['audio_settings'])
+        # Relire une partie d’avant la correction n’écrase pas la décision humaine.
+        old=apply_corrections(self.root,copy.deepcopy(self.data))
+        self.assertEqual(next(i for i in old['documents'][0]['parts'][0]['ideas'] if i['id']==idea['id'])['statement'],idea['statement'])
+
+    def test_invented_quote_or_page_cannot_be_manually_confirmed(self):
+        item=self.record()
+        for proof in ([{'page':2,'quote':QUOTE}],[{'page':1,'quote':'This invented quotation is absent from the supplied PDF page.'}]):
+            with self.subTest(proof=proof),self.assertRaises(ValueError):self.app.resolve_review(self.root,self.correction(item,evidence=proof))
+        self.assertEqual(len(self.reviews.pending()),1);self.assertFalse((self.root/'corrections.json').exists())
+
+    def test_exclusion_stays_in_the_source_report_with_a_reason(self):
+        item=self.record()
+        with self.assertRaises(ValueError):self.app.resolve_review(self.root,{'id':item['id'],'action':'exclude'})
+        self.app.resolve_review(self.root,{'id':item['id'],'action':'exclude','note':'La preuve ne confirme pas cette idée.'})
+        part=read(self.root/'etapes/02.json')['data']['documents'][0]['parts'][0]
+        self.assertEqual([i['id'] for i in part['ideas']],['PDF1-P1-I002'])
+        self.assertTrue(part['excluded_ideas'][0]['human_excluded']);self.assertFalse(self.reviews.pending())
+
+    def test_retry_reopens_the_failed_stage_without_deleting_good_units(self):
+        Pipeline(self.root,Replies()).run(3,3)
+        good=self.root/'etapes/parties/03-Synthese-PDF1-P1-I002.json';before=good.read_bytes()
+        item=self.record();self.app.resolve_review(self.root,{'id':item['id'],'action':'retry'})
+        self.assertEqual(self.app.summary(self.root)['next_step'],3);self.assertEqual(good.read_bytes(),before)
+
+    def test_pending_reviews_prevent_skipping_straight_to_export(self):
+        self.record()
+        with self.assertRaisesRegex(ValueError,'vérifications regroupées'):self.app.enqueue(self.root,{'first':3,'until':9})
+        with self.assertRaisesRegex(ValueError,'vérifications des sources'):self.app.enqueue_audio(self.root,{'action':'generate'})
+
+    def test_stale_correction_is_not_applied_to_a_different_pdf(self):
+        self.app.resolve_review(self.root,self.correction(self.record()))
+        write(self.root/'etapes/01.json',{'data':{'documents':[]}})
+        result=apply_corrections(self.root,copy.deepcopy(self.data))
+        self.assertEqual(result['documents'][0]['parts'][0]['ideas'][0]['statement'],self.ideas[0]['statement'])
+
+    def test_render_error_before_commit_preserves_the_source_and_decision(self):
+        item=self.record();before=(self.root/'etapes/02.json').read_bytes()
+        with patch('pipeline.part_markdown',side_effect=ValueError('Erreur de rendu simulée.')):
+            with self.assertRaises(ValueError):self.app.resolve_review(self.root,self.correction(item))
+        self.assertEqual((self.root/'etapes/02.json').read_bytes(),before)
+        self.assertFalse((self.root/'corrections.json').exists());self.assertEqual(len(self.reviews.pending()),1)
+
+    def test_a_human_exclusion_can_be_reopened_and_corrected(self):
+        item=self.record()
+        self.app.resolve_review(self.root,{'id':item['id'],'action':'exclude','note':'Appui initialement incertain.'})
+        reopened=self.app.flag_source(self.root,{'id':self.ideas[0]['id']})
+        self.app.resolve_review(self.root,self.correction(reopened))
+        part=read(self.root/'etapes/02.json')['data']['documents'][0]['parts'][0]
+        value=next(i for i in part['ideas'] if i['id']==self.ideas[0]['id'])
+        self.assertNotIn('human_excluded',value);self.assertIn('human_review',value)
+
+    def test_download_consent_is_checked_before_queueing_an_audio_job(self):
+        with patch('audio_export.encoder',side_effect=ValueError('absent')):
+            with self.assertRaises(DownloadConsentRequired):self.app.enqueue_audio(self.root,{'action':'prepare'})
+        self.assertFalse((self.root/'tache.json').exists())
+
+    def test_retained_idea_can_be_put_back_in_human_review(self):
+        item=self.app.flag_source(self.root,{'id':self.ideas[0]['id']})
+        self.assertEqual(item['idea_id'],self.ideas[0]['id'])
+        self.assertEqual(len(self.app.summary(self.root)['reviews']),1)
+        self.assertEqual(self.app.summary(self.root)['task']['state'],'needs_review')
+
+    def test_failed_extraction_is_retried_without_reusing_an_incomplete_part(self):
+        fail=[True]
+        class FailFirst(FakeClient):
+            def ask(inner,task,payload,*args,**kwargs):
+                if task=='part_summary' and fail[0]:
+                    fail[0]=False;raise InvalidResponseError('Extraction non exploitable.')
+                return super().ask(task,payload,*args,**kwargs)
+        self.app.client_factory=FailFirst
+        self.app.enqueue(self.root,{'first':1,'until':2});self.app.pending.join()
+        self.assertEqual(self.app.summary(self.root)['task']['state'],'needs_review')
+        failed=self.reviews.pending()[0];self.assertTrue(failed['source']['unextracted'])
+        before={p:p.read_bytes() for p in (self.root/'etapes/parties').glob('02-PDF1-P[23].*')}
+        self.assertTrue(before)
+        self.app.resolve_review(self.root,{'id':failed['id'],'action':'retry'})
+        self.app.enqueue(self.root,{'first':2,'until':2});self.app.pending.join()
+        self.assertEqual(self.app.summary(self.root)['task']['state'],'done')
+        self.assertFalse(self.reviews.pending())
+        parts=read(self.root/'etapes/02.json')['data']['documents'][0]['parts']
+        self.assertTrue(parts[0]['ideas']);self.assertFalse(parts[0]['incomplete_extraction'])
+        self.assertTrue(all(p.read_bytes()==raw for p,raw in before.items()))
+
+    def test_uncertain_source_retry_does_not_replay_the_cached_refusal(self):
+        fail=[True];calls=[]
+        class UncertainOnce(FakeClient):
+            def ask(inner,task,payload,*args,**kwargs):
+                value=super().ask(task,payload,*args,**kwargs)
+                if task=='review_facts':
+                    calls.extend(i['id'] for i in payload['candidates'])
+                    if fail[0]:
+                        fail[0]=False;identity=payload['candidates'][0]['id']
+                        value['decisions'][identity]={'status':'uncertain','reason':'Appui incertain pour ce passage.'}
+                return value
+        self.app.client_factory=UncertainOnce
+        self.app.enqueue(self.root,{'first':1,'until':2});self.app.pending.join()
+        item=self.reviews.pending()[0];count=calls.count(item['idea_id'])
+        before={p:p.read_bytes() for p in (self.root/'etapes/parties').glob('02-PDF1-P[23].*')}
+        self.app.resolve_review(self.root,{'id':item['id'],'action':'retry'})
+        self.app.enqueue(self.root,{'first':2,'until':2});self.app.pending.join()
+        self.assertEqual(self.app.summary(self.root)['task']['state'],'done')
+        self.assertGreater(calls.count(item['idea_id']),count)
+        self.assertFalse(self.reviews.pending())
+        self.assertTrue(all(p.read_bytes()==raw for p,raw in before.items()))
+
+
+if __name__=='__main__':unittest.main()
+```
+
 ## tests/test_storage.py
 
 ```python
@@ -6310,6 +7345,8 @@ if __name__=='__main__':unittest.main()
 ## tests/test_update030.py
 
 ```python
+from issues import ReviewRequired
+from review_queue import Reviews
 """Défauts observés dans l'export utilisateur : glossaire, sens et progression."""
 import copy
 import unittest
@@ -6389,7 +7426,8 @@ class PedagogyTests(unittest.TestCase):
         from pipeline import Pipeline
         source=facts(1);source[0]['statement']='Le DT (Data Transfer) représente le réseau.'
         self.prepare(source,{'DT':[{'definition':'Digital twin','page':1}]})
-        with self.assertRaisesRegex(InvalidResponseError,'Développement non confirmé'):self.generate(until=8)
+        with self.assertRaises(ReviewRequired):self.generate(until=8)
+        self.assertIn('Développement non confirmé',Reviews(self.project).pending()[0]['reason'])
         self.assertFalse((self.project/'etapes/06.json').exists())
         self.assertFalse((self.project/'exports/podcast.json').exists())
 
@@ -6399,6 +7437,8 @@ if __name__=='__main__':unittest.main()
 ## tests/test_update050.py
 
 ```python
+from issues import ReviewRequired
+from review_queue import Reviews
 """Régressions du résultat utilisateur : rédaction, vérification et oralisation."""
 import copy
 from pathlib import Path
@@ -6480,7 +7520,7 @@ class WritingFlow(unittest.TestCase):
             def ask(self,task,payload,instructions,validate,budget=4000):
                 if task=='writing_check':return {'status':'uncertain','quote':'','reason':'Le mécanisme ne figure pas dans la preuve.'}
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaises(InvalidResponseError):self.generate(Reject(),until=6)
+        with self.assertRaises(ReviewRequired):self.generate(Reject(),until=6)
         self.assertFalse((self.project/'etapes/06.json').exists());self.assertFalse((self.project/'exports/podcast.json').exists())
     def test_final_review_can_repair_a_readability_problem_and_records_the_change(self):
         self.prepare(facts(1));self.generate(until=8)
@@ -6500,7 +7540,7 @@ class WritingFlow(unittest.TestCase):
             def ask(self,task,payload,*args,**kwargs):
                 if task=='writing_check' and payload.get('final_review'):return {'status':'uncertain','quote':'','reason':'Le passage reste insuffisamment clair.'}
                 return super().ask(task,payload,*args,**kwargs)
-        with self.assertRaises(InvalidResponseError):Pipeline(self.project,RejectFinal()).run(9,9)
+        with self.assertRaises(ReviewRequired):Pipeline(self.project,RejectFinal()).run(9,9)
         self.assertFalse((self.project/'exports/podcast.json').exists())
     def test_a_method_cannot_be_classified_as_a_prerequisite_by_accident(self):
         source=facts(1);source[0]['statement']='Une stratégie multi-étapes optimise la configuration.'
@@ -6513,6 +7553,8 @@ if __name__=='__main__':unittest.main()
 ## tests/test_update051.py
 
 ```python
+from issues import ReviewRequired
+from review_queue import Reviews
 """Reprise des projets sans idée retenue et preuves sélectionnées par référence."""
 import copy
 from pathlib import Path
@@ -6636,7 +7678,8 @@ class SourceFlow(unittest.TestCase):
                 if task=='review_facts':
                     value={'decisions':{i['id']:{'status':'uncertain','reason':'Appui non confirmé.'} for i in payload['candidates']}};validate(value);return value
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaisesRegex(ModelError,'Étape 2/9.*Réexaminer'):Pipeline(self.root,Reject()).run(1,9)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,Reject()).run(1,9)
+        self.assertEqual(len(Reviews(self.root).pending(2)),6)
         self.assertTrue((self.root/'etapes/02.json').exists());self.assertTrue((self.root/'etapes/02.md').exists())
         self.assertFalse((self.root/'etapes/03.json').exists());self.assertFalse((self.root/'exports/podcast.json').exists())
         self.assertTrue(source_review.diagnostic(read(self.root/'etapes/02.json')['data'])['empty'])
@@ -7037,6 +8080,8 @@ if __name__=='__main__':unittest.main()
 ## tests/test_update054.py
 
 ```python
+from issues import ReviewRequired
+from review_queue import Reviews
 """Étape 4 : assembler les passages relus et reprendre les anciens résultats sans les couper."""
 import copy
 from pathlib import Path
@@ -7182,7 +8227,7 @@ class CommonTextTests(unittest.TestCase):
     def test_rejected_new_paragraph_never_completes_stage4(self):
         self.warm();self.packet().unlink()
         before=(self.root/'etapes/03.json').read_bytes()
-        with self.assertRaises(InvalidResponseError):Pipeline(self.root,Replies(PARAGRAPH,status='uncertain')).run(4,4)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,Replies(PARAGRAPH,status='uncertain')).run(4,4)
         self.assertFalse((self.root/'etapes/04.json').exists());self.assertFalse(self.packet(4).exists())
         self.assertEqual((self.root/'etapes/03.json').read_bytes(),before)
 
@@ -7260,7 +8305,7 @@ class CommonTextTests(unittest.TestCase):
             evidence=[{'page':2,'quote':'The method anticipates failures to plan early and cost-effective interventions.'}])
         self.idea['source_hash']=editorial.source_hash(self.idea);self.prepare()
         client=Replies('La méthode permet de planifier des interventions coûteuses.',status='uncertain')
-        with self.assertRaises(InvalidResponseError):Pipeline(self.root,client).run(3,3)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,client).run(3,3)
         self.assertFalse(self.packet().exists());self.assertFalse((self.root/'etapes/03.json').exists())
 
     def test_source_bibliographic_markers_stay_in_evidence_and_out_of_reviewed_speech(self):
@@ -7382,28 +8427,67 @@ const busy=p=>['queued','running'].includes(p?.task?.state);
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message;$('notice').classList.toggle('error',error);}
 async function api(path,body){const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Podcast-Token':state.token},body:body===undefined?undefined:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw Error(value.error||'La requête a échoué.');return value;}
 function node(tag,text){const e=document.createElement(tag);if(text)e.textContent=text;return e;}
+let reviewKey='',reviewDrafts=new Map(),sourceReaderProject=null;
+function renderReviews(p){
+ const items=p.reviews||[];$('review-panel').hidden=!items.length;
+ const key=JSON.stringify([p.id,items.map(i=>[i.id,i.attempts]),busy(p),p.pdf_readings]);if(key===reviewKey)return;reviewKey=key;
+ const holder=$('review-items');holder.replaceChildren();
+ for(const item of items){
+  const card=node('details');card.className='review-item';card.open=items.length===1;
+  card.append(node('summary',`Étape ${item.step} · ${item.idea_id} · ${item.category}`),node('p',item.reason));
+  if(item.draft){const rejected=node('details');rejected.append(node('summary','Voir le brouillon refusé'),node('pre',item.draft));card.append(rejected);}
+  const source=item.source||{},page=source.pages?.[0]||1;
+  if(/^PDF[1-9]\d*$/.test(source.document||'')){
+   const link=node('a',`Ouvrir le PDF source, page ${page}`);link.href=`/sources/${p.id}/${source.document}.pdf#page=${page}`;link.target='_blank';link.rel='noopener';card.append(link);
+   const name=`${source.document}-p${page}.md`;
+   if(p.pdf_readings?.includes(name)){const reading=node('a','Télécharger la relecture Docling de cette page');reading.href=`/files/${p.id}/lecture-${name}`;card.append(reading);}
+   if(p.pdf_reread_available){const reread=node('button','Relire cette page avec Docling local');reread.disabled=busy(p);reread.onclick=async()=>{try{await api(`/api/projects/${p.id}/reread`,{id:item.id});await refresh();}catch(e){notice(e.message,true);}};card.append(reread);}
+   else card.append(node('small','Docling est facultatif et absent de cette installation. Aucun modèle ne sera téléchargé automatiquement. La page PDF reste disponible pour vérifier la source.'));
+  }
+  let draft=reviewDrafts.get(item.id);
+  if(!draft){const evidence=source.evidence?.length?source.evidence:source.checked_evidence||[];draft={statement:source.statement||'',explanation:source.explanation||'',note:'',evidence:evidence.map(e=>typeof e==='string'?{page,quote:e}:{page:e.page||page,quote:e.quote||''})};if(!draft.evidence.length)draft.evidence=[{page,quote:''}];reviewDrafts.set(item.id,draft);}
+  const editable=p.completed.includes(2)&&/^PDF\d+-P\d+-I\d+$/.test(item.idea_id)&&!(p.incomplete_source_parts||[]).some(prefix=>item.idea_id.startsWith(prefix+'-'));
+  function field(title,value,update){const label=node('label',title),input=node('textarea');input.value=value;input.rows=3;input.disabled=busy(p);input.oninput=()=>update(input.value);label.append(input);card.append(label);return input;}
+  if(editable){
+   field('Idée à conserver',draft.statement,value=>draft.statement=value);
+   field('Explication et réserves',draft.explanation,value=>draft.explanation=value);
+   const proofs=node('div');card.append(proofs);
+   function proofFields(row){const label=node('label','Citation exacte du PDF'),number=node('input'),quote=node('textarea');number.type='number';number.min=1;number.value=row.page;number.setAttribute('aria-label','Page de la citation');number.oninput=()=>row.page=Number(number.value);quote.value=row.quote;quote.rows=4;quote.oninput=()=>row.quote=quote.value;number.disabled=quote.disabled=busy(p);label.append(number,quote);proofs.append(label);}
+   draft.evidence.forEach(proofFields);
+   const more=node('button','Ajouter une citation');more.type='button';more.disabled=busy(p)||draft.evidence.length>=4;more.onclick=()=>{const row={page,quote:''};draft.evidence.push(row);proofFields(row);more.disabled=draft.evidence.length>=4;};card.append(more);
+   field('Motif de la décision (obligatoire pour écarter)',draft.note,value=>draft.note=value);
+  }
+  const actions=node('div');actions.className='row';card.append(actions);
+  async function decide(action){try{notice('');await api(`/api/projects/${p.id}/review`,{id:item.id,action,...draft});reviewDrafts.delete(item.id);await refresh();notice(action==='retry'?'Nouvelle tentative autorisée : cliquez sur Continuer.':'Décision enregistrée. Les autres passages restent à vérifier.');}catch(e){notice(e.message,true);}}
+  if(editable){for(const [action,label] of [['correct','Valider cette correction de la source'],['exclude','Écarter cette idée avec un motif']]){const button=node('button',label);button.disabled=busy(p);button.onclick=()=>decide(action);actions.append(button);}}
+  const retry=node('button','Réessayer avec le modèle');retry.disabled=busy(p);retry.onclick=()=>decide('retry');actions.append(retry);holder.append(card);
+ }
+}
 function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('model').value.trim(),audience:$('audience').value.trim(),minutes:Number($('minutes').value),speakers:$('speakers').value.split(',').map(v=>v.trim()).filter(Boolean),num_ctx:Number($('num-ctx').value),temperature:.3};}
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
  const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v5'||runtime.editorial_mode!=='grounded-editorial-v3';
- document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
+ document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'mode local'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
  if(outdated){runtimeWarning=true;notice('Une ancienne instance ou une mise à jour incomplète est détectée. Fermez la fenêtre de lancement, puis utilisez Mettre-a-jour.cmd et relancez le programme.',true);}else if(runtimeWarning){runtimeWarning=false;notice('');}
  const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
+ renderReviews(p);
+ if(sourceReaderProject!==p.id){sourceReaderProject=p.id;$('source-reader').open=false;$('retained-ideas').replaceChildren();$('retained-proof').textContent='';}
+ $('source-reader').hidden=!p.completed.includes(2);$('flag-source').disabled=busy(p);
  $('project-name').textContent=p.name;$('source-info').textContent=p.pdfs.length?`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`:'Lecture audio d’un dialogue fourni';document.querySelector('.work').hidden=!p.pdfs.length;$('continue').hidden=!p.pdfs.length;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
- $('continue').disabled=outdated||busy(p)||p.next_step>9||p.needs_source_upgrade||p.source_diagnostic?.empty;$('save-settings').disabled=busy(p);$('continue').textContent=p.source_diagnostic?.empty?'Réexamen de l’étape 2 nécessaire':p.needs_source_upgrade?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
- $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
+ $('continue').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||p.next_step>9||(p.needs_source_upgrade&&p.next_step!==2)||(p.source_diagnostic?.empty&&p.next_step!==2);$('save-settings').disabled=busy(p);$('continue').textContent=p.source_diagnostic?.empty&&p.next_step!==2?'Réexamen de l’étape 2 nécessaire':p.needs_source_upgrade&&p.next_step!==2?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p)||Boolean(p.reviews?.length);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
  $('source-diagnostic').hidden=!p.source_diagnostic?.empty;const reasons=$('source-reasons');reasons.replaceChildren();if(p.source_diagnostic?.empty){$('source-diagnostic-message').textContent='0 idée retenue sur '+p.source_diagnostic.total+' idée(s) examinée(s). La synthèse est bloquée. Réexaminez l’étape 2 avec le nouveau contrôle des citations ; les PDF et leur extraction restent conservés.';for(const [reason,count] of Object.entries(p.source_diagnostic.reasons))reasons.append(node('li',count+' — '+reason));$('source-report').href=`/files/${p.id}/02.md`;}
  $('quality-upgrade').hidden=!p.needs_source_upgrade;
- $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Ces idées restent consultables dans le rapport et sont écartées du script provisoire.`;
+ $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Consultez les vérifications regroupées avant de poursuivre le script.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
- $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
+ $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
  const parts=(p.parts||[]).filter(name=>Number(name.slice(0,2))===step);$('saved-parts').hidden=!parts.length;const links=$('part-links');links.replaceChildren();for(const file of parts){const a=node('a',file.slice(3));a.href=`/files/${p.id}/partie-${file}`;links.append(a);}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
@@ -7434,7 +8518,7 @@ function renderAudio(p){const audio=p.audio;if(!audio)return;const key=p.id+JSON
  $('podcast-audio').hidden=!audio.available;const player=$('podcast-player');if(audio.available){const src=`/media/${p.id}/${audio.filename}?v=${audio.signature}`;if(player.getAttribute('src')!==src)player.src=src;$('download-mp3').href=`/files/${p.id}/${audio.filename}`;$('download-audio-report').href=`/files/${p.id}/${audio.report_file}`;$('audio-duration').textContent=(audio.scope_minutes?'Essai':'Podcast complet')+' — durée audio : '+Math.floor(audio.seconds/60)+' min '+Math.round(audio.seconds%60)+' s';$('audio-warnings').textContent=audio.warnings?.length?audio.warnings.length+' réplique(s) ont une durée atypique : consultez le rapport et réécoutez ces passages.':'Le rapport indique la durée de chaque réplique. Une durée plausible ne garantit pas que tous les mots ont été prononcés.';}else if(player.getAttribute('src')){player.pause();player.removeAttribute('src');player.load();}}
 function audioDraftPending(){return $('audio-source').value!==current()?.audio.source_mode||($('audio-source').value==='provided'&&audioTextDirty);}
 async function saveVoices(){await api(`/api/projects/${selected}/audio-settings`,audioSettings());}
-async function audioAction(action,speaker){try{notice('');if(action==='generate'&&audioDraftPending())throw Error('Cliquez sur Utiliser ce texte pour l’audio avant de générer le MP3.');if(action!=='prepare')await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker});await refresh();}catch(e){notice(e.message,true);}}
+async function audioAction(action,speaker){try{notice('');if(action==='generate'&&audioDraftPending())throw Error('Cliquez sur Utiliser ce texte pour l’audio avant de générer le MP3.');let allow_download=false;if(action==='prepare'){allow_download=window.confirm('Autoriser ce téléchargement uniquement ? Le moteur MP3 imageio-ffmpeg 0.6.0 sera récupéré depuis PyPI et files.pythonhosted.org pour encoder l’audio sur ce PC. Aucun PDF, dialogue ni référence vocale ne sera envoyé. Cette autorisation ne vaut pas pour les autres opérations.');if(!allow_download)return;}else await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker,allow_download});await refresh();}catch(e){notice(e.message,true);}}
 $('load-voices').onclick=async()=>{const button=$('load-voices');button.disabled=true;$('voices-status').textContent='Connexion à VoiceStudio…';try{const currentValues=audioSettings().voices;const value=await api('/api/voices',audioSettings());voiceCatalog=value.voices;for(const speaker of current().audio.speakers){if(!currentValues[speaker]){const matches=voiceCatalog.filter(v=>v.name.toLowerCase()===speaker.toLowerCase());if(matches.length===1)currentValues[speaker]=matches[0].id;}}voiceRows(current(),currentValues);$('voices-status').textContent=voiceCatalog.length?voiceCatalog.length+' voix créée(s) disponible(s). Les références sont affichées à côté de leurs noms.':'VoiceStudio répond, mais aucun profil vocal créé n’a été trouvé.';}catch(e){$('voices-status').textContent=e.message;}finally{button.disabled=false;}};
 $('save-voices').onclick=async()=>{try{await saveVoices();await refresh();notice('Voix enregistrées pour ce projet.');}catch(e){notice(e.message,true);}};
 $('prepare-audio').onclick=()=>audioAction('prepare');$('render-audio').onclick=()=>audioAction('generate');
@@ -7446,6 +8530,19 @@ $('audio-text-file').onchange=async()=>{const file=$('audio-text-file').files[0]
 $('save-audio-text').onclick=async()=>{try{const value=await api(`/api/projects/${selected}/audio-text`,{mode:'provided',text:$('audio-text').value});audioTextDirty=false;await refresh();$('audio-text-status').textContent='Texte enregistré. Intervenants : '+value.speakers.join(', ')+'.';}catch(e){notice(e.message,true);}};
 $('import-legacy-audio').onclick=async()=>{if($('audio-source').value!==current().audio.source_mode){notice('Enregistrez d’abord le dialogue avec Utiliser ce texte pour l’audio.',true);return;}const file=$('legacy-audio-file').files[0];if(!file){notice('Choisissez votre ancien podcast_interface.py ou un export JSON.',true);return;}if(file.size>500000){notice('Le fichier de réglages est trop volumineux.',true);return;}try{const value=await api(`/api/projects/${selected}/audio-import`,{source:await file.text(),apply_cast:$('legacy-cast').checked});audioFormKey='';await refresh();$('legacy-audio-status').textContent='Réglages récupérés : '+value.names.join(', ')+'.'+(value.invalidated_from?' Les résumés sont conservés ; cliquez sur Continuer pour adapter les intervenants du dialogue.':' Vous pouvez essayer les voix et générer le MP3.');}catch(e){notice(e.message,true);}};
 $('new-audio').onclick=async()=>{try{const created=await api('/api/projects',{name:'Lecture d’un dialogue',settings:{...state.defaults,speakers:['AnneSo','Sophie']},audio_only:true});selected=created.id;showSetup=false;step=1;previewKey='';audioFormKey='';await refresh();notice('Chargez votre dialogue TXT, puis vos réglages VoiceStudio.');}catch(e){notice(e.message,true);}};
+
+$('source-reader').ontoggle=async()=>{
+ if(!$('source-reader').open)return;
+ const p=current();if(!p?.completed.includes(2))return;
+ try{
+  const value=await api(`/files/${p.id}/02.json`);if(current()?.id!==p.id)return;
+  const ideas=value.data.documents.flatMap(d=>d.parts.flatMap(part=>part.ideas.concat((part.excluded_ideas||[]).filter(i=>i.human_excluded)))),select=$('retained-ideas');select.replaceChildren();
+  for(const idea of ideas){const option=node('option',`${idea.human_excluded?'Écartée · ':''}[${idea.id}] ${idea.statement}`);option.value=idea.id;select.append(option);}
+  select.onchange=()=>{const idea=ideas.find(i=>i.id===select.value);$('retained-proof').textContent=idea?idea.statement+'\n\n'+idea.explanation+(idea.human_excluded?'\n\nMotif : '+idea.reason:'')+'\n\n'+(idea.evidence||[]).map(e=>'Page '+e.page+' : '+e.quote).join('\n\n'):'Aucune idée retenue.';};
+  select.onchange();
+ }catch(e){notice(e.message,true);}
+};
+$('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag-source`,{id:$('retained-ideas').value});$('source-reader').open=false;await refresh();$('review-panel').scrollIntoView({behavior:'smooth'});}catch(e){notice(e.message,true);}};
 ```
 
 ## web/index.html
@@ -7467,6 +8564,8 @@ $('new-audio').onclick=async()=>{try{const created=await api('/api/projects',{na
 <section id="source-diagnostic" class="card" hidden><h3>Reprendre les idées non confirmées</h3><p id="source-diagnostic-message"></p><ul id="source-reasons"></ul><a id="source-report">Télécharger le rapport de l’étape 2</a></section>
 <p id="quality-upgrade" class="muted" hidden>Cette version réexamine les idées puis réécrit et relit le dialogue à partir des sources. Cliquez sur « Améliorer les résumés existants », attendez la fin du réexamen, puis sur « Continuer ». Les anciens résultats sont archivés ; vos PDF et vos réglages de voix restent conservés.</p>
 <p id="quality-report" class="muted" hidden></p>
+<section id="review-panel" class="card" hidden><h2>Vérifications regroupées</h2><p>Les autres passages validés sont conservés. Vérifiez la page du PDF, puis corrigez l’idée source, écartez-la avec un motif ou demandez une nouvelle tentative au modèle. Une correction sera réutilisée dans les étapes suivantes.</p><div id="review-items"></div></section>
+<details id="source-reader" class="card" hidden><summary>Relire les idées et signaler un doute</summary><p>La relecture automatique peut se tromper. Vous pouvez remettre une idée dans les vérifications regroupées.</p><label>Idée retenue<select id="retained-ideas"></select></label><pre id="retained-proof"></pre><button id="flag-source" type="button">Mettre cette idée à vérifier</button></details>
 <div class="work"><nav id="steps" aria-label="Étapes du podcast"></nav><section class="card result"><div class="row"><h2 id="step-title">Choisissez une étape</h2><button id="run-step">Exécuter cette étape</button></div><p id="step-description" class="muted"></p><div class="row"><a id="download-md" hidden>Télécharger le texte</a><a id="download-json" hidden>Télécharger les données</a></div><details id="saved-parts" hidden><summary>Parties déjà enregistrées en Markdown</summary><p class="small muted">Ces fichiers sont disponibles même si la suite du traitement s’arrête. Continuer reprend les parties manquantes.</p><div id="part-links" class="row"></div></details><article id="preview"><p class="muted">Les résultats apparaîtront ici.</p></article></section></div>
 <section id="final-exports" class="card" hidden><h2>Le script du podcast</h2><p>Relisez le dialogue, puis générez sa version audio avec vos voix VoiceStudio.</p><div id="export-links" class="row"></div><small>La durée du texte reste une estimation. Les passages incertains sont signalés dans les rapports.</small></section>
 <section id="audio-panel" class="card"><h2>Voix et podcast MP3</h2><p>Ouvrez VoiceStudio sur ce PC. Chargez vos voix, associez-en une à chaque intervenant, puis écoutez un aperçu.</p>
@@ -7496,6 +8595,7 @@ audio { width: 100%; margin-top: 12px; }
 #new-audio { margin-top: 10px; }
 textarea { width: 100%; border: 1px solid #b8c6bd; border-radius: 7px; padding: 12px; font: 14px/1.6 system-ui; color: var(--ink); background: white; margin: 8px 0 14px; resize: vertical; }
 input[type=checkbox] { display: inline-block; width: auto; margin-right: 8px; }
+.review-item{padding:16px 0}.review-item>a{display:block;margin:10px 0}.review-item label{margin-top:14px}.review-item textarea{display:block;width:100%;min-height:90px;resize:vertical;padding:12px;border:1px solid #b8c6bd;border-radius:7px;font:400 15px system-ui;color:var(--ink);background:#fff}.review-item input[type=number]{max-width:120px}.review-item textarea:focus-visible{outline:3px solid #dbab58;outline-offset:3px}#retained-proof{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}
 ```
 
 ## writing.py
@@ -7506,6 +8606,8 @@ import re
 from storage import fingerprint,read
 import quality
 import source_review
+import source_checks
+from issues import SourceIssue
 from llm import InvalidResponseError, RepetitionError, ResponseLimitError
 
 VERSION='grounded-writing-v2'
@@ -7605,7 +8707,7 @@ def common_entry(pipe,idea,terms,original=None):
     return rewrite(pipe,4,key,idea,terms)
 
 
-def validate_text(text,idea,terms,limit=95):
+def _validate_text(text,idea,terms,limit=95):
     identity=idea.get('id','ce passage')
     if not isinstance(text,str):raise TextShapeError('Le champ text doit contenir du texte pour '+identity+' ; il est absent ou non textuel.')
     count=len(text.split())
@@ -7627,6 +8729,16 @@ def validate_text(text,idea,terms,limit=95):
     if re.search(r'\[\d[\d, –-]*\]|\b(?:Fig\.|voir figure|voir tableau)',text,re.I):raise ValueError('Garder les références bibliographiques et figures dans le dossier, pas dans le texte oral.')
 
 
+def validate_text(text,idea,terms,limit=95):
+    try:return _validate_text(text,idea,terms,limit)
+    except (TextShapeError,WordCountError,quality.AcronymExpansionError,SourceIssue):raise
+    except ValueError as error:raise SourceIssue(str(error)) from error
+
+
+def deferred(pipe,step,key,idea,produce):
+    return pipe.reviewed(step,key,idea,produce) if hasattr(pipe,'reviewed') else produce()
+
+
 def check(pipe,text,idea,terms,final=False,recent=None):
     """La décision est du modèle, la présence et la nature de la preuve sont contrôlées."""
     source=evidence(idea)
@@ -7634,7 +8746,8 @@ def check(pipe,text,idea,terms,final=False,recent=None):
     rows=source_review.excerpts(source)
     prepared,_=source_wording(idea)
     payload={'text':text,'source_excerpts':rows,'expected_statement':prepared['statement'],
-             'expected_explanation':prepared['explanation'],'glossary':terms,'final_review':final,'recent_texts':recent or []}
+             'expected_explanation':prepared['explanation'],'source_constraints':source_checks.constraints(source),
+             'glossary':terms,'final_review':final,'recent_texts':recent or []}
     def validate(value):
         if not isinstance(value,dict) or value.get('status') not in ('supported','uncertain','contradicted'):raise ValueError('Un verdict supported, uncertain ou contradicted est requis.')
         if not isinstance(value.get('reason'),str) or not value['reason'].strip():raise ValueError('Motiver le verdict de relecture.')
@@ -7671,6 +8784,7 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
     prepared,wording_changes=source_wording(idea)
     payload={'statement':prepared['statement'],'explanation':prepared['explanation'],
              'source':evidence(idea),'glossary':terms,
+             'source_constraints':source_checks.constraints(evidence(idea)),
              'preferred_wording':{term:quality.writing_definition(entries[0]['definition']) for term,entries in terms.items() if entries},
              'allowed_definitions':{term:quality.definition_forms(entries) for term,entries in terms.items()},
              'kind':kind,'feedback':feedback,'context':context or {},
@@ -7713,12 +8827,12 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
             before=value['text'];after=prepare_draft(before,idea)
             corrections=[{'field':'draft.text','before':before,'after':after}] if before!=after else []
             return {**value,'text':after,'draft_wording_corrections':corrections}
-        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError) as error:
+        except (InvalidResponseError,TextShapeError,WordCountError,quality.AcronymExpansionError,SourceIssue) as error:
             # Les reprises ciblées concernent la forme, la longueur et les sigles du glossaire.
             cause=error
             while cause is not None and not isinstance(cause,(TextShapeError,WordCountError,quality.AcronymExpansionError)):cause=cause.__cause__
+            error.draft_text=seen.get('text')
             if cause is not None:
-                error.draft_text=seen.get('text')
                 if isinstance(cause,quality.AcronymExpansionError):error.terminology_issue=cause
                 else:error.length_issue=True
             raise
@@ -7772,7 +8886,9 @@ def rewrite(pipe,step,key,idea,terms,kind='explanation',feedback='',context=None
                         'terminology_corrections':terminology_corrections,
                         'source_wording_corrections':wording_changes+value['draft_wording_corrections']}
             notes=verdict['reason']
-        raise InvalidResponseError('Passage non validé après réécriture : '+notes)
+        error=InvalidResponseError('Passage non validé après réécriture : '+notes)
+        error.draft_text=value['text']
+        raise error from SourceIssue(notes)
     return pipe.unit(step,key,'Rédaction vérifiée — '+idea['id'],
         rewrite_inputs(idea,terms,kind,feedback,context),produce,lambda value:entry_markdown(value,idea['id']),
         validate_saved=lambda value:validate_cached_entry(value,idea,terms))
@@ -7798,7 +8914,9 @@ def sentences(pipe):
     for c in plan['chapters']:
         items=[]
         for identity in c['idea_ids']:
-            idea=registry[identity];entry=rewrite(pipe,6,'Phrase-'+identity,idea,terms_for(data,idea),'sentence')
+            idea=registry[identity]
+            entry=deferred(pipe,6,'Phrase-'+identity,idea,lambda:rewrite(pipe,6,'Phrase-'+identity,idea,terms_for(data,idea),'sentence'))
+            if entry is None:continue
             items.append({'idea_id':identity,'sentence':entry['text'],**{k:v for k,v in entry.items() if k!='text'}})
             warnings.extend(entry.get('warnings',[]))
         chapters.append({'id':c['id'],'items':items});notes+=['## '+c['title'],'','\n\n'.join('- '+i['sentence']+' ['+i['idea_id']+']' for i in items)]
@@ -7816,7 +8934,8 @@ def explanations(pipe):
             idea=registry[identity]
             try:validate_entry(actual[identity],idea,'sentence')
             except (KeyError,ValueError):raise ValueError('Phrase associée à une autre idée : refaire l’étape 6. '+identity) from None
-            entry=rewrite(pipe,7,'Explication-'+identity,idea,terms_for(data,idea),context={'key_sentence':actual[identity]['sentence'],'previous':entries[-1]['text'] if entries else ''})
+            entry=deferred(pipe,7,'Explication-'+identity,idea,lambda:rewrite(pipe,7,'Explication-'+identity,idea,terms_for(data,idea),context={'key_sentence':actual[identity]['sentence'],'previous':entries[-1]['text'] if entries else ''}))
+            if entry is None:continue
             entries.append({'idea_id':identity,**entry})
             warnings.extend(entry.get('warnings',[]))
         chapters.append({'id':c['id'],'title':c['title'],'transition':'','items':entries})
@@ -7845,9 +8964,10 @@ def final_pass(pipe,chapters,registry,data):
                 final=check(pipe,text,idea,terms,final=True,recent=recent[-2:])
                 if final['status']!='supported':raise InvalidResponseError('Révision finale non concluante : '+final['reason'])
                 return {'text':text,'review':final,'corrected':True}
-            value=pipe.unit(9,'Relecture-'+idea['id'],'Révision du dialogue — '+idea['id'],
+            value=deferred(pipe,9,'Relecture-'+idea['id'],idea,lambda:pipe.unit(9,'Relecture-'+idea['id'],'Révision du dialogue — '+idea['id'],
                 {'protocol':VERSION,'proof_protocol':source_review.PROTOCOL,'text':turn['text'],'source':idea,'terms':terms,'recent':recent[-2:]},produce,
-                lambda v:v['text']+'\n\nRelecture : '+v['review']['reason'])
+                lambda v:v['text']+'\n\nRelecture : '+v['review']['reason']))
+            if value is None:continue
             if value['corrected']:corrections.append({'idea_id':idea['id'],'before':turn['text'],'after':value['text'],'reason':value['review']['reason']})
             turn['text']=value['text'];turn['text_hash']=fingerprint(value['text']);turn['final_review']=value['review']
             turn['length_warning']=(idea['id']+' : réponse de '+str(len(turn['text'].split()))+' mots après intégration du lexique.'

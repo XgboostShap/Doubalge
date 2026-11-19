@@ -219,16 +219,19 @@ def run_process(command,cancelled):
             if proc.poll() is None:proc.kill();proc.wait()
 
 
-def prepare_encoder(cancelled,progress):
+def prepare_encoder(cancelled,progress,allow_download=False):
     try:return encoder()
     except ValueError:pass
+    if allow_download is not True:
+        from issues import DownloadConsentRequired
+        raise DownloadConsentRequired('Le moteur MP3 est absent. Autorisez explicitement le téléchargement de imageio-ffmpeg 0.6.0 depuis PyPI ; aucun document ne sera envoyé.')
     progress('Installation du moteur MP3 — premier téléchargement')
     uv=Path(__file__).resolve().parent/'.runtime'/('uv.exe' if os.name=='nt' else 'uv')
-    if uv.exists():command=[str(uv),'pip','install','--python',sys.executable,'imageio-ffmpeg==0.6.0']
+    if uv.exists():command=[str(uv),'pip','install','--python',sys.executable,'--no-deps','--index-url','https://pypi.org/simple','imageio-ffmpeg==0.6.0']
     else:
         if importlib.util.find_spec('pip') is None:
             run_process([sys.executable,'-m','ensurepip','--upgrade'],cancelled)
-        command=[sys.executable,'-m','pip','install','--disable-pip-version-check','imageio-ffmpeg==0.6.0']
+        command=[sys.executable,'-m','pip','install','--disable-pip-version-check','--no-deps','--index-url','https://pypi.org/simple','imageio-ffmpeg==0.6.0']
     run_process(command,cancelled)
     return encoder()
 

@@ -1,3 +1,5 @@
+from issues import ReviewRequired
+from review_queue import Reviews
 """Reprise des projets sans idée retenue et preuves sélectionnées par référence."""
 import copy
 from pathlib import Path
@@ -121,7 +123,8 @@ class SourceFlow(unittest.TestCase):
                 if task=='review_facts':
                     value={'decisions':{i['id']:{'status':'uncertain','reason':'Appui non confirmé.'} for i in payload['candidates']}};validate(value);return value
                 return super().ask(task,payload,instructions,validate,budget)
-        with self.assertRaisesRegex(ModelError,'Étape 2/9.*Réexaminer'):Pipeline(self.root,Reject()).run(1,9)
+        with self.assertRaises(ReviewRequired):Pipeline(self.root,Reject()).run(1,9)
+        self.assertEqual(len(Reviews(self.root).pending(2)),6)
         self.assertTrue((self.root/'etapes/02.json').exists());self.assertTrue((self.root/'etapes/02.md').exists())
         self.assertFalse((self.root/'etapes/03.json').exists());self.assertFalse((self.root/'exports/podcast.json').exists())
         self.assertTrue(source_review.diagnostic(read(self.root/'etapes/02.json')['data'])['empty'])

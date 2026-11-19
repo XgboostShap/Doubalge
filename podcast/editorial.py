@@ -37,7 +37,9 @@ def neutral_question(role, recent):
     return next(q for q in (QUESTIONS[role],)+QUESTION_VARIANTS[role] if quality.definition_key(q) not in used)
 
 def source_hash(idea):
-    return fingerprint({k:idea.get(k) for k in ('id','statement','explanation','document','pages','evidence')})
+    value={k:idea.get(k) for k in ('id','statement','explanation','document','pages','evidence')}
+    if idea.get('human_review'):value['human_review']=idea['human_review']
+    return fingerprint(value)
 
 def passage(idea):
     statement=idea['statement'].strip()
@@ -169,7 +171,9 @@ def compile_documents(pipe):
             selected_ideas=[i for i in part['ideas'] if i['id'] in ids]
             paragraphs=[]
             for idea in selected_ideas:
-                packet=writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{}))
+                packet=writing.deferred(pipe,3,'Synthese-'+idea['id'],idea,
+                    lambda:writing.rewrite(pipe,3,'Synthese-'+idea['id'],idea,doc.get('glossary',{})))
+                if packet is None:continue
                 paragraphs.append(packet['text']+' ['+idea['id']+']')
                 length_warnings.extend(packet.get('warnings',[]))
             text='\n\n'.join(paragraphs) or 'Aucune idée explicative retenue dans cette partie.'
@@ -188,6 +192,7 @@ def compile_documents(pipe):
 def registry_markdown(ideas):
     return '\n\n'.join('- **['+i['id']+']** '+i['statement']+'\n  '+i.get('explanation','')+
         '\n  Source : '+i.get('document','PDF')+', pages '+', '.join(map(str,i.get('pages',[])))+
+        ('\n  Validation humaine : '+i['human_review'].get('note','Source vérifiée par l’utilisateur.') if i.get('human_review') else '')+
         ('\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i.get('evidence',[]))
          if i.get('evidence') else '') for i in ideas)
 
@@ -208,8 +213,9 @@ def common(pipe):
         if not entries:continue
         paragraphs=[]
         for idea in entries:
-            packet=writing.common_entry(pipe,idea,
-                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']])
+            packet=writing.deferred(pipe,4,'Commun-'+idea['id'],idea,lambda:writing.common_entry(pipe,idea,
+                {term:values for doc in data['documents'] if doc['id']==idea['document'] for term,values in doc.get('glossary',{}).items()},originals[idea['id']]))
+            if packet is None:continue
             paragraphs.append(packet['text']+' ['+idea['id']+']')
             length_warnings.extend(packet.get('warnings',[]))
         text='\n\n'.join(paragraphs)

@@ -18,28 +18,67 @@ const busy=p=>['queued','running'].includes(p?.task?.state);
 function notice(message,error=false){$('notice').hidden=!message;$('notice').textContent=message;$('notice').classList.toggle('error',error);}
 async function api(path,body){const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json','X-Podcast-Token':state.token},body:body===undefined?undefined:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw Error(value.error||'La requête a échoué.');return value;}
 function node(tag,text){const e=document.createElement(tag);if(text)e.textContent=text;return e;}
+let reviewKey='',reviewDrafts=new Map(),sourceReaderProject=null;
+function renderReviews(p){
+ const items=p.reviews||[];$('review-panel').hidden=!items.length;
+ const key=JSON.stringify([p.id,items.map(i=>[i.id,i.attempts]),busy(p),p.pdf_readings]);if(key===reviewKey)return;reviewKey=key;
+ const holder=$('review-items');holder.replaceChildren();
+ for(const item of items){
+  const card=node('details');card.className='review-item';card.open=items.length===1;
+  card.append(node('summary',`Étape ${item.step} · ${item.idea_id} · ${item.category}`),node('p',item.reason));
+  if(item.draft){const rejected=node('details');rejected.append(node('summary','Voir le brouillon refusé'),node('pre',item.draft));card.append(rejected);}
+  const source=item.source||{},page=source.pages?.[0]||1;
+  if(/^PDF[1-9]\d*$/.test(source.document||'')){
+   const link=node('a',`Ouvrir le PDF source, page ${page}`);link.href=`/sources/${p.id}/${source.document}.pdf#page=${page}`;link.target='_blank';link.rel='noopener';card.append(link);
+   const name=`${source.document}-p${page}.md`;
+   if(p.pdf_readings?.includes(name)){const reading=node('a','Télécharger la relecture Docling de cette page');reading.href=`/files/${p.id}/lecture-${name}`;card.append(reading);}
+   if(p.pdf_reread_available){const reread=node('button','Relire cette page avec Docling local');reread.disabled=busy(p);reread.onclick=async()=>{try{await api(`/api/projects/${p.id}/reread`,{id:item.id});await refresh();}catch(e){notice(e.message,true);}};card.append(reread);}
+   else card.append(node('small','Docling est facultatif et absent de cette installation. Aucun modèle ne sera téléchargé automatiquement. La page PDF reste disponible pour vérifier la source.'));
+  }
+  let draft=reviewDrafts.get(item.id);
+  if(!draft){const evidence=source.evidence?.length?source.evidence:source.checked_evidence||[];draft={statement:source.statement||'',explanation:source.explanation||'',note:'',evidence:evidence.map(e=>typeof e==='string'?{page,quote:e}:{page:e.page||page,quote:e.quote||''})};if(!draft.evidence.length)draft.evidence=[{page,quote:''}];reviewDrafts.set(item.id,draft);}
+  const editable=p.completed.includes(2)&&/^PDF\d+-P\d+-I\d+$/.test(item.idea_id)&&!(p.incomplete_source_parts||[]).some(prefix=>item.idea_id.startsWith(prefix+'-'));
+  function field(title,value,update){const label=node('label',title),input=node('textarea');input.value=value;input.rows=3;input.disabled=busy(p);input.oninput=()=>update(input.value);label.append(input);card.append(label);return input;}
+  if(editable){
+   field('Idée à conserver',draft.statement,value=>draft.statement=value);
+   field('Explication et réserves',draft.explanation,value=>draft.explanation=value);
+   const proofs=node('div');card.append(proofs);
+   function proofFields(row){const label=node('label','Citation exacte du PDF'),number=node('input'),quote=node('textarea');number.type='number';number.min=1;number.value=row.page;number.setAttribute('aria-label','Page de la citation');number.oninput=()=>row.page=Number(number.value);quote.value=row.quote;quote.rows=4;quote.oninput=()=>row.quote=quote.value;number.disabled=quote.disabled=busy(p);label.append(number,quote);proofs.append(label);}
+   draft.evidence.forEach(proofFields);
+   const more=node('button','Ajouter une citation');more.type='button';more.disabled=busy(p)||draft.evidence.length>=4;more.onclick=()=>{const row={page,quote:''};draft.evidence.push(row);proofFields(row);more.disabled=draft.evidence.length>=4;};card.append(more);
+   field('Motif de la décision (obligatoire pour écarter)',draft.note,value=>draft.note=value);
+  }
+  const actions=node('div');actions.className='row';card.append(actions);
+  async function decide(action){try{notice('');await api(`/api/projects/${p.id}/review`,{id:item.id,action,...draft});reviewDrafts.delete(item.id);await refresh();notice(action==='retry'?'Nouvelle tentative autorisée : cliquez sur Continuer.':'Décision enregistrée. Les autres passages restent à vérifier.');}catch(e){notice(e.message,true);}}
+  if(editable){for(const [action,label] of [['correct','Valider cette correction de la source'],['exclude','Écarter cette idée avec un motif']]){const button=node('button',label);button.disabled=busy(p);button.onclick=()=>decide(action);actions.append(button);}}
+  const retry=node('button','Réessayer avec le modèle');retry.disabled=busy(p);retry.onclick=()=>decide('retry');actions.append(retry);holder.append(card);
+ }
+}
 function formSettings(){return {endpoint:$('endpoint').value.trim(),model:$('model').value.trim(),audience:$('audience').value.trim(),minutes:Number($('minutes').value),speakers:$('speakers').value.split(',').map(v=>v.trim()).filter(Boolean),num_ctx:Number($('num-ctx').value),temperature:.3};}
 function fillSettings(s){for(const id of ['endpoint','model','audience','minutes'])$(id).value=s[id];$('speakers').value=s.speakers.join(', ');$('num-ctx').value=String(s.num_ctx);}
 async function refresh(){if(polling)return;polling=true;try{state=await api('/api/state');render();}catch(e){notice('L’application ne répond plus. Vérifiez que sa fenêtre de lancement est ouverte.',true);}finally{polling=false;}}
 function render(){
  const runtime=state.runtime,outdated=!runtime||runtime.page_sources!=='pdf-page-v1'||runtime.summary_quality!=='source-review-v5'||runtime.editorial_mode!=='grounded-editorial-v3';
- document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'pages automatiques'):'Ancienne instance du programme';
+ document.querySelector('.badge').textContent=runtime?'Version '+runtime.version+' · '+(outdated?'mise à jour incomplète':'mode local'):'Ancienne instance du programme';
  let about=$('runtime-info');if(!about){about=node('details');about.id='runtime-info';about.append(node('summary','Version et dossier du programme'),node('p'));document.querySelector('aside').append(about);}
  about.querySelector('p').textContent=runtime?'Version '+runtime.version+' · dossier : '+runtime.app_dir:'Fermez la fenêtre de lancement puis relancez le programme mis à jour.';
  if(outdated){runtimeWarning=true;notice('Une ancienne instance ou une mise à jour incomplète est détectée. Fermez la fenêtre de lancement, puis utilisez Mettre-a-jour.cmd et relancez le programme.',true);}else if(runtimeWarning){runtimeWarning=false;notice('');}
  const nav=$('projects');nav.replaceChildren();for(const p of state.projects){const b=node('button',p.name);b.className=p.id===selected?'active':'';b.onclick=()=>{selected=p.id;step=p.completed.at(-1)||1;showSetup=false;previewKey='';fillSettings(p.settings);notice('');render();};nav.append(b);}if(!state.projects.length)nav.append(node('p','Votre premier projet apparaîtra ici.'));
  const p=current();$('project').hidden=!p;$('welcome').hidden=!!p;$('setup').hidden=p&&!showSetup;$('new-fields').hidden=!!p;$('create').hidden=!!p;$('save-settings').hidden=!p;$('setup-title').textContent=p?'Paramètres du projet':'Préparer le projet';
  if(!p)return;
+ renderReviews(p);
+ if(sourceReaderProject!==p.id){sourceReaderProject=p.id;$('source-reader').open=false;$('retained-ideas').replaceChildren();$('retained-proof').textContent='';}
+ $('source-reader').hidden=!p.completed.includes(2);$('flag-source').disabled=busy(p);
  $('project-name').textContent=p.name;$('source-info').textContent=p.pdfs.length?`${p.pdfs.length} PDF · ${p.completed.length}/9 étapes terminées · ${p.settings.minutes} minutes visées`:'Lecture audio d’un dialogue fourni';document.querySelector('.work').hidden=!p.pdfs.length;$('continue').hidden=!p.pdfs.length;
  $('task-box').hidden=!p.task;$('task-message').textContent=p.task?.message||'';$('task-error').hidden=!p.task?.error;$('task-error').textContent=p.task?.error||'';$('cancel').hidden=!busy(p);
- $('continue').disabled=outdated||busy(p)||p.next_step>9||p.needs_source_upgrade||p.source_diagnostic?.empty;$('save-settings').disabled=busy(p);$('continue').textContent=p.source_diagnostic?.empty?'Réexamen de l’étape 2 nécessaire':p.needs_source_upgrade?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
- $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
+ $('continue').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||p.next_step>9||(p.needs_source_upgrade&&p.next_step!==2)||(p.source_diagnostic?.empty&&p.next_step!==2);$('save-settings').disabled=busy(p);$('continue').textContent=p.source_diagnostic?.empty&&p.next_step!==2?'Réexamen de l’étape 2 nécessaire':p.needs_source_upgrade&&p.next_step!==2?'Réexamen des sources requis':p.next_step>9?'Script terminé':'Continuer jusqu’au script final';
+ $('refine').hidden=!p.completed.includes(2);$('refine').disabled=outdated||busy(p)||Boolean(p.reviews?.length);$('refine').textContent=p.source_diagnostic?.empty?'Réexaminer l’étape 2':'Améliorer les résumés existants';$('refine').classList.toggle('primary',Boolean(p.source_diagnostic?.empty));
  $('source-diagnostic').hidden=!p.source_diagnostic?.empty;const reasons=$('source-reasons');reasons.replaceChildren();if(p.source_diagnostic?.empty){$('source-diagnostic-message').textContent='0 idée retenue sur '+p.source_diagnostic.total+' idée(s) examinée(s). La synthèse est bloquée. Réexaminez l’étape 2 avec le nouveau contrôle des citations ; les PDF et leur extraction restent conservés.';for(const [reason,count] of Object.entries(p.source_diagnostic.reasons))reasons.append(node('li',count+' — '+reason));$('source-report').href=`/files/${p.id}/02.md`;}
  $('quality-upgrade').hidden=!p.needs_source_upgrade;
- $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Ces idées restent consultables dans le rapport et sont écartées du script provisoire.`;
+ $('quality-report').hidden=!p.completed.includes(2)||!p.summary_warnings;$('quality-report').textContent=`${p.summary_warnings||0} idée(s) à vérifier dans le rapport de l’étape 2. Consultez les vérifications regroupées avant de poursuivre le script.`;
  $('download-project').href=`/files/${p.id}/dossier.zip`;$('download-project').hidden=busy(p);
  const steps=$('steps');steps.replaceChildren();state.steps.forEach((title,i)=>{const n=i+1,b=node('button');b.className=[step===n?'selected':'',p.completed.includes(n)?'done':'',busy(p)&&p.task.step===n?'running':''].join(' ');b.append(node('b',p.completed.includes(n)?'✓ '+n:String(n)),node('span',title));b.onclick=()=>{step=n;previewKey='';render();};steps.append(b);});
- $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
+ $('step-title').textContent=`${step}. ${state.steps[step-1]}`;$('step-description').textContent=descriptions[step-1];$('run-step').disabled=outdated||busy(p)||Boolean(p.reviews?.length)||(step>1&&!p.completed.includes(step-1));$('run-step').textContent=p.completed.includes(step)?'Refaire cette étape':'Exécuter cette étape';
  for(const [id,ext] of [['download-md','md'],['download-json','json']]){$(id).hidden=!p.completed.includes(step);$(id).href=`/files/${p.id}/${String(step).padStart(2,'0')}.${ext}`;}
  const parts=(p.parts||[]).filter(name=>Number(name.slice(0,2))===step);$('saved-parts').hidden=!parts.length;const links=$('part-links');links.replaceChildren();for(const file of parts){const a=node('a',file.slice(3));a.href=`/files/${p.id}/partie-${file}`;links.append(a);}
  const key=JSON.stringify([p.id,step,p.completed.includes(step),p.task?.id,p.task?.state]);if(key!==previewKey){previewKey=key;loadPreview(p,step);}
@@ -70,7 +109,7 @@ function renderAudio(p){const audio=p.audio;if(!audio)return;const key=p.id+JSON
  $('podcast-audio').hidden=!audio.available;const player=$('podcast-player');if(audio.available){const src=`/media/${p.id}/${audio.filename}?v=${audio.signature}`;if(player.getAttribute('src')!==src)player.src=src;$('download-mp3').href=`/files/${p.id}/${audio.filename}`;$('download-audio-report').href=`/files/${p.id}/${audio.report_file}`;$('audio-duration').textContent=(audio.scope_minutes?'Essai':'Podcast complet')+' — durée audio : '+Math.floor(audio.seconds/60)+' min '+Math.round(audio.seconds%60)+' s';$('audio-warnings').textContent=audio.warnings?.length?audio.warnings.length+' réplique(s) ont une durée atypique : consultez le rapport et réécoutez ces passages.':'Le rapport indique la durée de chaque réplique. Une durée plausible ne garantit pas que tous les mots ont été prononcés.';}else if(player.getAttribute('src')){player.pause();player.removeAttribute('src');player.load();}}
 function audioDraftPending(){return $('audio-source').value!==current()?.audio.source_mode||($('audio-source').value==='provided'&&audioTextDirty);}
 async function saveVoices(){await api(`/api/projects/${selected}/audio-settings`,audioSettings());}
-async function audioAction(action,speaker){try{notice('');if(action==='generate'&&audioDraftPending())throw Error('Cliquez sur Utiliser ce texte pour l’audio avant de générer le MP3.');if(action!=='prepare')await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker});await refresh();}catch(e){notice(e.message,true);}}
+async function audioAction(action,speaker){try{notice('');if(action==='generate'&&audioDraftPending())throw Error('Cliquez sur Utiliser ce texte pour l’audio avant de générer le MP3.');let allow_download=false;if(action==='prepare'){allow_download=window.confirm('Autoriser ce téléchargement uniquement ? Le moteur MP3 imageio-ffmpeg 0.6.0 sera récupéré depuis PyPI et files.pythonhosted.org pour encoder l’audio sur ce PC. Aucun PDF, dialogue ni référence vocale ne sera envoyé. Cette autorisation ne vaut pas pour les autres opérations.');if(!allow_download)return;}else await saveVoices();await api(`/api/projects/${selected}/audio`,{action,speaker,allow_download});await refresh();}catch(e){notice(e.message,true);}}
 $('load-voices').onclick=async()=>{const button=$('load-voices');button.disabled=true;$('voices-status').textContent='Connexion à VoiceStudio…';try{const currentValues=audioSettings().voices;const value=await api('/api/voices',audioSettings());voiceCatalog=value.voices;for(const speaker of current().audio.speakers){if(!currentValues[speaker]){const matches=voiceCatalog.filter(v=>v.name.toLowerCase()===speaker.toLowerCase());if(matches.length===1)currentValues[speaker]=matches[0].id;}}voiceRows(current(),currentValues);$('voices-status').textContent=voiceCatalog.length?voiceCatalog.length+' voix créée(s) disponible(s). Les références sont affichées à côté de leurs noms.':'VoiceStudio répond, mais aucun profil vocal créé n’a été trouvé.';}catch(e){$('voices-status').textContent=e.message;}finally{button.disabled=false;}};
 $('save-voices').onclick=async()=>{try{await saveVoices();await refresh();notice('Voix enregistrées pour ce projet.');}catch(e){notice(e.message,true);}};
 $('prepare-audio').onclick=()=>audioAction('prepare');$('render-audio').onclick=()=>audioAction('generate');
@@ -82,3 +121,16 @@ $('audio-text-file').onchange=async()=>{const file=$('audio-text-file').files[0]
 $('save-audio-text').onclick=async()=>{try{const value=await api(`/api/projects/${selected}/audio-text`,{mode:'provided',text:$('audio-text').value});audioTextDirty=false;await refresh();$('audio-text-status').textContent='Texte enregistré. Intervenants : '+value.speakers.join(', ')+'.';}catch(e){notice(e.message,true);}};
 $('import-legacy-audio').onclick=async()=>{if($('audio-source').value!==current().audio.source_mode){notice('Enregistrez d’abord le dialogue avec Utiliser ce texte pour l’audio.',true);return;}const file=$('legacy-audio-file').files[0];if(!file){notice('Choisissez votre ancien podcast_interface.py ou un export JSON.',true);return;}if(file.size>500000){notice('Le fichier de réglages est trop volumineux.',true);return;}try{const value=await api(`/api/projects/${selected}/audio-import`,{source:await file.text(),apply_cast:$('legacy-cast').checked});audioFormKey='';await refresh();$('legacy-audio-status').textContent='Réglages récupérés : '+value.names.join(', ')+'.'+(value.invalidated_from?' Les résumés sont conservés ; cliquez sur Continuer pour adapter les intervenants du dialogue.':' Vous pouvez essayer les voix et générer le MP3.');}catch(e){notice(e.message,true);}};
 $('new-audio').onclick=async()=>{try{const created=await api('/api/projects',{name:'Lecture d’un dialogue',settings:{...state.defaults,speakers:['AnneSo','Sophie']},audio_only:true});selected=created.id;showSetup=false;step=1;previewKey='';audioFormKey='';await refresh();notice('Chargez votre dialogue TXT, puis vos réglages VoiceStudio.');}catch(e){notice(e.message,true);}};
+
+$('source-reader').ontoggle=async()=>{
+ if(!$('source-reader').open)return;
+ const p=current();if(!p?.completed.includes(2))return;
+ try{
+  const value=await api(`/files/${p.id}/02.json`);if(current()?.id!==p.id)return;
+  const ideas=value.data.documents.flatMap(d=>d.parts.flatMap(part=>part.ideas.concat((part.excluded_ideas||[]).filter(i=>i.human_excluded)))),select=$('retained-ideas');select.replaceChildren();
+  for(const idea of ideas){const option=node('option',`${idea.human_excluded?'Écartée · ':''}[${idea.id}] ${idea.statement}`);option.value=idea.id;select.append(option);}
+  select.onchange=()=>{const idea=ideas.find(i=>i.id===select.value);$('retained-proof').textContent=idea?idea.statement+'\n\n'+idea.explanation+(idea.human_excluded?'\n\nMotif : '+idea.reason:'')+'\n\n'+(idea.evidence||[]).map(e=>'Page '+e.page+' : '+e.quote).join('\n\n'):'Aucune idée retenue.';};
+  select.onchange();
+ }catch(e){notice(e.message,true);}
+};
+$('flag-source').onclick=async()=>{try{await api(`/api/projects/${selected}/flag-source`,{id:$('retained-ideas').value});$('source-reader').open=false;await refresh();$('review-panel').scrollIntoView({behavior:'smooth'});}catch(e){notice(e.message,true);}};

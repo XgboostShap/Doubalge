@@ -4,6 +4,7 @@ from itertools import groupby
 from pathlib import Path
 import re
 import time
+from contextlib import nullcontext
 
 from llm import Cancelled, InvalidResponseError, ModelError, RepetitionError, ResponseLimitError
 from pdfs import extract, fragments
@@ -11,6 +12,8 @@ import quality
 import editorial
 import source_review
 from storage import fingerprint, read, write, write_text
+from issues import ReviewRequired, SourceIssue
+from review_queue import Reviews, apply_corrections
 
 SOURCE_PAGE_MODE = 'pdf-page-v1'
 SUMMARY_QUALITY_MODE = quality.VERSION
@@ -23,6 +26,11 @@ STEPS = [
     'Relier les idées en explications', 'Rédiger le dialogue avec mémoire',
     'Réviser le script complet',
 ]
+
+
+def validate_complete_extraction(value):
+    if value.get('incomplete_extraction'):
+        raise ValueError('Des fragments restent à extraire ; reprise des réponses déjà enregistrées.')
 
 
 def text(value, key):
@@ -114,6 +122,19 @@ class Pipeline:
         self.progress = progress or (lambda message:None)
         self.meta = read(self.project/'projet.json')
         self.config = self.meta['settings']
+        self.reviews = Reviews(self.project)
+
+    def reviewed(self, step, key, idea, produce):
+        """Un refus de contenu ne perd pas les autres unités de cette étape."""
+        try:
+            scope=self.client.request_scope(6) if hasattr(self.client,'request_scope') else nullcontext()
+            with scope: value=produce()
+        except (InvalidResponseError,RepetitionError,ResponseLimitError,SourceIssue) as error:
+            self.reviews.record(step,key,idea,error)
+            self.progress('Passage à vérifier — '+idea.get('id',key)+' ; poursuite des autres parties')
+            return None
+        self.reviews.completed(step,key)
+        return value
 
     def saved(self, step):
         return read(self.project/'etapes'/f'{step:02}.json')['data']
@@ -169,6 +190,9 @@ class Pipeline:
                 data, markdown = getattr(self,f'step{number}')()
             except ModelError as error:
                 raise type(error)(f'Étape {number}/9 — {STEPS[number-1]} : '+str(error)) from error
+            pending=self.reviews.pending(number)
+            if pending and number!=2:
+                raise ReviewRequired(number,len(pending))
             if self.cancelled.is_set():
                 raise Cancelled()
             write_text(self.project/'etapes'/f'{number:02}.md','# '+STEPS[number-1]+'\n\n'+markdown)
@@ -178,6 +202,7 @@ class Pipeline:
                 self.meta['summary_quality']=quality.VERSION
                 self.meta['summary_warnings']=sum(len(p.get('uncertain_ideas',[])) for d in data['documents'] for p in d['parts'])
                 write(self.project/'projet.json',self.meta)
+                if pending:raise ReviewRequired(number,len(pending))
                 if until>2 and source_review.diagnostic(data)['empty']:
                     raise ModelError('Étape 2/9 — '+source_review.empty_message(data))
         if until==9:
@@ -383,7 +408,14 @@ class Pipeline:
                 continue
             candidates=old.get(page)
             if candidates is None:
-                value=self.summary_excerpt(doc['id'],part['number'],page,chunk)
+                key=f'{doc["id"]}-P{part["number"]}-F{index}'
+                value=self.reviewed(2,key,{'id':key,'document':doc['id'],'pages':[page],
+                    'statement':'Extraction des idées à vérifier','explanation':'','unextracted':True,
+                    'evidence':[{'page':page,'quote':' '.join(b['text'] for b in chunk)}]},
+                    lambda:self.summary_excerpt(doc['id'],part['number'],page,chunk))
+                if value is None:
+                    empty_excerpts.append({'page':page,'summary':'Extraction à réessayer : voir les vérifications regroupées.','pending':True})
+                    continue
                 if not value['ideas']:empty_excerpts.append({'page':page,'summary':value['summary']})
                 candidates=[]
                 for idea in value['ideas']:
@@ -400,9 +432,15 @@ class Pipeline:
                 payload={'source_page':page,'source_text':raw,
                          'candidates':[{'id':i['id'],'statement':i['statement'],'explanation':i['explanation']} for i in batch],
                          'glossary':terms if len(json.dumps(terms,ensure_ascii=False))<=5000 else quality.relevant_terms(terms,raw)}
-                reviewed=self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
+                review_key='Source-'+batch[0]['id']
+                reviewed=self.reviewed(2,review_key,{**batch[0],'document':doc['id'],
+                    'evidence':[{'page':page,'quote':raw}]},lambda:self.unit(2,f'{doc["id"]}-P{part["number"]}-F{index}R{number}',
                     f'{doc["id"]} — contrôle page {page}',{'protocol':source_review.PROTOCOL,'quality':quality.VERSION,'payload':payload,'prompt':source_review.REVIEW_PROMPT},
-                    lambda:self.review_candidates(payload,batch,raw,terms),review_markdown)
+                    lambda:self.review_candidates(payload,batch,raw,terms),review_markdown))
+                if reviewed is None:
+                    reason=next(i['reason'] for i in self.reviews.pending(2) if i['key']==review_key)
+                    excluded.extend({**i,'reason':'À vérifier : '+reason,'checked_evidence':[raw]} for i in batch)
+                    continue
                 originals={i['id']:i for i in batch}
                 for fact in reviewed['kept']:
                     fact=quality.normalize_terminology(fact,raw)
@@ -433,6 +471,7 @@ class Pipeline:
         return {'number':part['number'],'summary':summary['text'],'synthesis_warnings':summary['warnings'],
                 'editorial_warnings':editorial_warnings,
                 'ideas':ideas,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,
+                'incomplete_extraction':any(e.get('pending') for e in empty_excerpts),
                 'excerpts_without_ideas':empty_excerpts,'excluded_ideas':excluded,'page_notes':page_notes,
                 'uncertain_ideas':uncertain,
                 'quality_note':'Citations exactes et seconde lecture automatique de leur appui aux idées. Ces contrôles ne garantissent pas la fidélité scientifique ; une relecture reste nécessaire.'}
@@ -447,9 +486,11 @@ class Pipeline:
             for part in doc['parts']:
                 title = f'{doc["id"]} — partie {part["number"]}'
                 previous=self.previous_part(doc,part,source_signature)
+                if previous and previous.get('incomplete_extraction'):previous=None
                 value = self.unit(2,f'{doc["id"]}-P{part["number"]}',title,
                                   {'source':part,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL,'glossary':terms},
-                                  lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown)
+                                  lambda:self.summarize_part(doc,part,pages,terms,previous),part_markdown,
+                                  validate_saved=lambda v:validate_complete_extraction(v))
                 parts.append(value)
                 notes.append('## '+title+'\n\n'+part_markdown(value))
             if terms:
@@ -457,7 +498,18 @@ class Pipeline:
                     '- **'+term+'** : '+' / '.join(e['definition']+' (page '+str(e['page'])+')' for e in entries)
                     for term,entries in sorted(terms.items())))
             documents.append({'id':doc['id'],'name':doc['name'],'parts':parts,'glossary':terms})
-        result={'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL}
+        result=apply_corrections(self.project,{'documents':documents,'quality_version':quality.VERSION,'review_protocol':source_review.PROTOCOL})
+        for doc in result['documents']:
+            for part in doc['parts']:
+                for idea in part['ideas']:self.reviews.completed(2,'Source-'+idea['id'])
+                for idea in part.get('uncertain_ideas',[]):
+                    candidate={**idea,'document':doc['id']}
+                    # La relecture rejetée reste visible, sans devenir une preuve acceptée.
+                    candidate['statement']=candidate.get('checked_statement') or candidate.get('statement','')
+                    candidate['explanation']=candidate.get('checked_explanation') or candidate.get('explanation','')
+                    self.reviews.record(2,'Source-'+idea['id'],candidate,SourceIssue(idea['reason']))
+        if (self.project/'corrections.json').exists():
+            notes=['## '+d['id']+' — partie '+str(p['number'])+'\n\n'+part_markdown(p) for d in result['documents'] for p in d['parts']]
         result['source_diagnostic']=source_review.diagnostic(result)
         return result,'\n\n'.join(notes)
 
@@ -555,7 +607,7 @@ def part_markdown(part):
     if part.get('excluded_ideas'):
         result+='\n\n### Idées écartées ou regroupées — motifs\n\n'+'\n'.join(
             '- ['+i['id']+'] '+i['statement']+' — '+i['reason'] for i in part['excluded_ideas'])
-    if part['excerpts_without_ideas']:
+    if part.get('excerpts_without_ideas'):
         result += '\n\n### Extraits sans idée retenue — à vérifier\n\n'+'\n'.join(
             f'- Page {e["page"]} : '+e['summary'] for e in part['excerpts_without_ideas'])
     if part.get('quality_note'):result+='\n\n'+part['quality_note']
@@ -609,7 +661,7 @@ def idea_markdown(ideas):
         if i.get('evidence'):
             line+='\n  Appui source : '+' / '.join('« '+e['quote']+' » (page '+str(e['page'])+')' for e in i['evidence'])
         if i.get('status')=='corrected':line+='\n  Correction proposée : '+i['review_reason']
-        if i.get('support_reason'):line+='\n  Seconde lecture automatique : '+i['support_reason']
+        if i.get('support_reason'):line+=('\n  Validation humaine : ' if i.get('human_review') else '\n  Seconde lecture automatique : ')+i['support_reason']
         lines.append(line)
     return '\n\n'.join(lines)
 

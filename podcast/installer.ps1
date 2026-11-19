@@ -1,3 +1,4 @@
+param([switch]$AutoriserTelechargement)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -8,7 +9,17 @@ $appDir = $PSScriptRoot
 $runtime = Join-Path $appDir '.runtime'
 New-Item -ItemType Directory -Force $runtime | Out-Null
 $uv = Join-Path $runtime 'uv.exe'
+$allowDownload = $AutoriserTelechargement.IsPresent
+if (-not $allowDownload) {
+    Write-Host 'Par defaut, installation hors connexion avec les ressources deja en cache.'
+    Write-Host 'Internet peut servir a recuperer uv/Python depuis GitHub et pypdf depuis PyPI/files.pythonhosted.org.'
+    Write-Host 'Aucun PDF, texte de podcast ou reglage vocal ne sera envoye. Cette autorisation concerne cette installation uniquement.'
+    $answer = Read-Host 'Autoriser ces telechargements maintenant ? [o/N]'
+    $allowDownload = $answer -match '^(o|oui)$'
+}
+$env:UV_OFFLINE = if ($allowDownload) { 'false' } else { 'true' }
 if (-not (Test-Path $uv)) {
+    if (-not $allowDownload) { throw 'uv est absent. Aucun acces Internet effectue. Relancez Installer-Windows.cmd et autorisez la preparation si vous souhaitez telecharger les ressources.' }
     Write-Host 'Telechargement du gestionnaire Python officiel uv.'
     $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/astral-sh/uv/releases/tags/0.13.7' -Headers @{'User-Agent'='PodcastPedago-Installer'}
     $asset = $release.assets | Where-Object { $_.name -eq 'uv-x86_64-pc-windows-msvc.zip' } | Select-Object -First 1
@@ -30,7 +41,10 @@ $env:UV_CACHE_DIR = Join-Path $runtime 'cache'
 $env:UV_PYTHON_BIN_DIR = Join-Path $runtime 'bin'
 Write-Host 'Installation de Python 3.12 dans le dossier de l application.'
 & $uv python install 3.12 --no-bin --no-registry
-if ($LASTEXITCODE -ne 0) { throw 'Installation de Python interrompue. Verifiez la connexion puis relancez.' }
+if ($LASTEXITCODE -ne 0) {
+    if (-not $allowDownload) { throw 'Python est absent du cache local. Aucun telechargement autorise. Relancez l installateur et autorisez la preparation pour recuperer cette ressource.' }
+    throw 'Installation de Python interrompue. Verifiez la connexion puis relancez.'
+}
 $venv = Join-Path $appDir '.venv'
 $python = Join-Path $venv 'Scripts\python.exe'
 if (-not (Test-Path $python)) {
@@ -38,7 +52,10 @@ if (-not (Test-Path $python)) {
     if ($LASTEXITCODE -ne 0) { throw 'Creation de l environnement Python impossible.' }
 }
 & $uv pip install --python $python -r (Join-Path $appDir 'requirements.txt')
-if ($LASTEXITCODE -ne 0) { throw 'Installation des dependances impossible. Relancez pour reprendre.' }
+if ($LASTEXITCODE -ne 0) {
+    if (-not $allowDownload) { throw 'Les dependances ne sont pas toutes en cache. Aucun telechargement autorise. Relancez l installateur et autorisez la preparation pour recuperer les ressources manquantes.' }
+    throw 'Installation des dependances impossible. Relancez pour reprendre.'
+}
 & $uv pip check --python $python
 if ($LASTEXITCODE -ne 0) { throw 'Les dependances ne sont pas coherentes.' }
 & $python -c "from pypdf import PdfReader; import app; print('Programme importe correctement.')"

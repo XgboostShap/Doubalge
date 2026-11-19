@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 import socket
 import threading
+from contextlib import contextmanager
 from urllib.parse import urlsplit
 
 from storage import fingerprint, read, write
 from quality import response_schema
+from issues import repair_message
 
 
 class Cancelled(Exception):
@@ -28,6 +30,10 @@ class ResponseLimitError(ModelError):
 
 class RepetitionError(ModelError):
     """Arrêt de génération répétitive, distinct d'une panne réseau ou d'un 404."""
+
+
+class RequestBudgetError(InvalidResponseError):
+    """Arrêt borné d’un passage ; les autres passages peuvent continuer."""
 
 
 def model_error(detail):
@@ -79,8 +85,44 @@ class Ollama:
         self.progress = progress or (lambda text:None)
         self.active = None
         self.active_socket = None
+        self._budgets = []
+        self._local_model_checked = None
         self.cache.mkdir(parents=True, exist_ok=True)
         endpoint_parts(config['endpoint'])
+
+    @contextmanager
+    def request_scope(self, maximum=6):
+        counter={'remaining':maximum}
+        self._budgets.append(counter)
+        try: yield
+        finally: self._budgets.remove(counter)
+
+    def ensure_local_model(self):
+        """Interroger uniquement Ollama local avant de lui transmettre des sources."""
+        name=self.config['model']
+        target=(self.config['endpoint'],name)
+        if self._local_model_checked==target:return
+        if name.lower().endswith((':cloud','-cloud')):
+            raise ModelError('Mode local : choisissez un modèle installé sur ce PC ; les modèles cloud sont désactivés.')
+        conn=connection(self.config['endpoint'],timeout=10)
+        try:
+            conn.request('POST','/api/show',json.dumps({'model':name}).encode(),{'Content-Type':'application/json'})
+            response=conn.getresponse();raw=response.read(1024*1024)
+            if response.status!=200:
+                raise ModelError(f'Ollama répond HTTP {response.status} : '+raw[:2000].decode(errors='replace'))
+            value=json.loads(raw)
+            if not isinstance(value,dict) or not isinstance(value.get('details',{}),dict):
+                raise ModelError('Métadonnées Ollama non exploitables : impossible de confirmer le modèle local.')
+            if value.get('remote_host') or value.get('remote_model') or value.get('details',{}).get('remote_host'):
+                raise ModelError('Mode local : ce modèle délègue le calcul à un serveur distant. Choisissez un modèle local.')
+            if not value.get('details',{}).get('format'):
+                raise ModelError('Impossible de confirmer que ce modèle est local avec /api/show. Mettez Ollama à jour ou choisissez un modèle local installé.')
+            self._local_model_checked=target
+        except (OSError,http.client.HTTPException) as error:
+            raise ModelError('Vérification du modèle local impossible : '+str(error)) from error
+        except (ValueError,TypeError) as error:
+            raise ModelError('Métadonnées Ollama non exploitables : impossible de confirmer le modèle local.') from error
+        finally:conn.close()
 
     def cancel(self):
         self.cancelled.set()
@@ -117,6 +159,9 @@ class Ollama:
             if self.cancelled.is_set():
                 raise Cancelled()
             try:
+                if any(c['remaining']<=0 for c in self._budgets):
+                    raise RequestBudgetError('Budget de reprises atteint pour ce passage. Les autres parties validées sont conservées.')
+                for counter in self._budgets:counter['remaining']-=1
                 text = self._request(messages,budget,recovery=bool(repeat_retries),schema=schema,temperature=review_temperature)
                 value = json.loads(text)
                 validate(value)
@@ -139,10 +184,12 @@ class Ollama:
                 if repairs:
                     raise InvalidResponseError('La réponse du modèle reste invalide : '+str(error)) from error
                 repairs += 1
-                self.progress('Correction du format de réponse du modèle : '+str(error)[:250])
-                messages = messages[:2] + [{'role':'user','content':'Ta réponse précédente ne respectait pas la structure : '+str(error)+'. Reprends la demande initiale et renvoie un objet JSON complet.'}]
+                kind,feedback=repair_message(error)
+                self.progress('Reprise ciblée ('+kind+') : '+str(error)[:250])
+                messages = messages[:2] + [{'role':'user','content':feedback}]
 
     def _request(self, messages, budget, recovery=False, schema=None,temperature=None):
+        self.ensure_local_model()
         conn = connection(self.config['endpoint'])
         self.active = conn
         try:
